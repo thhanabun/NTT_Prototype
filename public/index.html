@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10221f">
+    <meta name="description" content="Hybrid Smart Basket retail prototype">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/basket.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/extras.css">
+    <title>Basketly — Smart Basket Prototype</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Basketly home">
+          <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 12h18l-2 15H9L7 12Z"/><path d="m11 12 5-8 5 8M12 17v5M16 17v5M20 17v5"/></svg></span>
+          <span><strong>basketly</strong><small>SMART RETAIL LAB</small></span>
+        </a>
+        <div class="workspace-label">WORKSPACE</div>
+        <nav class="primary-nav" aria-label="Main navigation">
+          <button class="nav-item active" data-view="shopper"><span class="nav-icon">▧</span> Shopper app <span class="nav-arrow">›</span></button>
+          <button class="nav-item" data-view="staff"><span class="nav-icon">◫</span> Staff dashboard</button>
+        </nav>
+        <div class="sidebar-divider"></div>
+        <div class="workspace-label">PROTOTYPE</div>
+        <div class="side-module"><span class="side-module-icon">⌁</span><span><strong>Smart shelf</strong><small>SHELF-01 · 2 lanes</small></span><span class="tiny-online"></span></div>
+        <div class="side-module"><span class="side-module-icon">◉</span><span><strong>Basket tags</strong><small>BLE · A &amp; B</small></span><span class="tiny-online"></span></div>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-note"><span class="note-dot"></span><span>Local demo mode<small>Events reset when server restarts</small></span></div>
+        <div class="user-card"><div class="avatar">SB</div><span><strong>Demo staff</strong><small>Prototype workspace</small></span><span class="more">···</span></div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 12h18l-2 15H9L7 12Z"/><path d="m11 12 5-8 5 8M12 17v5M16 17v5M20 17v5"/></svg></span>basketly</div>
+          <div class="breadcrumb"><span>Prototype</span><b>/</b><strong id="page-label">Shopper app</strong></div>
+          <div class="top-actions"><span class="demo-pill"><span></span> DEMO ENVIRONMENT</span><span class="live-chip"><i></i> Live</span><button class="icon-button" id="reset-button" title="Reset demo data" aria-label="Reset demo data">↻</button></div>
+        </header>
+
+        <section class="view" id="view-shopper">
+          <div class="page-heading">
+            <div><div class="eyebrow">CUSTOMER EXPERIENCE</div><h1>A lighter way to shop.</h1><p>Pick what you need. Your basket keeps up.</p></div>
+            <div class="heading-badge"><span class="heading-spark">✳</span><span><strong>Smart basket</strong><small>Powered by shelf signals</small></span></div>
+          </div>
+
+          <div class="basket-bind card">
+            <div class="bind-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 12h18l-2 15H9L7 12Z"/><path d="m11 12 5-8 5 8"/></svg></div>
+            <div class="bind-copy"><strong>Connect your basket</strong><span>Scan the QR on your basket to start a session.</span></div>
+            <div class="basket-choice" role="group" aria-label="Choose basket">
+              <button class="basket-choice-button selected" data-basket="A"><span class="basket-letter">A</span> Basket A</button>
+              <button class="basket-choice-button" data-basket="B"><span class="basket-letter">B</span> Basket B</button>
+            </div>
+            <button class="button button-light scan-button" id="scan-button"><span>▦</span> Scan QR</button>
+            <button class="button button-primary start-button" id="start-session"><span>Start shopping <b>→</b></span></button>
+          </div>
+
+          <div class="shop-grid">
+            <section class="card products-card">
+              <div class="section-title"><div><div class="eyebrow">ON THE SHELF</div><h2>Fresh picks</h2></div><span class="section-count">2 PRODUCTS</span></div>
+              <div class="product-row">
+                <div class="product-art coke-art"><span class="product-sun"></span><span class="can-label">Coca<br>Cola</span><span class="can-wave">〰</span></div>
+                <div class="product-meta"><span class="product-tag">COLD DRINK</span><h3>Coca-Cola</h3><p>Original taste · 325 ml</p><div class="product-price">฿25 <small>/ can</small></div></div>
+                <div class="shelf-lane"><span class="lane-led"></span><span>Lane 01</span><small>In stock</small></div>
+              </div>
+              <div class="product-row">
+                <div class="product-art water-art"><span class="bottle-cap"></span><span class="bottle-body"><i></i></span><span class="bottle-label">PURE<br>WATER</span></div>
+                <div class="product-meta"><span class="product-tag blue-tag">STAY HYDRATED</span><h3>Mineral water</h3><p>Natural spring · 600 ml</p><div class="product-price">฿15 <small>/ bottle</small></div></div>
+                <div class="shelf-lane"><span class="lane-led"></span><span>Lane 02</span><small>In stock</small></div>
+              </div>
+              <div class="shelf-foot"><span class="status-check">✓</span> Shelf sensors are ready. Items are added automatically when picked up.</div>
+            </section>
+
+            <section class="card cart-card">
+              <div class="cart-head"><div><div class="eyebrow">YOUR BASKET</div><h2>Shopping cart <span id="shop-basket-chip">A</span></h2></div><div class="cart-session" id="shop-session-state"><i></i> Session not started</div></div>
+              <div id="shop-cart-lines" class="cart-lines"><div class="empty-cart"><span class="empty-basket">⌑</span><strong>Your cart is ready</strong><span>Pick something from the shelf to see it here.</span></div></div>
+              <div id="customer-confirmation" class="customer-confirmation hidden"></div>
+              <div class="cart-summary"><div><span>Subtotal</span><strong id="shop-subtotal">฿0</strong></div><div><span>VAT included</span><strong>Included</strong></div><div class="cart-total"><span>Total</span><strong id="shop-total">฿0</strong></div></div>
+              <div class="cart-foot"><span class="secure-note"><span>✓</span> You only pay for confirmed items</span><button class="button button-primary checkout-button" id="checkout-button" disabled>Mock checkout <b>→</b></button></div>
+              <div id="order-receipt" class="receipt hidden"></div>
+            </section>
+          </div>
+          <div class="shopper-tip"><span>✦</span><span><strong>Shopping, without the guesswork.</strong> If we’re unsure which basket a product belongs to, we’ll ask before adding it.</span></div>
+        </section>
+
+        <section class="view hidden" id="view-staff">
+          <div class="page-heading staff-heading">
+            <div><div class="eyebrow">OPERATIONS / OVERVIEW</div><h1>Good morning, team.</h1><p>Your shelf is online. Here’s what’s happening in store.</p></div>
+            <div class="staff-heading-actions"><span class="date-label" id="current-date"></span><button class="button button-light" id="refresh-button">↻ <span>Refresh</span></button></div>
+          </div>
+          <div class="metric-grid">
+            <article class="metric-card"><div class="metric-label">SHELF STATUS <span class="metric-icon green-icon">⌁</span></div><div class="metric-value"><span class="metric-dot"></span><strong id="shelf-status">Online</strong></div><small id="shelf-last-seen">Last signal just now</small></article>
+            <article class="metric-card"><div class="metric-label">LAST SHELF EVENT <span class="metric-icon coral-icon">↗</span></div><div class="metric-value"><strong id="last-event">Waiting for a pick</strong></div><small id="last-event-time">No events received</small></article>
+            <article class="metric-card"><div class="metric-label">WORKFLOW STATE <span class="metric-icon violet-icon">◉</span></div><div class="metric-value"><strong id="fsm-state">IDLE</strong></div><small>Deterministic cart policy</small></article>
+            <article class="metric-card"><div class="metric-label">OPEN CASES <span class="metric-icon amber-icon">◎</span></div><div class="metric-value"><strong id="open-case-count">0</strong><span class="metric-unit">need attention</span></div><small>Customer + staff review</small></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="card monitor-card">
+              <div class="section-title"><div><div class="eyebrow">DEVICE MONITOR</div><h2>Basket proximity</h2></div><span class="live-chip"><i></i> Streaming</span></div>
+              <div class="proximity-legend"><span><i class="legend-dot basket-a-dot"></i>Basket A</span><span><i class="legend-dot basket-b-dot"></i>Basket B</span><small>BLE signal · higher (closer) is stronger</small></div>
+              <div id="rssi-chart" class="rssi-chart"></div>
+              <div class="monitor-footer"><span><i class="lane-led"></i> 2 sensor lanes active</span><span>Clear zone ≥ 10 dB</span></div>
+            </section>
+            <section class="card basket-monitor-card">
+              <div class="section-title"><div><div class="eyebrow">LIVE BASKETS</div><h2>Cart overview</h2></div><span class="section-count">2 BASKETS</span></div>
+              <div id="staff-baskets" class="staff-baskets"></div>
+            </section>
+          </div>
+
+          <section class="card case-monitor-card">
+            <div class="section-title case-section-title"><div><div class="eyebrow">AGENT CASE MONITOR</div><h2>Cases needing a decision</h2></div><div class="case-title-actions"><span id="case-filter-label" class="filter-count">All cases</span><button class="button button-light compact-button" id="clear-filter">Show all</button></div></div>
+            <div id="case-list" class="case-list"></div>
+          </section>
+
+          <div class="dashboard-bottom">
+            <section class="card demo-controls">
+              <div class="section-title"><div><div class="eyebrow">SIMULATOR</div><h2>Send a shelf event</h2></div><div class="sim-controls"><select class="lane-select" aria-label="Select shelf lane"><option value="LANE-1">Lane 01 · Coke</option><option value="LANE-2">Lane 02 · Water</option></select><span class="sim-badge">LOCAL ONLY</span></div></div>
+              <p>Generate the demo journeys. These events use the same cart and case rules as the device pipeline.</p>
+              <div class="sim-row"><span class="sim-number">01</span><span class="sim-copy"><strong>Clear pick</strong><small>Basket A is clearly closer. No Agent.</small></span><button class="button button-light sim-button" data-sim="clear-a">Send event <b>↗</b></button></div>
+              <div class="sim-row"><span class="sim-number">02</span><span class="sim-copy"><strong>Ambiguous pick</strong><small>Ask the customer to confirm Basket A.</small></span><button class="button button-light sim-button" data-sim="ambiguous">Send event <b>↗</b></button></div>
+              <div class="sim-row"><span class="sim-number">03</span><span class="sim-copy"><strong>Low agent confidence</strong><small>Tied RSSI. Staff HITL after investigation.</small></span><button class="button button-light sim-button" data-sim="low-confidence">Send event <b>↗</b></button></div>
+              <div class="sim-row"><span class="sim-number">04</span><span class="sim-copy"><strong>Unknown zone</strong><small>No BLE evidence. Staff review required.</small></span><button class="button button-light sim-button" data-sim="unknown">Send event <b>↗</b></button></div>
+              <div class="sim-row"><span class="sim-number">05</span><span class="sim-copy"><strong>Put back</strong><small>Return a confirmed item from Basket A.</small></span><button class="button button-light sim-button" data-sim="put-back">Send event <b>↗</b></button></div>
+              <div class="sim-row"><span class="sim-number">06</span><span class="sim-copy"><strong>Duplicate delivery</strong><small>Repeat the same event ID. Cart stays unchanged.</small></span><button class="button button-light sim-button" data-sim="duplicate">Send event <b>↗</b></button></div>
+            </section>
+            <section class="card event-card">
+              <div class="section-title"><div><div class="eyebrow">AUDIT TRAIL</div><h2>Recent activity</h2></div><span class="section-count">LIVE</span></div>
+              <div id="event-list" class="event-list"></div>
+            </section>
+          </div>
+          <footer class="page-footer"><span>Basketly prototype · local event simulator</span><span>No real payment · payable total excludes unresolved items</span></footer>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="scanner-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scanner-title">
+      <div class="scanner-panel">
+        <button class="modal-close" id="close-scanner" aria-label="Close scanner">×</button>
+        <div class="eyebrow">BASKET PAIRING</div><h2 id="scanner-title">Scan your basket QR</h2>
+        <p>Point your camera at the QR label on Basket A or Basket B.</p>
+        <div class="video-frame"><video id="scanner-video" autoplay playsinline></video><div class="scan-reticle"></div></div>
+        <div class="scanner-fallback"><span>Camera not available?</span><button class="text-button" data-basket="A">Use Basket A</button><button class="text-button" data-basket="B">Use Basket B</button></div>
+        <div id="scanner-error" class="scanner-error"></div>
+      </div>
+    </div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

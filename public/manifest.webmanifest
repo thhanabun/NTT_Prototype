@@ -1,0 +1,11 @@
+{
+  "name": "Basketly Smart Basket",
+  "short_name": "Basketly",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f6",
+  "theme_color": "#10221f",
+  "icons": [
+    { "src": "/basket.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
