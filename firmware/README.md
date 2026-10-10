@@ -1,5 +1,7 @@
 # ESP32 shelf firmware
 
+Follow the [primary IoT roadmap](../docs/iot-roadmap.md) for implementation. Local switch integration comes first, BLE comes after the three DX-CP101 beacons arrive, and AWS provisioning comes last. This document describes the current firmware draft, which still needs the roadmap changes.
+
 The sketch watches one microswitch per lane and continuously scans the two BLE basket tags. It debounces shelf-state changes, takes a rolling median of the last five tag readings, and publishes one idempotent event for each stable transition. A bounded eight-event RAM outbox retries while Wi-Fi/MQTT reconnects; a power loss or a longer outage can still lose queued events.
 
 ## Wiring

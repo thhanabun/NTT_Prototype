@@ -2,6 +2,8 @@
 
 A two-basket, two-lane retail demo. A shelf event updates a shopper cart only when the deterministic policy can identify an active basket with clear evidence. Ambiguous or missing evidence stays pending and requires customer or staff confirmation. The amount shown at checkout includes confirmed items only.
 
+The [primary IoT roadmap](docs/iot-roadmap.md) sets the hardware delivery order: ESP32 and two switches into the local app first, three DX-CP101 beacons second, and AWS IoT Core third. Follow that roadmap for IoT implementation; the cloud architecture below remains the longer-term target.
+
 ## Run locally
 
 Requirements: Node.js 20 or newer. No package install or cloud account is needed.
