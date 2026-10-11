@@ -25,7 +25,7 @@ export default function Home() {
               Reserved route for basket pairing, cart, confirmation, and mock checkout.
             </p>
           </div>
-          <Button className="w-fit" render={<Link href="/shopper" />}>
+          <Button className="w-fit" nativeButton={false} render={<Link href="/shopper" />}>
             Open Shopper route
           </Button>
         </article>
@@ -37,7 +37,7 @@ export default function Home() {
               Reserved route for store overview, case review, and staff decisions.
             </p>
           </div>
-          <Button className="w-fit" variant="outline" render={<Link href="/admin" />}>
+          <Button className="w-fit" variant="outline" nativeButton={false} render={<Link href="/admin" />}>
             Open Admin route
           </Button>
         </article>

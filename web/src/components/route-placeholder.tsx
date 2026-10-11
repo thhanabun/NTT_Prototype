@@ -16,7 +16,7 @@ export function RoutePlaceholder({ title, description }: RoutePlaceholderProps) 
         <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>
         <p className="text-lg leading-8 text-muted-foreground">{description}</p>
       </div>
-      <Button className="w-fit" variant="outline" render={<Link href="/" />}>
+      <Button className="w-fit" variant="outline" nativeButton={false} render={<Link href="/" />}>
         Back to project overview
       </Button>
     </section>
