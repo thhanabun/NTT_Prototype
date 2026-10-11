@@ -28,4 +28,16 @@ Set `LOCAL_API_ORIGIN` in `.env.local` to change the backend origin. The default
 - `src/lib/api/types.ts` mirrors the local contract in `../docs/web-app-plan.md`.
 - `src/lib/api/client.ts` contains typed local API requests and the named `state` event subscription helper.
 
-The route pages are scaffolding for Phase 2. Shopper and Admin workflows are implemented in later phases.
+The Admin route is scaffolding for Phase 2. The Shopper route now contains the Phase 3 UI preview, using local sample fixtures only.
+
+## Shopper UI preview (Phase 3)
+
+Open `/shopper`. Use **Preview screen states** to inspect connection, empty cart, confirmed cart, uncertain pick/return, multiple cases, staff review, loading, submitting, load/action errors, disconnection, and receipt states.
+
+- Basket selection, Start session, YES/NO, retry, and mock checkout buttons change sample preview state only. No HTTP API requests, EventSource connections, AWS calls, or model calls are made by this screen.
+- Sample prices match the local contract: Coke THB 25 and Water THB 15. Pending items are excluded from displayed totals; checkout is disabled while review is pending or data is unavailable.
+- QR shows a preview explanation and manual basket selection. Camera scanning and real session/cart/checkout integration belong to Phase 4; realtime integration belongs to Phase 6.
+- Fixtures are in `src/components/shopper/sample-data.ts`; the screen and scoped responsive styling are in the same directory.
+- Mock checkout receipts reflect the currently displayed confirmed sample lines. They do not represent a real order or payment.
+
+Verification commands: `npm run lint`, `npm run typecheck`, and `npm run build`.
