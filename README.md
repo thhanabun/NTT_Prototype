@@ -10,6 +10,8 @@ Requirements: Node.js 20 or newer. No package install or cloud account is needed
 
 Open http://127.0.0.1:3000. The web app and API are served by the same Node process; EventSource streams state changes to both views. Demo state and case audit are persisted to the ignored data/demo-state.json file. Use the reset button to clear the local demo.
 
+The original browser prototype and API remain on port 3000. The separate Next.js frontend in `web/` runs on port 3001; see [web/README.md](web/README.md) to run both apps together.
+
 1. In Shopper app, choose Basket A and select Start shopping. A URL with ?basket=A can also start a session, which is the payload expected on a basket QR.
 2. Open Staff dashboard and use the simulator controls. Select Coke or Water to choose a shelf lane.
 3. Try Clear pick, then Ambiguous pick. Return to Shopper app and confirm YES or choose NO to route it to staff.
@@ -55,13 +57,14 @@ The intended cloud path remains AWS-native:
 
 The local path is executable without downloading dependencies. It is not an AWS deployment and does not call Bedrock. The firmware has not been compiled or flashed, and no IoT certificates are included. See firmware/README.md before connecting hardware.
 
-The requested Next.js dependency set was not present in this empty workspace, and the npm registry did not respond from this environment. To keep the prototype runnable here, the local harness uses the Node.js standard library; the table above keeps the planned Next.js/AWS target explicit.
+The original localhost harness stays dependency-free. The separate Next.js frontend has its own npm package and lockfile under `web/`; the local API remains the source of truth for that app.
 
 ## Source layout
 
 - src/domain.mjs — event validation, idempotency, cart FSM, case policy, HITL decisions and mock checkout.
 - src/server.mjs — localhost HTTP API, static PWA host and realtime event stream.
 - public/ — shopper and staff views, PWA manifest, native camera scanning and event simulator.
+- web/ — separate Next.js App Router frontend, UI foundation, API types and same-origin development proxy.
 - firmware/esp32/smart_shelf.ino — ESP32 switch debounce, BLE RSSI median and MQTT event publisher.
 - tests/domain.test.mjs — acceptance checks for clear/duplicate, ambiguous, low-confidence, missing-RSSI and PUT_BACK flows.
 - docs/event-contract.md — shared device/API event contract and deterministic decision table.
