@@ -88,4 +88,3 @@ export function submitShelfEvent(event: ShelfEventInput): Promise<ProcessShelfEv
 export function resetDemo(): Promise<{ ok: true }> {
   return post("/api/reset", {});
 }
-

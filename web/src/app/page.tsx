@@ -6,14 +6,14 @@ export default function Home() {
     <section className="flex flex-1 flex-col justify-center gap-10 py-10">
       <div className="max-w-2xl space-y-5">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Phase 5 · Local store operations
+          Phase 6 · Realtime store operations
         </p>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Basketly web app
         </h1>
         <p className="max-w-xl text-lg leading-8 text-muted-foreground">
           The Shopper app now uses local basket sessions, carts, confirmations, and mock
-          checkout. The Admin dashboard reviews baskets and resolves staff cases using the same backend.
+          checkout. Shopper and Admin now receive automatic updates from the same local backend.
         </p>
       </div>
 

@@ -33,6 +33,7 @@ browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM
 const page=await browser.newPage({viewport:{width:390,height:844}});
 const errors=[];
 const faults={load:false,malformed:false,rejectCheckout:false,loseConfirmation:false};
+  await page.addInitScript(() => { window.EventSource = undefined; });
 page.on('pageerror',error=>errors.push(error.message));
 page.on('console',msg=>{if(msg.type()==='error' && !msg.text().startsWith('Failed to load resource:'))errors.push(msg.text());});
 await page.route('**/api/**',async route=>{
