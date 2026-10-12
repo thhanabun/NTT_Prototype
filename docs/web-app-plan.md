@@ -253,3 +253,19 @@ Phase 1 deliverables:
 - [ ] Review and agree on scope/API assumptions with the backend teammate.
 
 The documentation work for Phase 1 is complete. Team agreement remains pending. Phase 2 can proceed against the existing local contract while cloud-specific questions remain open.
+
+### Phase 3 implementation checkpoint
+
+The `/shopper` route now provides a responsive UI preview with local sample data. Completed UI work:
+
+- [x] Manual Basket A/B selection and session display.
+- [x] QR entry-point preview with an explanation and manual fallback; real camera integration remains Phase 4.
+- [x] Product display and confirmed cart with Coke THB 25 and Water THB 15.
+- [x] Empty, loading, submitting, load-error, action-error, and disconnected states.
+- [x] Separate confirmation wording for PICK and PUT_BACK, including multiple pending cases.
+- [x] Staff-review messaging and checkout-blocking reasons.
+- [x] Mock receipt using the displayed confirmed sample lines.
+- [x] Preview controls to inspect each screen state without backend/model requests.
+- [x] Browser interaction checks at 320, 390, 768, and 1440 pixel widths with no horizontal overflow, API requests, or console errors.
+
+Fixtures and rendering live in `web/src/components/shopper/`. This checkpoint covers the UI only; the earlier end-to-end acceptance checklist remains pending for real API integration. API mutations/QR scanning belong to Phase 4, live updates to Phase 6, and cloud integration to Phase 7.

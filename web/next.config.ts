@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const apiOrigin = (process.env.LOCAL_API_ORIGIN ?? "http://127.0.0.1:3000").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1"],
   cacheComponents: true,
   partialPrefetching: true,
   async rewrites() {
@@ -18,6 +19,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       "*.css": {
+        condition: { not: { path: "*.module.css" } },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
