@@ -40,7 +40,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
     cache: "no-store",
-    signal: AbortSignal.timeout(12_000),
+    signal: init?.signal ?? AbortSignal.timeout(12_000),
     headers: {
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
       ...init?.headers,
@@ -54,8 +54,8 @@ function post<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: "POST", body: JSON.stringify(body) });
 }
 
-export function getState(): Promise<ApiState> {
-  return request<ApiState>("/api/state");
+export function getState(signal?: AbortSignal): Promise<ApiState> {
+  return request<ApiState>("/api/state", {signal});
 }
 
 export function startSession(basketId: BasketId): Promise<{ session: Session }> {
@@ -87,22 +87,4 @@ export function submitShelfEvent(event: ShelfEventInput): Promise<ProcessShelfEv
 
 export function resetDemo(): Promise<{ ok: true }> {
   return post("/api/reset", {});
-}
-
-export function subscribeToState(
-  onState: (state: ApiState) => void,
-  onError?: (error: Error) => void,
-): () => void {
-  const stream = new EventSource("/api/stream");
-
-  stream.addEventListener("state", (event) => {
-    try {
-      onState(JSON.parse((event as MessageEvent<string>).data) as ApiState);
-    } catch {
-      onError?.(new Error("The live state update could not be read."));
-    }
-  });
-  stream.onerror = () => onError?.(new Error("The live update connection was interrupted."));
-
-  return () => stream.close();
 }

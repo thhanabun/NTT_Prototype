@@ -5,16 +5,20 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 
-export async function startLocalApi() {
+export async function startLocalApi({ corsOrigin } = {}) {
   const repository = fileURLToPath(new URL('../../../', import.meta.url));
   const directory = await mkdtemp(join(tmpdir(), 'basketly-admin-'));
   let server;
-  async function close() {
+  let port = 0;
+  async function stop() {
     if (server && server.exitCode === null && server.signalCode === null) {
       const exited = new Promise(resolveExit => server.once('exit', resolveExit));
       server.kill();
       await exited;
     }
+  }
+  async function close() {
+    await stop();
     assert.ok(directory.startsWith(join(tmpdir(), 'basketly-admin-')));
     await rm(directory, { recursive: true, force: true });
   }
@@ -30,19 +34,33 @@ export async function startLocalApi() {
       assert.ok(source.includes(before), 'Local API test harness needs updating for the server layout');
       source = source.replace(before, after);
     }
+    if (corsOrigin) {
+      // Test-only CORS/diagnostics permit native EventSource to use this isolated server.
+      source = source.replace('const subscribers = new Set();', 'const subscribers = new Set(); let invalidStream = false;');
+      source = source.replaceAll('JSON.stringify(snapshot(store))', '(invalidStream ? "invalid" : JSON.stringify(snapshot(store)))');
+      source = source.replace('const server = createServer(async (request, response) => {', `const server = createServer(async (request, response) => {
+        response.setHeader("Access-Control-Allow-Origin", ${JSON.stringify(corsOrigin)});
+        if (request.url === "/__test/subscribers") return sendJson(response, 200, {count:subscribers.size});
+        if (request.url === "/__test/invalid") { invalidStream = true; publish(); return sendJson(response,200,{ok:true}); }
+        if (request.url === "/__test/valid") { invalidStream = false; return sendJson(response,200,{ok:true}); }
+      `);
+    }
     const file = join(directory, 'server.mjs');
     await writeFile(file, source);
-    server = spawn(process.execPath, [file], { env: { ...process.env, PORT: '0', HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] });
-    const origin = await new Promise((resolveReady, reject) => {
-      const timer = setTimeout(() => reject(new Error('Test API startup timed out')), 15000);
-      server.on('error', error => { clearTimeout(timer); reject(error); });
-      server.on('exit', code => { clearTimeout(timer); reject(new Error(`Test API exited: ${code}`)); });
-      server.stdout.on('data', chunk => {
-        const port = chunk.toString().match(/TEST_API_READY:(\d+)/)?.[1];
-        if (port) { clearTimeout(timer); resolveReady(`http://127.0.0.1:${port}`); }
+    async function start() {
+      server = spawn(process.execPath, [file], { env: { ...process.env, PORT:String(port), HOST:'127.0.0.1' }, stdio:['ignore','pipe','pipe'] });
+      return new Promise((resolveReady, reject) => {
+        const timer = setTimeout(() => reject(new Error('Test API startup timed out')), 15000);
+        server.on('error', error => { clearTimeout(timer); reject(error); });
+        server.on('exit', code => { clearTimeout(timer); reject(new Error(`Test API exited: ${code}`)); });
+        server.stdout.on('data', chunk => {
+          const actualPort = chunk.toString().match(/TEST_API_READY:(\d+)/)?.[1];
+          if (actualPort) { port = Number(actualPort); clearTimeout(timer); resolveReady(`http://127.0.0.1:${port}`); }
+        });
+        server.stderr.on('data', chunk => process.stderr.write(chunk));
       });
-      server.stderr.on('data', chunk => process.stderr.write(chunk));
-    });
-    return { origin, directory, close };
+    }
+    const origin = await start();
+    return {origin, directory, close, stop, restart:async () => {await stop(); await start();}};
   } catch (error) { await close(); throw error; }
 }

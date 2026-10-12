@@ -7,6 +7,7 @@ import { useAdmin } from "./use-admin";
 import { CaseDetails, caseStatusLabel, formatTime } from "./case-details";
 import { StaffActions } from "./staff-actions";
 import { LocalSimulator } from "./local-simulator";
+import { ConnectionStatus } from "@/components/connection-status";
 import styles from "./admin.module.css";
 
 const money = (value: number) => `฿${value.toLocaleString("th-TH")}`;
@@ -22,7 +23,7 @@ export function AdminDashboard() {
   return (
     <div className={styles.dashboard} lang="th">
       <div className={styles.hero}><div><p className={styles.eyebrow}>BASKETLY / STORE OPERATIONS</p><h1>ภาพรวมร้านของคุณ<span>.</span></h1><p>ตรวจตะกร้า ติดตามหลักฐาน และจัดการรายการที่ต้องยืนยัน</p></div><button className={styles.outlineButton} disabled={admin.loading || admin.pending} onClick={() => void admin.refresh()}><RefreshCw size={16} aria-hidden="true" /> อัปเดต dashboard</button></div>
-      <div className={styles.updateBar}><span className={`${styles.badge} ${admin.stale ? styles.amber : styles.blue}`}>{admin.stale ? "ข้อมูลอาจไม่ใช่ข้อมูลล่าสุด" : "Local API · Manual refresh"}</span><span>โหลดล่าสุด: {formatTime(admin.updatedAt)}</span></div>
+      <div className={styles.updateBar}><span className={`${styles.badge} ${admin.stale ? styles.amber : styles.green}`}><ConnectionStatus connection={admin.connection} retryAttempt={admin.retryAttempt} stale={admin.stale} /></span><span>ข้อมูลล่าสุด: {formatTime(admin.updatedAt)}</span></div>
       {admin.error && <div className={styles.error} role="alert"><CircleAlert size={20} aria-hidden="true" /><div>{admin.error}<button disabled={admin.loading || admin.pending} onClick={() => void admin.refresh()}>ลองโหลดใหม่</button></div></div>}
       {admin.notice && <p className={styles.notice} role="status">{admin.notice}</p>}
       {admin.loading && <p className={styles.loading} role="status"><LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> กำลังโหลดข้อมูลร้าน…</p>}

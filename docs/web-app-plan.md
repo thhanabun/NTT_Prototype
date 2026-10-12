@@ -309,3 +309,20 @@ Next phases:
 - [x] Verify staff decisions, simulator events, stale/concurrent-case recovery, shared Shopper data, and responsive layouts against an isolated local backend.
 
 There is no polling, EventSource subscription, real Agent call, AWS deployment, or staff authentication in Phase 5. Phase 6 will coordinate automatic updates and reconnection. Per the agreed stopping point, complete Phase 6 locally and then wait for the cloud/backend team before Phase 7.
+
+### Phase 6 implementation checkpoint
+
+Shopper and Admin now subscribe to the existing local SSE endpoint through one shared store per browser tab.
+
+- [x] Update carts, sessions, customer/staff cases, dashboard metrics, and receipts automatically from named `state` snapshots.
+- [x] Share one EventSource per tab and release it on client navigation away from subscribed screens, including Strict Mode cleanup.
+- [x] Display connecting/live/reconnecting/offline/manual-fallback status and preserve the last snapshot on failures.
+- [x] Block mutations while data is stale and recover from a full snapshot without replaying user actions.
+- [x] Use five capped retries (1.5, 3, 6, 12, 30 seconds), then require explicit retry; no periodic polling.
+- [x] Prevent delayed HTTP reads from overwriting newer stream snapshots and abort pending reads on cleanup.
+- [x] Preserve fixture preview isolation and the manual fallback when EventSource is unavailable.
+- [x] Verify native SSE across Shopper A/B/Admin tabs, backend restart, stale-data guards, retry exhaustion, no duplicate streams/actions, client navigation cleanup, and responsive connection states.
+
+No backend business rules or AWS resources were changed. Native realtime tests use isolated local persistence and test-only diagnostics in a temporary server copy. Real-phone QR verification remains a separate manual check.
+
+Agreed stopping point: Phases 1–6 are implemented locally. Wait for the backend/cloud team's API, authentication, realtime transport, region, permissions, and test-budget agreement before starting Phase 7. Phase 8 hosting remains later work.

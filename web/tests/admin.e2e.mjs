@@ -11,6 +11,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   const faults = {load:false, loseDecision:false};
+  await page.addInitScript(() => { window.EventSource = undefined; });
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text()); });
   await page.route('**/api/**', async route => {
