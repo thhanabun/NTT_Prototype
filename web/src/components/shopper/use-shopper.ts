@@ -60,6 +60,7 @@ export function useShopper() {
       if (selected === "A" || selected === "B") setBasketId(selected);
     }).catch((cause) => {
       if (request !== generation.current) return;
+      if (selected === "A" || selected === "B") setBasketId(selected);
       setError(cause instanceof Error ? cause.message : "Could not load the basket.");
       setStale(true);
     }).finally(() => {

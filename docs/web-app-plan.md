@@ -269,3 +269,28 @@ The `/shopper` route now provides a responsive UI preview with local sample data
 - [x] Browser interaction checks at 320, 390, 768, and 1440 pixel widths with no horizontal overflow, API requests, or console errors.
 
 Fixtures and rendering live in `web/src/components/shopper/`. This checkpoint covers the UI only; the earlier end-to-end acceptance checklist remains pending for real API integration. API mutations/QR scanning belong to Phase 4, live updates to Phase 6, and cloud integration to Phase 7.
+
+### Phase 4 implementation checkpoint
+
+`/shopper` now reads the local API; the Phase 3 fixture screen remains at `/shopper/preview`.
+
+- [x] Start/reuse basket sessions and persist the selected A/B basket in the URL and optional local storage.
+- [x] Display API products, confirmed lines, prices, quantities, totals, and session timestamps.
+- [x] Refresh the snapshot manually and after mutations, with loading, stale-data, and error states.
+- [x] Submit customer YES/NO and display the server's resulting case/cart state, including staff escalation and multiple waiting cases.
+- [x] Block checkout for pending cases, missing sessions/items, pending submissions, or unavailable current data.
+- [x] Submit mock checkout and display the backend order; preserve the receipt if the following snapshot read fails.
+- [x] Prevent concurrent UI submissions and reload state before allowing retry after uncertain mutation responses.
+- [x] Scan QR URLs when supported, retain manual fallback, and release camera tracks on close/success.
+- [x] Verify the workflow against an isolated instance of the real local backend with browser integration checks, including failure recovery.
+
+The browser checks simulate camera APIs. Real-phone QR/camera verification remains a manual device check. Automatic live updates and Admin workflows are still future phases; Phase 4 uses explicit refresh, never periodic polling. Authentication and AWS integration remain Phase 7 dependencies.
+
+Next phases:
+
+| Phase | What changes next |
+| --- | --- |
+| 5 | Build Admin overview, basket monitoring, case evidence/timeline, and staff decision UI against the local API |
+| 6 | Add coordinated realtime updates, reconnect/stale-state handling, and test Shopper/Admin journeys together |
+| 7 | Integrate the agreed AWS API, authentication, and cloud realtime within a bounded test budget |
+| 8 | Deploy the web app to permitted AWS hosting and rehearse the HTTPS demo on devices |
