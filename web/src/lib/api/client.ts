@@ -29,6 +29,10 @@ async function readResponse<T>(response: Response): Promise<T> {
     throw new ApiError(message, response.status);
   }
 
+  if (body === null || typeof body !== "object") {
+    throw new ApiError("The server returned an invalid JSON response.", response.status);
+  }
+
   return body as T;
 }
 
@@ -36,6 +40,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
     cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
     headers: {
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
       ...init?.headers,

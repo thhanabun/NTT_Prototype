@@ -45,6 +45,7 @@
 .outlineButton { border: 1px solid #d8e3f3; background: #fff; color: #3c5d8a; }
 .outlineButton:hover { background: #f0f6ff; }
 .connection { display: flex; align-items: center; gap: 7px; margin-top: 18px; font-size: 10px; color: var(--muted); }
+.refreshButton { width: 100%; margin-top: 12px; }
 .onlineDot, .offlineDot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #7694ba; }
 .offlineDot { background: #ca7937; }
 .sectionHeading { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 20px; }
