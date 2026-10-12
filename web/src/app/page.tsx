@@ -6,14 +6,14 @@ export default function Home() {
     <section className="flex flex-1 flex-col justify-center gap-10 py-10">
       <div className="max-w-2xl space-y-5">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Phase 4 · Shopper API integration
+          Phase 5 · Local store operations
         </p>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Basketly web app
         </h1>
         <p className="max-w-xl text-lg leading-8 text-muted-foreground">
           The Shopper app now uses local basket sessions, carts, confirmations, and mock
-          checkout. The Admin foundation is ready for its next phase.
+          checkout. The Admin dashboard reviews baskets and resolves staff cases using the same backend.
         </p>
       </div>
 
@@ -35,7 +35,8 @@ export default function Home() {
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">Admin</h2>
             <p className="text-sm leading-6 text-muted-foreground">
-              Reserved route for store overview, case review, and staff decisions.
+              Monitor baskets, inspect case evidence and timelines, resolve staff cases,
+              and send development simulator events.
             </p>
           </div>
           <Button className="w-fit" variant="outline" nativeButton={false} render={<Link href="/admin" />}>

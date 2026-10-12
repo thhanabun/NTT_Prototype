@@ -294,3 +294,18 @@ Next phases:
 | 6 | Add coordinated realtime updates, reconnect/stale-state handling, and test Shopper/Admin journeys together |
 | 7 | Integrate the agreed AWS API, authentication, and cloud realtime within a bounded test budget |
 | 8 | Deploy the web app to permitted AWS hosting and rehearse the HTTPS demo on devices |
+
+### Phase 5 implementation checkpoint
+
+`/admin` now provides the store operations dashboard against the same local API as Shopper.
+
+- [x] Display reported shelf/workflow status, active baskets, confirmed carts, and loaded-case counts.
+- [x] Display RSSI evidence without claiming exact tracking or live hardware health.
+- [x] Filter open/staff/customer/closed cases and inspect reasons, candidate, proposed action, confidence, tool records, and timeline.
+- [x] Approve to an explicit basket or reject staff cases; keep waiting-customer and closed cases read-only.
+- [x] Block invalid approval targets and concurrent UI submissions; let backend validation remain authoritative.
+- [x] Refresh after decisions and preserve last confirmed state during failed reads or uncertain mutation responses.
+- [x] Provide development-only simulator controls for Coke/Water lanes, clear A/B picks, ambiguity, tied/missing RSSI, put-back, and duplicate delivery.
+- [x] Verify staff decisions, simulator events, stale/concurrent-case recovery, shared Shopper data, and responsive layouts against an isolated local backend.
+
+There is no polling, EventSource subscription, real Agent call, AWS deployment, or staff authentication in Phase 5. Phase 6 will coordinate automatic updates and reconnection. Per the agreed stopping point, complete Phase 6 locally and then wait for the cloud/backend team before Phase 7.

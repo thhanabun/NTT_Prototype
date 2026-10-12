@@ -28,7 +28,24 @@ Set `LOCAL_API_ORIGIN` in `.env.local` to change the backend origin. The default
 - `src/lib/api/types.ts` mirrors the local contract in `../docs/web-app-plan.md`.
 - `src/lib/api/client.ts` contains typed local API requests and the named `state` event subscription helper.
 
-The Admin route is scaffolding for Phase 2. `/shopper` uses the local backend (Phase 4); `/shopper/preview` retains the independent sample-data UI from Phase 3.
+Both `/shopper` (Phase 4) and `/admin` (Phase 5) use the local backend. `/shopper/preview` retains the independent sample-data UI from Phase 3.
+
+## Admin local workflow (Phase 5)
+
+Open `http://localhost:3001/admin` with the root backend on port 3000. The dashboard displays reported shelf status, workflow state, active baskets, confirmed carts, RSSI evidence, cases, timelines, and recent events. It uses explicit refresh; automatic updates remain Phase 6.
+
+1. Start Basket A/B sessions in Shopper; Admin basket cards link to the correct Shopper basket.
+2. Expand **Local simulator** at the bottom of Admin (development mode only), choose a lane, and send an event. The simulator refreshes Admin after submission. Shopper still requires Refresh basket to receive these changes.
+3. Clear A/B picks update the appropriate cart when a session is active. Ambiguous pick asks Shopper A to confirm. Tied RSSI and unknown-zone events create staff cases. Put-back targets A. Duplicate delivery reuses the most recently successfully submitted event ID; it does not create a second cart mutation.
+4. Filter cases by open, staff, customer, closed, or all. Select a case to inspect its evidence, proposed basket/action, confidence, tool records, and timeline.
+5. For `OPEN_STAFF`, select A/B and Approve or Reject. Unknown candidates require a choice. Approval is disabled for inactive sessions or unmatched returns; the backend validates again. Rejection closes without changing a cart.
+6. `WAITING_CUSTOMER` cases expose no staff decision controls; respond in Shopper. `CLOSED` cases display their resolution and are read-only.
+
+Buttons are locked while mutations are in progress or fresh data is unavailable. Errors retain the last snapshot and refresh authoritative data; an uncertain decision response is not retried automatically.
+
+Limits are shown honestly: case metrics count only the loaded snapshot (up to 30 cases); activity contains up to 20 recent events. RSSI is proximity evidence, not exact location. ONLINE is a backend-reported value without a health timeout. Agent evidence/tool calls are a local mock, not a Bedrock invocation. Staff authentication is not implemented for this localhost demo and remains a cloud/backend integration dependency.
+
+Neither route requires AWS for these phases. The frontend uses the same local API through its development proxy; the old port-3000 browser app remains available for comparison.
 
 ## Shopper local API workflow (Phase 4)
 
@@ -74,6 +91,8 @@ npm run test:e2e
 The first command downloads a local testing browser; it does not use AWS. `SHOPPER_TEST_ORIGIN` can point to a different frontend origin. `PLAYWRIGHT_CHROMIUM_EXECUTABLE` optionally selects an existing Chromium executable.
 
 The suite starts a copy of the real backend on an ephemeral port with temporary persistence, forwards only the test browser's API requests to it, and cleans it up. It does not reset the team's `data/demo-state.json` or change the frontend proxy configuration.
+
+`npm run test:e2e` runs Shopper and Admin suites; `npm run test:admin` runs only Admin. Admin checks overview/evidence/filtering, approval/rejection, missing-session/return guards, duplicate submissions, simulator events, stale/concurrent-case/uncertain-response recovery, Shopper consistency, and mobile/desktop/landscape layout. Its server helper is in `tests/helpers/local-api.mjs`.
 
 Checks cover session/cart integration, confirmed and duplicate events, customer YES/NO, returns, multiple cases, unknown-zone blocking, duplicate submissions, checkout/receipt/reload, failed requests and uncertain-response recovery, invalid JSON, QR fallback, simulated camera detection/denial/cleanup, responsive widths, and browser runtime/console errors. Camera APIs are simulated for repeatability; physical QR labels and a real phone camera still need a manual device check.
 
