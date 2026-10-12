@@ -22,6 +22,20 @@
 .error, .info { display: flex; gap: 10px; align-items: start; border-radius: 11px; padding: 14px; margin-bottom: 18px; font-size: 12px; line-height: 1.8; }
 .error { background: #fff1ef; border: 1px solid #f0c8bf; color: #a14438; overflow-wrap: anywhere; }
 .error button { display: block; text-decoration: underline; margin-top: 4px; }
+.notice { padding: 12px 15px; margin-bottom: 16px; font-size: 12px; line-height: 1.8; color: #25815f; background: #eaf8f0; border: 1px solid #cee9dc; border-radius: 10px; overflow-wrap: anywhere; }
+.staffActions { margin-top: 20px; padding: 17px; border-radius: 12px; border: 1px solid #d4e7ea; background: #f6fbfc; }
+.staffActions h3 { font-size: 14px; font-weight: 650; margin-bottom: 12px; }
+.staffActions fieldset { border: 0; padding: 0; margin: 0; }
+.staffActions legend { font-size: 11px; color: var(--muted); margin-bottom: 9px; }
+.targetChoices { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.targetChoices label { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; border: 1px solid #d6e5e9; border-radius: 8px; padding: 10px; font-size: 12px; background: #fff; cursor: pointer; }
+.targetChoices label.chosenTarget { border-color: #78b9c5; background: #eaf7fa; }
+.targetChoices small { flex-basis: 100%; padding-left: 19px; font-size: 10px; color: #7d969f; }
+.targetChoices input { accent-color: var(--teal); }
+.validation { font-size: 11px; line-height: 1.8; color: #a07a3c; margin-top: 12px; }
+.actionButtons { display: flex; gap: 9px; margin-top: 14px; }
+.actionButtons button { flex: 1; }
+.shopperLink { display: inline-block; font-size: 11px; color: var(--teal); text-decoration: underline; text-underline-offset: 3px; margin-top: 9px; }
 .error > svg, .info > svg { flex-shrink: 0; margin-top: 2px; }
 .info { background: #edf7fa; color: #487782; border: 1px solid #d8e9ed; margin-top: 16px; }
 .loading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 15px; }
