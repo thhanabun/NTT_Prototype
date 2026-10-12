@@ -6,20 +6,12 @@ import {
   LoaderCircle, QrCode, ReceiptText, ShieldCheck, ShoppingBasket,
   Sparkles, Wifi, WifiOff, X,
 } from "lucide-react";
-import type { BasketId, Sku } from "@/lib/api/types";
+import type { BasketId } from "@/lib/api/types";
+import { ProductArt } from "./product-art";
 import { previewStates, sampleBasket, sampleProducts, sampleReceipt, type PreviewState } from "./sample-data";
 import styles from "./shopper.module.css";
 
 const money = (amount: number) => `฿${amount.toLocaleString("th-TH")}`;
-
-function ProductArt({ sku }: { sku: Sku }) {
-  return (
-    <div className={`${styles.productArt} ${sku === "COKE" ? styles.cokeArt : styles.waterArt}`} aria-hidden="true">
-      {sku === "COKE" ? <div className={styles.can}><span>Coca<br />Cola</span><i /></div>
-        : <div className={styles.bottle}><i /><span>PURE<br />WATER</span></div>}
-    </div>
-  );
-}
 
 export function ShopperPreview() {
   const [view, setView] = useState<PreviewState>("connect");

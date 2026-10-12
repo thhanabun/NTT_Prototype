@@ -1,7 +1,7 @@
-import { ShopperPreview } from "@/components/shopper/shopper-preview";
+import { ShopperApp } from "@/components/shopper/shopper-app";
 
 export default function ShopperPage() {
   return (
-    <ShopperPreview />
+    <ShopperApp />
   );
 }

@@ -6,14 +6,14 @@ export default function Home() {
     <section className="flex flex-1 flex-col justify-center gap-10 py-10">
       <div className="max-w-2xl space-y-5">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Phase 2 · Frontend foundation
+          Phase 4 · Shopper API integration
         </p>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Basketly web app
         </h1>
         <p className="max-w-xl text-lg leading-8 text-muted-foreground">
-          The Next.js project is ready for the Shopper and Admin experiences. Local API
-          requests are routed through this app so HTTP and live updates share one origin.
+          The Shopper app now uses local basket sessions, carts, confirmations, and mock
+          checkout. The Admin foundation is ready for its next phase.
         </p>
       </div>
 
@@ -22,7 +22,8 @@ export default function Home() {
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">Shopper</h2>
             <p className="text-sm leading-6 text-muted-foreground">
-              Reserved route for basket pairing, cart, confirmation, and mock checkout.
+              Pair a basket, review its confirmed cart, answer uncertain-item cases, and
+              complete a mock checkout using the local backend.
             </p>
           </div>
           <Button className="w-fit" nativeButton={false} render={<Link href="/shopper" />}>
