@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, CheckCheck, ChevronRight, CircleAlert, Clock3, LoaderCircle, ReceiptText, RefreshCw, ShieldCheck, ShoppingBasket, Sparkles, X } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Check, CheckCheck, ChevronRight, CircleAlert, Clock3, LoaderCircle, QrCode, ReceiptText, RefreshCw, ShieldCheck, ShoppingBasket, Sparkles, X } from "lucide-react";
+import { BasketScanner } from "./basket-scanner";
 import { useShopper } from "./use-shopper";
 import { ProductArt } from "./product-art";
 import styles from "./shopper.module.css";
@@ -9,6 +11,7 @@ import styles from "./shopper.module.css";
 export const money = (amount: number) => `฿${amount.toLocaleString("th-TH")}`;
 export function ShopperApp() {
   const shop = useShopper();
+  const [scannerOpen, setScannerOpen] = useState(false);
   const { basket, loading, pending, stale } = shop;
   const product = shop.state?.products.find((item) => item.sku === shop.currentCase?.sku);
   const isReturn = shop.currentCase?.eventType === "PUT_BACK";
@@ -33,6 +36,7 @@ export function ShopperApp() {
             {basket.session ? <dl className={styles.sessionDetails}><div><dt>Session</dt><dd>{basket.session.sessionId}</dd></div><div><dt>เริ่มเมื่อ</dt><dd>{new Date(basket.session.startedAt).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</dd></div></dl> : <div className={styles.connectActions}><button className={styles.primaryButton} disabled={loading || pending || stale} onClick={() => void shop.beginSession()}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <ShoppingBasket size={17} aria-hidden="true" />} เริ่ม shopping session <ArrowRight size={16} aria-hidden="true" /></button></div>}
             <div className={styles.connection}><span className={stale ? styles.offlineDot : styles.onlineDot} />{stale ? "ข้อมูลอาจไม่ใช่ยอดล่าสุด" : "Local API · อัปเดตเมื่อกด refresh"}</div>
             <button className={`${styles.outlineButton} ${styles.refreshButton}`} disabled={loading || pending} onClick={() => void shop.refresh()}><RefreshCw size={15} aria-hidden="true" /> อัปเดตตะกร้า</button>
+            <button className={`${styles.outlineButton} ${styles.refreshButton}`} disabled={loading || pending || stale} onClick={() => setScannerOpen(true)}><QrCode size={17} aria-hidden="true" /> สแกน QR</button>
           </section>
           <section className={styles.card} aria-labelledby="products-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>ON THE SHELF</p><h2 id="products-heading">เลือกสิ่งที่คุณชอบ</h2></div><span className={styles.smallLabel}>{shop.state?.products.length ?? 0} PRODUCTS</span></div>
             {shop.state?.products.map((product) => <div className={styles.productRow} key={product.sku}><ProductArt sku={product.sku} /><div className={styles.productCopy}><span className={styles.productCategory}>{product.sku === "COKE" ? "REFRESH YOUR DAY" : "STAY HYDRATED"}</span><h3>{product.name}</h3><p>{product.sku === "COKE" ? "Original taste · 325 ml" : "Natural water · 600 ml"}</p><strong>{money(product.price)} <small>/ ชิ้น</small></strong></div><span className={styles.lane}>Lane {product.sku === "COKE" ? "01" : "02"}</span></div>)}
@@ -52,6 +56,7 @@ export function ShopperApp() {
         </section>
       </div>
       <div className={styles.previewControls}><Link href="/shopper/preview">ดู UI preview ด้วยข้อมูลตัวอย่าง</Link><p>ใช้ simulator ใน Staff dashboard เดิมที่ port 3000 เพื่อส่ง shelf event แล้วกดอัปเดตตะกร้า</p></div>
+      {scannerOpen && <BasketScanner onClose={() => setScannerOpen(false)} onPair={(id) => { setScannerOpen(false); shop.selectBasket(id); void shop.beginSession(id); }} />}
     </div>
   );
 }
