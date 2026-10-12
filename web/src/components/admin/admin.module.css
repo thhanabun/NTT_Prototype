@@ -36,6 +36,17 @@
 .actionButtons { display: flex; gap: 9px; margin-top: 14px; }
 .actionButtons button { flex: 1; }
 .shopperLink { display: inline-block; font-size: 11px; color: var(--teal); text-decoration: underline; text-underline-offset: 3px; margin-top: 9px; }
+.simulator { margin-top: 22px; border-style: dashed; }
+.simulator summary { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; cursor: pointer; font-size: 14px; font-weight: 650; color: #568191; }
+.simulator summary span { font-size: 11px; color: #8ba1aa; font-weight: 400; }
+.simulator > p { margin-top: 14px; }
+.simulator summary:focus-visible, .simulator select:focus-visible { outline: 3px solid #128ba2; outline-offset: 3px; }
+.lanePicker { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; margin: 18px 0; }
+.lanePicker select { padding: 10px; border: 1px solid #d6e5e9; border-radius: 8px; background: #fff; max-width: 100%; }
+.simulatorGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.simulatorGrid > div { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; border: 1px solid #e1ecef; border-radius: 11px; padding: 14px; }
+.simulatorGrid h3 { font-size: 12px; font-weight: 650; }
+.simulatorGrid p { font-size: 11px; color: var(--muted); line-height: 1.8; margin-top: 5px; }
 .error > svg, .info > svg { flex-shrink: 0; margin-top: 2px; }
 .info { background: #edf7fa; color: #487782; border: 1px solid #d8e9ed; margin-top: 16px; }
 .loading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 15px; }
@@ -117,5 +128,5 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 @media (max-width: 950px) { .overviewGrid { grid-template-columns: 1fr; } .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 720px) { .hero { align-items: start; flex-direction: column; } .hero > button { width: 100%; } .caseGrid { grid-template-columns: 1fr; } .events li { flex-wrap: wrap; } .events time { flex-basis: 100%; text-align: left; padding-left: 42px; } }
+@media (max-width: 720px) { .hero { align-items: start; flex-direction: column; } .hero > button { width: 100%; } .caseGrid { grid-template-columns: 1fr; } .simulatorGrid { grid-template-columns: 1fr; } .events li { flex-wrap: wrap; } .events time { flex-basis: 100%; text-align: left; padding-left: 42px; } }
 @media (max-width: 420px) { .card { padding: 17px 14px; border-radius: 14px; } .sectionHeading h2 { font-size: 17px; } .metric { padding: 12px; } .metric > strong { font-size: 19px; } .metrics { gap: 9px; } .basketGrid { grid-template-columns: 1fr; } .caseButton { padding: 12px; } .details > div { font-size: 10px; } .filters button { padding: 7px; } }
