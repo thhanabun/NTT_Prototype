@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getState, startSession } from "@/lib/api/client";
-import type { ApiState, Basket, BasketId } from "@/lib/api/types";
+import { checkout, confirmCustomerCase, getState, startSession } from "@/lib/api/client";
+import type { ApiState, Basket, BasketId, Order } from "@/lib/api/types";
 
 const storageKey = "basketly-basket";
 export function useShopper() {
@@ -13,6 +13,8 @@ export function useShopper() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+  const [showReceipt, setShowReceipt] = useState(true);
   const locked = useRef(false);
   const generation = useRef(0);
 
@@ -70,33 +72,78 @@ export function useShopper() {
     if (locked.current) return;
     setBasketId(id);
     setNotice("");
+    setShowReceipt(true);
     const url = new URL(window.location.href);
     url.searchParams.set("basket", id);
     window.history.replaceState(null, "", url);
     try { localStorage.setItem(storageKey, id); } catch { /* Selection still works without storage. */ }
   }
 
-  async function beginSession() {
+  async function runAction(action: () => Promise<string>) {
     if (locked.current || loading || stale) return;
     locked.current = true;
     setPending(true);
     setError("");
     setNotice("");
     try {
-      await startSession(basketId);
-      if (await refresh()) setNotice(`Basket ${basketId} พร้อมสำหรับการช้อปแล้ว`);
+      const message = await action();
+      if (await refresh()) setNotice(message);
     } catch (cause) {
       await refresh();
-      setError(cause instanceof Error ? cause.message : "Could not start the session.");
+      setError(cause instanceof Error ? cause.message : "The request failed. Check the latest state before retrying.");
     } finally {
       locked.current = false;
       setPending(false);
     }
   }
 
+  async function beginSession(id: BasketId = basketId) {
+    return runAction(async () => {
+      await startSession(id);
+      setShowReceipt(false);
+      setCompletedOrder(null);
+      return `Basket ${id} พร้อมสำหรับการช้อปแล้ว`;
+    });
+  }
+
   const basket: Basket = state?.baskets.find((item) => item.basketId === basketId) ?? {
     basketId, session: null, lines: [], total: 0, payable: false, unresolvedCaseCount: 0,
   };
 
-  return { state, basket, basketId, loading, stale, error, notice, pending, refresh, selectBasket, beginSession };
+  const waitingCases = (state?.cases ?? []).filter((item) => item.status === "WAITING_CUSTOMER" && item.candidate === basketId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const staffCases = (state?.cases ?? []).filter((item) => item.status === "OPEN_STAFF" &&
+    (!item.candidate || item.candidate === basketId || item.evidence.zone === "ZONE_UNKNOWN"));
+  const currentCase = waitingCases[0] ?? null;
+  const receipt = showReceipt && !basket.session
+    ? (completedOrder?.basketId === basketId ? completedOrder : state?.recentOrders.find((item) => item.basketId === basketId)) ?? null
+    : null;
+
+  async function confirmItem(answer: "YES" | "NO") {
+    if (!currentCase) return;
+    return runAction(async () => {
+      const result = await confirmCustomerCase(currentCase.caseId, answer);
+      return result.case.status === "CLOSED" ? "ยืนยันรายการแล้ว และตรวจสอบตะกร้าล่าสุดเรียบร้อย"
+        : "ส่งรายการให้พนักงานตรวจสอบแล้ว รายการยังไม่เปลี่ยนยอดชำระ";
+    });
+  }
+
+  async function finishCheckout() {
+    if (!basket.session || !basket.lines.length || !basket.payable) return;
+    return runAction(async () => {
+      const { order } = await checkout(basketId);
+      setCompletedOrder(order);
+      setShowReceipt(true);
+      // The successful server response confirms this session closed, even if the next GET fails.
+      setState((previous) => previous ? {
+        ...previous,
+        baskets: previous.baskets.map((item) => item.basketId === basketId
+          ? { ...item, session: null, lines: [], total: 0, payable: false } : item),
+      } : previous);
+      return "Mock checkout สำเร็จ ไม่มีการเรียกเก็บเงินจริง";
+    });
+  }
+
+  return { state, basket, basketId, loading, stale, error, notice, pending, refresh, selectBasket, beginSession,
+    currentCase, waitingCases, staffCases, receipt, confirmItem, finishCheckout, dismissReceipt: () => setShowReceipt(false) };
 }
