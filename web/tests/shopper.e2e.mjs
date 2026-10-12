@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -9,6 +9,8 @@ import { spawn } from 'node:child_process';
 // Run the real local server with isolated persistence and an ephemeral port.
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const temporary = await mkdtemp(join(tmpdir(), 'basketly-shopper-'));
+const artifacts = process.env.SHOPPER_TEST_ARTIFACT_DIR ?? temporary;
+await mkdir(artifacts, {recursive:true});
 let serverSource = await readFile(resolve(repository, 'src/server.mjs'), 'utf8');
 serverSource = serverSource.replace('from "./domain.mjs"', `from ${JSON.stringify(pathToFileURL(resolve(repository, 'src/domain.mjs')).href)}`)
   .replace('const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));', `const root = ${JSON.stringify(resolve(repository, 'public'))};`)
@@ -46,10 +48,24 @@ const post=async(path,data={})=>{const r=await page.request.post(api+path,{data}
 const refresh=async()=>{await page.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).click();await page.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).waitFor();await page.waitForFunction(()=>!document.querySelector('section[aria-busy="true"]'));};
 const cart=()=>page.getByRole('region',{name:/ตะกร้าสินค้า/});
 const total=async value=>{await page.waitForFunction(value=>document.querySelector('[class*="totalRow"] strong')?.textContent===value,value);};
+const responsive=async label=>{
+ for(const [width,height] of [[320,740],[375,812],[390,844],[768,1024],[1024,768],[1440,900],[844,390]]) {
+  await page.setViewportSize({width,height});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${label}: page overflow at ${width}x${height}`);
+  const overflow=await page.locator('main button, main [class*="cartLine"], main dialog[open]').evaluateAll(elements=>elements.filter(element=>{
+   const rect=element.getBoundingClientRect();
+   return rect.width>0 && (rect.left < -1 || rect.right > innerWidth+1 || element.scrollWidth>element.clientWidth+2);
+  }).map(element=>element.textContent?.trim()));
+  assert.deepEqual(overflow,[],`${label}: clipped controls at ${width}x${height}`);
+  if(width===390 || width===1440) await page.screenshot({path:join(artifacts,`${label}-${width}.png`),fullPage:true});
+ }
+ await page.setViewportSize({width:390,height:844});
+};
  await post('/api/reset');
  await page.goto(`${process.env.SHOPPER_TEST_ORIGIN ?? 'http://localhost:3001'}/shopper`);
  await page.getByRole('button',{name:/เริ่ม shopping session/}).waitFor();
  await page.waitForFunction(()=>!document.querySelector('section[aria-busy="true"]'));
+ await responsive('connection');
  await page.getByRole('radio',{name:/Basket B/}).check();
  await page.getByRole('button',{name:/เริ่ม shopping session/}).click();
  await page.getByText('Active',{exact:true}).waitFor();
@@ -63,8 +79,10 @@ const total=async value=>{await page.waitForFunction(value=>document.querySelect
  const event=async(id,rssi={A:-73,B:-48},eventType='PICK',laneId='LANE-1')=>post('/api/events',{eventId:id,laneId,eventType,rssi});
  const check=()=>page.getByRole('button',{name:'Mock checkout',exact:true});
  await event('step2-clear');await refresh();await total('฿40');
+ await responsive('cart');
  await event('step2-clear');await refresh();await total('฿40');
  await event('step2-confirm',{A:-57,B:-55});await refresh();await total('฿40');
+ await responsive('confirmation');
  assert.equal(await check().isDisabled(),true);
  let confirmations=0; page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/customer'))confirmations++;});
  await page.getByRole('button',{name:'ใช่, ฉันหยิบ',exact:true}).evaluate(button=>{button.click();button.click();});
@@ -74,6 +92,7 @@ const total=async value=>{await page.waitForFunction(value=>document.querySelect
  await event('step2-no',{A:-57,B:-55});await refresh();
  await page.getByRole('button',{name:'ไม่ใช่, ให้พนักงานดู',exact:true}).click();
  await page.getByRole('heading',{name:'พนักงานกำลังตรวจสอบ'}).waitFor();await total('฿40');
+ await responsive('staff-review');
  let state=await page.request.get(api+'/api/state').then(r=>r.json());
  await post(`/api/cases/${state.cases[0].caseId}/staff`,{decision:'REJECT'});await refresh();
  await event('step2-multi-1',{A:-57,B:-55},'PICK','LANE-2');
@@ -84,6 +103,7 @@ const total=async value=>{await page.waitForFunction(value=>document.querySelect
  state=await page.request.get(api+'/api/state').then(r=>r.json());await post(`/api/cases/${state.cases[0].caseId}/staff`,{decision:'REJECT'});await refresh();
  await check().click();await page.getByRole('heading',{name:'ขอบคุณที่ช้อปกับเรา'}).waitFor();
  assert.equal(await cart().locator('[class*="receiptTotal"] dd').innerText(),'฿70');
+ await responsive('receipt');
  state=await page.request.get(api+'/api/state').then(r=>r.json());assert.equal(state.baskets[1].session,null);assert.equal(state.baskets[1].lines.length,0);
  await page.reload();await page.getByRole('heading',{name:'ขอบคุณที่ช้อปกับเรา'}).waitFor();
  await page.getByRole('button',{name:'เตรียมช้อปครั้งใหม่',exact:true}).click();
@@ -121,6 +141,7 @@ const total=async value=>{await page.waitForFunction(value=>document.querySelect
  await page.evaluate(()=>{window.__qr='';window.__deny=true;});
  await page.getByRole('button',{name:'สแกน QR',exact:true}).click();
  await page.getByRole('status').filter({hasText:'ไม่ได้รับอนุญาต'}).waitFor();
+ await responsive('scanner');
  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
  await page.evaluate(()=>{window.__deny=false;});
  await page.getByRole('button',{name:'สแกน QR',exact:true}).click();await page.getByRole('status').filter({hasText:'วาง QR'}).waitFor();
@@ -144,6 +165,7 @@ const total=async value=>{await page.waitForFunction(value=>document.querySelect
  await page.getByRole('heading',{name:'ขอบคุณที่ช้อปกับเรา'}).waitFor();
  assert.equal(await cart().locator('[class*="receiptTotal"] dd').innerText(),'฿50');
  await page.getByRole('alert').filter({hasText:'Test backend temporarily unavailable'}).waitFor();
+ await responsive('error');
  assert.equal(await page.getByRole('button',{name:/เริ่ม shopping session/}).isDisabled(),true);
  faults.load=false;await refresh();
  faults.malformed=true;await page.reload();await page.getByRole('alert').filter({hasText:'invalid JSON'}).waitFor();
