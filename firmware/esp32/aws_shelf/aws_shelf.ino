@@ -27,19 +27,17 @@
   #include "../secrets.h"
 #elif __has_include("secrets.h")
   #include "secrets.h"
+#else
+  #include "../secrets.example.h"
+#endif
+#include "../shelf_protocol.h"
+#ifndef SHELF_PROJECT_UUID
+  #define SHELF_PROJECT_UUID ""
+#endif
+#ifndef SHELF_ENABLE_TEST_COMMANDS
+  #define SHELF_ENABLE_TEST_COMMANDS 0
 #endif
 
-#ifndef WIFI_SSID
-  constexpr char WIFI_SSID[] = "YOUR_WIFI_SSID";
-  constexpr char WIFI_PASSWORD[] = "YOUR_WIFI_PASSWORD";
-#endif
-
-#ifndef AWS_IOT_ENDPOINT
-  constexpr char AWS_IOT_ENDPOINT[] = "xxxxxxxxxxxx-ats.iot.ap-southeast-1.amazonaws.com";
-  constexpr char AWS_ROOT_CA[] = "";
-  constexpr char DEVICE_CERTIFICATE[] = "";
-  constexpr char DEVICE_PRIVATE_KEY[] = "";
-#endif
 
 // ----------------------------------------------------------------------------
 // 2. Hardware Pin Configuration & Constants (Section 2)
@@ -53,15 +51,7 @@ constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // FR-1.2: 80 ms stable debounce
 // ----------------------------------------------------------------------------
 // 3. BLE Beacon Configuration (Section 2 & FR-2)
 // ----------------------------------------------------------------------------
-#ifndef BASKET_A_MAC
-  constexpr char BASKET_A_MAC[]       = "48:87:2d:9e:3e:c5"; // Beacon 1: 48872D9E3EC5
-#endif
-#ifndef BASKET_B_MAC
-  constexpr char BASKET_B_MAC[]       = "48:87:2d:9e:3c:0e"; // Beacon 2 (Basket B): 48872D9E3C0E
-#endif
-#ifndef HIGH_VALUE_MAC
-  constexpr char HIGH_VALUE_MAC[]     = "48:87:2d:9e:3e:49"; // Beacon 3 (High-Value): 48872D9E3E49
-#endif
+constexpr const char* HIGH_VALUE_MAC = EXPENSIVE_ITEM_MAC;
 
 // iBeacon standard Major / Minor identities (docs/iot-roadmap.md)
 constexpr uint16_t BASKET_A_MAJOR     = 1;
@@ -107,6 +97,7 @@ struct TrackedBeacon {
   uint32_t lastSeenMs;
   int8_t txPower;
   uint32_t packetsCount;
+  uint32_t rssiAt[RSSI_WINDOW] = {};
 };
 
 TrackedBeacon trackedBeacons[ROLE_COUNT] = {
@@ -132,13 +123,12 @@ Lane lanes[] = {
 // Thread-safe mutex for BLE data access
 portMUX_TYPE bleMux = portMUX_INITIALIZER_UNLOCKED;
 
-// RAM Outbox Ring Buffer (FR-6.3)
-char outbox[OUTBOX_CAPACITY][384] = {};
-uint8_t outboxHead = 0;
-uint8_t outboxCount = 0;
+ShelfOutbox eventOutbox;
+bool ackSubscribed = false;
+constexpr char TOPIC_ACKS[] = "smartbasket/shelf/SHELF-01/acks";
 uint32_t eventSequence = 0;
-uint32_t droppedEvents = 0;
-uint16_t bootId = 0;
+uint32_t bootId = 0;
+
 
 // Networking
 WiFiClientSecure tlsClient;
@@ -168,31 +158,16 @@ bool decodeIBeacon(const uint8_t* data, size_t len, uint16_t& major, uint16_t& m
 
 // Compute 5-sample rolling median RSSI (FR-2.3 & FR-2.4)
 int8_t getMedianRssi(BeaconRole role, bool& isFresh) {
-  int8_t samples[RSSI_WINDOW];
-  uint8_t count = 0;
-  uint32_t lastSeen = 0;
-
+  int8_t values[RSSI_WINDOW];
+  uint32_t times[RSSI_WINDOW];
+  uint8_t count;
   portENTER_CRITICAL(&bleMux);
-  count = trackedBeacons[role].rssiCount;
-  lastSeen = trackedBeacons[role].lastSeenMs;
-  for (uint8_t i = 0; i < count; ++i) {
-    samples[i] = trackedBeacons[role].rssiHistory[i];
-  }
+  const auto& beacon = trackedBeacons[role];
+  count = beacon.rssiCount;
+  memcpy(values, beacon.rssiHistory, sizeof(values));
+  memcpy(times, beacon.rssiAt, sizeof(times));
   portEXIT_CRITICAL(&bleMux);
-
-  isFresh = (count > 0) && ((millis() - lastSeen) <= TAG_FRESH_MS);
-  if (!isFresh || count == 0) return 0;
-
-  for (uint8_t i = 0; i < count; ++i) {
-    for (uint8_t j = i + 1; j < count; ++j) {
-      if (samples[j] < samples[i]) {
-        const int8_t tmp = samples[i];
-        samples[i] = samples[j];
-        samples[j] = tmp;
-      }
-    }
-  }
-  return samples[count / 2];
+  return shelfFreshMedian(values, times, count, millis(), isFresh);
 }
 
 // High-Value Asset presence state machine (FR-3.2)
@@ -203,7 +178,7 @@ const char* getHighValueStatus(uint32_t& lastSeenAgoMs) {
   lastSeen = trackedBeacons[ROLE_HIGH_VALUE].lastSeenMs;
   portEXIT_CRITICAL(&bleMux);
 
-  if (lastSeen == 0) {
+  if (trackedBeacons[ROLE_HIGH_VALUE].rssiCount == 0) {
     lastSeenAgoMs = 0;
     return "NOT_YET_SEEN";
   }
@@ -231,7 +206,8 @@ class ShelfBLECallbacks final : public NimBLEScanCallbacks {
 
     if (device->haveManufacturerData()) {
       std::string mfg = device->getManufacturerData();
-      isIBeacon = decodeIBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(),
+      isIBeacon = shelfBeaconUuidMatches(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(), SHELF_PROJECT_UUID) &&
+        decodeIBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(),
                                 major, minor, txPower);
     }
 
@@ -256,7 +232,7 @@ class ShelfBLECallbacks final : public NimBLEScanCallbacks {
     // Match by iBeacon Major / Minor if MAC did not match
     if (matchedRole < 0 && isIBeacon) {
       for (int r = 0; r < ROLE_COUNT; ++r) {
-        if (trackedBeacons[r].targetMajor == major && trackedBeacons[r].targetMinor == minor) {
+        if (trackedBeacons[r].targetMac.length() == 0 && trackedBeacons[r].targetMajor == major && trackedBeacons[r].targetMinor == minor) {
           matchedRole = r;
           break;
         }
@@ -269,6 +245,7 @@ class ShelfBLECallbacks final : public NimBLEScanCallbacks {
     TrackedBeacon& b = trackedBeacons[matchedRole];
     b.txPower = txPower;
     b.rssiHistory[b.rssiHead] = rssi;
+    b.rssiAt[b.rssiHead] = millis();
     b.rssiHead = (b.rssiHead + 1) % RSSI_WINDOW;
     if (b.rssiCount < RSSI_WINDOW) ++b.rssiCount;
     b.lastSeenMs = millis();
@@ -315,10 +292,13 @@ void maintainNetworkNonBlocking() {
   if (!mqttClient.connected()) {
     if (now - lastMqttRetryMs >= MQTT_RETRY_INTERVAL_MS) {
       lastMqttRetryMs = now;
-      char clientId[36];
-      snprintf(clientId, sizeof(clientId), "smart-shelf-%04x", bootId);
+      const char* clientId = SHELF_ID;
       Serial.printf("[MQTT] Connecting to AWS IoT Core as '%s'...\n", clientId);
+      ackSubscribed = false;
       if (mqttClient.connect(clientId)) {
+        ackSubscribed = mqttClient.subscribe(TOPIC_ACKS, 1);
+        if (!ackSubscribed) { mqttClient.disconnect(); return; }
+        eventOutbox.setReady(true);
         Serial.println("[MQTT] Connected to AWS IoT Core!");
       } else {
         Serial.printf("[MQTT] Connect failed (state=%d); will retry in %lu ms\n",
@@ -334,33 +314,18 @@ void maintainNetworkNonBlocking() {
 // ----------------------------------------------------------------------------
 // 9. Fault-Tolerant Outbox Ring Buffer (FR-6.3)
 // ----------------------------------------------------------------------------
-void flushOutbox() {
-  while (mqttClient.connected() && outboxCount > 0) {
-    const char* payload = outbox[outboxHead];
-    if (mqttClient.publish(TOPIC_EVENTS, payload, false)) {
-      Serial.printf("[OUTBOX] Published event to '%s'\n", TOPIC_EVENTS);
-      outboxHead = (outboxHead + 1) % OUTBOX_CAPACITY;
-      --outboxCount;
-    } else {
-      Serial.println("[OUTBOX] Publish failed; retaining event in buffer.");
-      break;
-    }
-  }
+void onMqttMessage(char* topic, byte* payload, unsigned int length) {
+  if (strcmp(topic, TOPIC_ACKS) != 0 || length >= 48) return;
+  char id[48] = {};
+  memcpy(id, payload, length);
+  eventOutbox.acknowledge(id);
 }
 
-void queueEvent(const char* payload) {
-  if (outboxCount >= OUTBOX_CAPACITY) {
-    droppedEvents++;
-    Serial.printf("[OUTBOX] Buffer full (%u/%u); dropped event #%lu\n",
-                  outboxCount, OUTBOX_CAPACITY, static_cast<unsigned long>(droppedEvents));
-    return;
-  }
-  const uint8_t tail = (outboxHead + outboxCount) % OUTBOX_CAPACITY;
-  strlcpy(outbox[tail], payload, sizeof(outbox[tail]));
-  ++outboxCount;
-  Serial.printf("[OUTBOX] Event queued (depth: %u/%u)\n", outboxCount, OUTBOX_CAPACITY);
-  flushOutbox();
+void flushOutbox() {
+  eventOutbox.setReady(WiFi.status() == WL_CONNECTED && mqttClient.connected() && ackSubscribed);
+  eventOutbox.pump(millis(), [](const char*, const char* payload) { return mqttClient.publish(TOPIC_EVENTS, payload, false); });
 }
+
 
 // ----------------------------------------------------------------------------
 // 10. Shelf Switch Event Generator (FR-1, FR-3.3, FR-4)
@@ -374,16 +339,20 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   const int8_t rssiB  = getMedianRssi(ROLE_BASKET_B, freshB);
   const int8_t rssiHV = getMedianRssi(ROLE_HIGH_VALUE, freshHV);
 
+  uint32_t nextSequence;
+  portENTER_CRITICAL(&bleMux);
+  nextSequence = ++eventSequence;
+  portEXIT_CRITICAL(&bleMux);
   char eventId[40];
   snprintf(eventId, sizeof(eventId), "esp32-%04x-%04lu",
-           bootId, static_cast<unsigned long>(++eventSequence));
+           bootId, static_cast<unsigned long>(nextSequence));
 
   const String timestamp = getUtcIsoTimestamp();
 
   char payload[384];
   snprintf(payload, sizeof(payload),
     "{\"eventId\":\"%s\",\"shelfId\":\"%s\",\"laneId\":\"%s\",\"sku\":\"%s\","
-    "\"eventType\":\"%s\",\"timestamp\":\"%s\","
+    "\"eventType\":\"%s\",\"delayed\":false,\"timestamp\":\"%s\","
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     eventId, SHELF_ID, lane.laneId, lane.sku, eventType, timestamp.c_str(),
     freshA  ? String(rssiA).c_str()  : "null",
@@ -395,7 +364,7 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   Serial.printf("  Payload: %s\n", payload);
   Serial.println("--------------------------------------------------");
 
-  queueEvent(payload);
+  if (!eventOutbox.enqueue(eventId, payload, WiFi.status() == WL_CONNECTED)) Serial.println("[OUTBOX] Full; event dropped");
 }
 
 // ----------------------------------------------------------------------------
@@ -449,8 +418,8 @@ void publishTelemetry() {
     "\"baskets\":{\"A\":%s,\"B\":%s}}",
     SHELF_ID,
     static_cast<unsigned long>(millis() / 1000),
-    outboxCount,
-    static_cast<unsigned long>(droppedEvents),
+    eventOutbox.depth(),
+    static_cast<unsigned long>(eventOutbox.dropped()),
     HIGH_VALUE_TAG_ID,
     hvStatus,
     freshHV ? String(rssiHV).c_str() : "null",
@@ -476,8 +445,8 @@ void printDiagnostics() {
   Serial.printf("\n[DIAG #%lu | Uptime %lus] Outbox: %u | Dropped: %lu | Wi-Fi: %s | MQTT: %s\n",
                 static_cast<unsigned long>(millis() / 2000),
                 static_cast<unsigned long>(millis() / 1000),
-                outboxCount,
-                static_cast<unsigned long>(droppedEvents),
+                eventOutbox.depth(),
+                static_cast<unsigned long>(eventOutbox.dropped()),
                 WiFi.status() == WL_CONNECTED ? "CONNECTED" : "DISCONNECTED",
                 mqttClient.connected() ? "CONNECTED" : "DISCONNECTED");
 
@@ -498,14 +467,26 @@ void printDiagnostics() {
 // ----------------------------------------------------------------------------
 // 14. Setup
 // ----------------------------------------------------------------------------
+void sampleShelfInputs(void*) {
+  for (;;) {
+    for (Lane& lane : lanes) sampleLane(lane);
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(500);
+  if (!eventOutbox.begin()) {
+    Serial.println("Cannot allocate event outbox");
+    while (true) delay(1000);
+  }
+
 
   // Initialize NimBLE stack first before querying MAC or scan
   NimBLEDevice::init(SHELF_ID);
 
-  bootId = static_cast<uint16_t>(esp_random() & 0xffff);
+  bootId = esp_random();
 
   Serial.println("\n==================================================================");
   Serial.println("  SmartBasket — ESP32 Smart Shelf Firmware (AWS IoT Core Ready)   ");
@@ -536,8 +517,14 @@ void setup() {
     tlsClient.setPrivateKey(DEVICE_PRIVATE_KEY);
   }
   mqttClient.setServer(AWS_IOT_ENDPOINT, 8883);
-  mqttClient.setBufferSize(512);
+  mqttClient.setBufferSize(1024);
+  mqttClient.setSocketTimeout(2);
+  mqttClient.setCallback(onMqttMessage);
 
+  if (xTaskCreate(sampleShelfInputs, "shelf-inputs", 4096, nullptr, 2, nullptr) != pdPASS) {
+    Serial.println("Cannot start independent sensor task");
+    while (true) delay(1000);
+  }
   pBLEScan = NimBLEDevice::getScan();
   pBLEScan->setScanCallbacks(&bleCallbacks, true);
   pBLEScan->setActiveScan(true);
@@ -554,9 +541,6 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
 
-  for (Lane& lane : lanes) {
-    sampleLane(lane);
-  }
 
   maintainNetworkNonBlocking();
   flushOutbox();

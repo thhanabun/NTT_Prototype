@@ -38,3 +38,12 @@ node tools/mqtt-broker/broker.mjs
   - Fired on switch state changes (`PICK` / `PUT_BACK`).
 - **Telemetry**: `smartbasket/shelf/SHELF-01/telemetry`
   - Published periodically (1 Hz) containing switch states and BLE beacon RSSI medians.
+
+
+## Application delivery protocol
+
+Only exact smartbasket/shelf/{shelfId}/events topics are forwarded. After the API returns 2xx, publish the eventId as the plain body on smartbasket/shelf/{shelfId}/acks (QoS 1). Invalid JSON, non-2xx and network errors are logged without an ACK; firmware keeps the event and retries. HTTP timeout is 35 seconds to accommodate the local model's 30-second deadline. MQTT_PORT can override port1883.
+
+Use one forwarder: leave FORWARD_TO_HTTP=true for this local broker, or disable it and run the separate IoT bridge. Running both consumers needlessly duplicates ingestion (the backend still deduplicates by eventId). Telemetry is logged; no /api/telemetry ingestion is claimed.
+
+This broker binds on the LAN for hardware development without TLS/authentication. Keep it on a trusted demo network; do not expose it as a public production broker. Real AWS uses a separate TLS/certificate connection.

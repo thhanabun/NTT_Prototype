@@ -37,26 +37,21 @@ struct Lane {
 // ----------------------------------------------------------------------------
 // 1. Secrets & Wi-Fi / Local MQTT Configuration
 // ----------------------------------------------------------------------------
-#if __has_include("secrets.h")
-  #include "secrets.h"
-  #define HAS_LOCAL_CONFIG 1
-#elif __has_include("../secrets.h")
+#if __has_include("../secrets.h")
   #include "../secrets.h"
-  #define HAS_LOCAL_CONFIG 1
-#elif __has_include("wifi_test/secrets.h")
-  #include "wifi_test/secrets.h"
-  #define HAS_LOCAL_CONFIG 1
+#elif __has_include("secrets.h")
+  #include "secrets.h"
+#else
+  #include "../secrets.example.h"
+#endif
+#include "../shelf_protocol.h"
+#ifndef SHELF_PROJECT_UUID
+  #define SHELF_PROJECT_UUID ""
+#endif
+#ifndef SHELF_ENABLE_TEST_COMMANDS
+  #define SHELF_ENABLE_TEST_COMMANDS 0
 #endif
 
-#ifndef HAS_LOCAL_CONFIG
-  constexpr char WIFI_SSID[] = "Sn2";
-  constexpr char WIFI_PASSWORD[] = "12345678";
-  constexpr char LOCAL_MQTT_HOST[] = "192.168.100.15";
-  constexpr uint16_t LOCAL_MQTT_PORT = 1883;
-  constexpr char BASKET_A_MAC[]       = "48:87:2d:9e:3e:c5";
-  constexpr char BASKET_B_MAC[]       = "48:87:2d:9e:3c:0e";
-  constexpr char EXPENSIVE_ITEM_MAC[] = "48:87:2d:9e:3e:49";
-#endif
 
 // Target MAC String references for auto-normalizing comparison
 String targetBasketAMac       = BASKET_A_MAC;
@@ -66,20 +61,20 @@ String targetExpensiveItemMac = EXPENSIVE_ITEM_MAC;
 // Enable Local MQTT and/or HTTP
 bool ENABLE_LOCAL_MQTT = true;
 bool ENABLE_LOCAL_HTTP = false;
-const char* LOCAL_HTTP_HOST = "192.168.100.15";
-const uint16_t LOCAL_HTTP_PORT = 3000;
+const char* LOCAL_HTTP_HOST = LOCAL_SERVER_HOST;
+const uint16_t LOCAL_HTTP_PORT = LOCAL_SERVER_PORT;
 
 // MQTT Topics matching AWS IoT schema
 constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
 constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
-constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/+/cmd";
+constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/SHELF-01/cmd";
 
 // ----------------------------------------------------------------------------
 // 2. Hardware Microswitch Pins (Roller switches: COM -> GND, NO -> GPIO pin)
 // ----------------------------------------------------------------------------
 constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
 constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
-constexpr uint32_t SWITCH_DEBOUNCE_MS = 15; // 15 ms ultra-responsive debounce
+constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // Stable transition; calibrate against physical switch bounce
 
 // Hardware interrupt counters (captures ANY electrical change, even for 1 microsecond)
 volatile uint32_t cokeEdgeCount = 0;
@@ -129,6 +124,7 @@ struct TrackedBeacon {
   uint32_t lastSeenMs;
   int8_t txPower;
   uint32_t packetsCount;
+  uint32_t rssiAt[RSSI_WINDOW] = {};
 };
 
 TrackedBeacon trackedBeacons[ROLE_COUNT] = {
@@ -149,12 +145,15 @@ PubSubClient mqttClient(tcpClient);
 NimBLEScan* pBLEScan = nullptr;
 
 uint32_t eventSeq = 0;
-uint16_t bootId = 0;
+uint32_t bootId = 0;
 uint32_t lastDashboardMs = 0;
 uint32_t lastTelemetryMs = 0;
 uint32_t lastMqttRetryMs = 0;
 uint32_t lastWifiRetryMs = 0;
 bool wasWifiConnected = false;
+ShelfOutbox eventOutbox;
+bool ackSubscribed = false;
+constexpr char TOPIC_ACKS[] = "smartbasket/shelf/SHELF-01/acks";
 
 // ----------------------------------------------------------------------------
 // 5. Signal Filtering & Proximity Helpers
@@ -169,31 +168,16 @@ bool decodeIBeacon(const uint8_t* data, size_t len, uint16_t& major, uint16_t& m
 }
 
 int8_t getMedianRssi(BeaconRole role, bool& isFresh) {
-  int8_t samples[RSSI_WINDOW];
-  uint8_t count = 0;
-  uint32_t lastSeen = 0;
-
+  int8_t values[RSSI_WINDOW];
+  uint32_t times[RSSI_WINDOW];
+  uint8_t count;
   portENTER_CRITICAL(&bleMux);
-  count = trackedBeacons[role].rssiCount;
-  lastSeen = trackedBeacons[role].lastSeenMs;
-  for (uint8_t i = 0; i < count; ++i) {
-    samples[i] = trackedBeacons[role].rssiHistory[i];
-  }
+  const auto& beacon = trackedBeacons[role];
+  count = beacon.rssiCount;
+  memcpy(values, beacon.rssiHistory, sizeof(values));
+  memcpy(times, beacon.rssiAt, sizeof(times));
   portEXIT_CRITICAL(&bleMux);
-
-  isFresh = (count > 0) && ((millis() - lastSeen) <= TAG_FRESH_MS);
-  if (!isFresh || count == 0) return 0;
-
-  for (uint8_t i = 0; i < count; ++i) {
-    for (uint8_t j = i + 1; j < count; ++j) {
-      if (samples[j] < samples[i]) {
-        const int8_t tmp = samples[i];
-        samples[i] = samples[j];
-        samples[j] = tmp;
-      }
-    }
-  }
-  return samples[count / 2];
+  return shelfFreshMedian(values, times, count, millis(), isFresh);
 }
 
 float estimateDistanceM(int8_t rssi, int8_t txPower) {
@@ -209,7 +193,7 @@ const char* getExpensiveStatus() {
   lastSeen = trackedBeacons[ROLE_EXPENSIVE_ITEM].lastSeenMs;
   portEXIT_CRITICAL(&bleMux);
 
-  if (lastSeen == 0) return "NOT_YET_SEEN";
+  if (trackedBeacons[ROLE_EXPENSIVE_ITEM].rssiCount == 0) return "NOT_YET_SEEN";
   if ((millis() - lastSeen) <= TAG_FRESH_MS) return "RECENTLY_SEEN";
   return "STALE";
 }
@@ -239,7 +223,8 @@ class LocalScanCallbacks final : public NimBLEScanCallbacks {
 
     if (device->haveManufacturerData()) {
       std::string mfg = device->getManufacturerData();
-      isIBeacon = decodeIBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(),
+      isIBeacon = shelfBeaconUuidMatches(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(), SHELF_PROJECT_UUID) &&
+        decodeIBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(),
                                 major, minor, txPower);
     }
 
@@ -262,7 +247,7 @@ class LocalScanCallbacks final : public NimBLEScanCallbacks {
 
     if (matchedRole < 0 && isIBeacon) {
       for (int r = 0; r < ROLE_COUNT; ++r) {
-        if (trackedBeacons[r].targetMajor == major && trackedBeacons[r].targetMinor == minor) {
+        if (trackedBeacons[r].targetMac.length() == 0 && trackedBeacons[r].targetMajor == major && trackedBeacons[r].targetMinor == minor) {
           matchedRole = r;
           break;
         }
@@ -277,6 +262,7 @@ class LocalScanCallbacks final : public NimBLEScanCallbacks {
     b.lastRssi = rssi;
     b.txPower = txPower;
     b.rssiHistory[b.rssiHead] = rssi;
+    b.rssiAt[b.rssiHead] = millis();
     b.rssiHead = (b.rssiHead + 1) % RSSI_WINDOW;
     if (b.rssiCount < RSSI_WINDOW) ++b.rssiCount;
     b.lastSeenMs = millis();
@@ -307,14 +293,20 @@ void maintainWifi() {
 }
 
 void maintainMqtt() {
-  if (!ENABLE_LOCAL_MQTT) return;
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (!ENABLE_LOCAL_MQTT || WiFi.status() != WL_CONNECTED) {
+    ackSubscribed = false;
+    eventOutbox.setReady(false);
+    return;
+  }
 
   if (mqttClient.connected()) {
+    eventOutbox.setReady(ackSubscribed);
     mqttClient.loop();
     return;
   }
 
+  eventOutbox.setReady(false);
+  ackSubscribed = false;
   const uint32_t now = millis();
   if (now - lastMqttRetryMs < 5000) return; // Retry every 5s without blocking
   lastMqttRetryMs = now;
@@ -327,8 +319,10 @@ void maintainMqtt() {
 
   if (mqttClient.connect(clientId)) {
     Serial.println("\x1b[32m[MQTT] >>> CONNECTED TO LOCAL BROKER! <<<\x1b[0m");
-    mqttClient.subscribe(TOPIC_COMMAND);
-    mqttClient.subscribe("smartbasket/shelf/SHELF-01/cmd");
+    ackSubscribed = mqttClient.subscribe(TOPIC_ACKS, 1);
+    if (!ackSubscribed) { mqttClient.disconnect(); return; }
+    eventOutbox.setReady(true);
+    if (SHELF_ENABLE_TEST_COMMANDS) mqttClient.subscribe(TOPIC_COMMAND);
     // Publish online birth announcement
     char birthPayload[128];
     snprintf(birthPayload, sizeof(birthPayload),
@@ -362,17 +356,28 @@ void publishTelemetry() {
   }
   snprintf(gndBuf, sizeof(gndBuf), "[%s]", gndList.c_str());
 
-  char telem[512];
+  uint32_t hvLastSeen;
+  portENTER_CRITICAL(&bleMux);
+  hvLastSeen = trackedBeacons[ROLE_EXPENSIVE_ITEM].lastSeenMs;
+  portEXIT_CRITICAL(&bleMux);
+  const char* hvStatus = getExpensiveStatus();
+  char hvAge[16] = "null";
+  if (strcmp(hvStatus, "NOT_YET_SEEN") != 0) snprintf(hvAge, sizeof(hvAge), "%lu", static_cast<unsigned long>(millis() - hvLastSeen));
+  char telem[768];
   snprintf(telem, sizeof(telem),
     "{\"shelfId\":\"%s\",\"uptimeMs\":%lu,"
     "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d},"
                "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d}],"
+    "\"queueDepth\":%u,\"droppedEvents\":%lu,"
+    "\"highValueItem\":{\"tagId\":\"HV-001\",\"status\":\"%s\",\"rssi\":%s,\"lastSeenMsAgo\":%s},"
     "\"gndPins\":%s,"
     "\"edges\":{\"coke\":%lu,\"water\":%lu},"
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     SHELF_ID, static_cast<unsigned long>(millis()),
     lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false", raw0,
     lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false", raw1,
+    eventOutbox.depth(), static_cast<unsigned long>(eventOutbox.dropped()),
+    hvStatus, freshExp ? String(rssiExp).c_str() : "null", hvAge,
     gndBuf,
     (unsigned long)cokeEdgeCount, (unsigned long)waterEdgeCount,
     freshA   ? String(rssiA).c_str()   : "null",
@@ -385,20 +390,27 @@ void publishTelemetry() {
 // ----------------------------------------------------------------------------
 // 8. Event Dispatch (MQTT, Serial & Local HTTP)
 // ----------------------------------------------------------------------------
-void postEventToLocalHttp(const char* jsonPayload) {
-  if (!ENABLE_LOCAL_HTTP || WiFi.status() != WL_CONNECTED) return;
+bool postEventToLocalHttp(const char* jsonPayload) {
+  if (!ENABLE_LOCAL_HTTP || WiFi.status() != WL_CONNECTED) return false;
+  WiFiClient httpSocket; // Never reuse the MQTT TCP socket for HTTP.
   HTTPClient http;
   char url[128];
   snprintf(url, sizeof(url), "http://%s:%u/api/events", LOCAL_HTTP_HOST, LOCAL_HTTP_PORT);
-  http.begin(tcpClient, url);
+  http.begin(httpSocket, url);
+  http.setTimeout(35000);
   http.addHeader("Content-Type", "application/json");
   const int code = http.POST(reinterpret_cast<uint8_t*>(const_cast<char*>(jsonPayload)), strlen(jsonPayload));
-  if (code >= 200 && code < 300) {
-    Serial.printf("[HTTP] Successfully dispatched to %s (HTTP %d)\n", url, code);
-  } else {
-    Serial.printf("[HTTP] POST failed (HTTP %d)\n", code);
-  }
   http.end();
+  return code >= 200 && code < 300;
+}
+
+void pumpEvents() {
+  if (ENABLE_LOCAL_HTTP && WiFi.status() == WL_CONNECTED) eventOutbox.setReady(true);
+  eventOutbox.pump(millis(), [](const char* id, const char* payload) {
+    if (ENABLE_LOCAL_MQTT && mqttClient.connected() && ackSubscribed) return mqttClient.publish(TOPIC_EVENTS, payload);
+    if (postEventToLocalHttp(payload)) { eventOutbox.acknowledge(id); return true; }
+    return false;
+  });
 }
 
 void triggerShelfEvent(const Lane& lane, const char* eventType) {
@@ -418,14 +430,18 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   const float distB = freshB ? estimateDistanceM(rssiB, txB) : -1.0f;
   const float distExp = freshExp ? estimateDistanceM(rssiExp, txExp) : -1.0f;
 
+  uint32_t nextSequence;
+  portENTER_CRITICAL(&bleMux);
+  nextSequence = ++eventSeq;
+  portEXIT_CRITICAL(&bleMux);
   char eventId[40];
-  snprintf(eventId, sizeof(eventId), "esp32-%04x-%04lu", bootId, static_cast<unsigned long>(++eventSeq));
+  snprintf(eventId, sizeof(eventId), "esp32-%04x-%04lu", bootId, static_cast<unsigned long>(nextSequence));
 
   // Build JSON payload conforming to schema
   char payload[384];
   snprintf(payload, sizeof(payload),
     "{\"eventId\":\"%s\",\"shelfId\":\"%s\",\"laneId\":\"%s\",\"sku\":\"%s\","
-    "\"eventType\":\"%s\",\"timestamp\":\"\","
+    "\"eventType\":\"%s\",\"delayed\":false,\"timestamp\":\"\","
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     eventId, SHELF_ID, lane.laneId, lane.sku, eventType,
     freshA   ? String(rssiA).c_str()   : "null",
@@ -453,46 +469,23 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   Serial.printf("  JSON       : %s\n", payload);
   Serial.println("******************************************************************");
 
-  // Dispatch via Local MQTT
-  if (ENABLE_LOCAL_MQTT && mqttClient.connected()) {
-    if (mqttClient.publish(TOPIC_EVENTS, payload)) {
-      Serial.printf("[MQTT] >>> Published event to %s <<<\n", TOPIC_EVENTS);
-    } else {
-      Serial.println("[MQTT] Publish failed (check packet buffer size)");
-    }
-  } else if (ENABLE_LOCAL_MQTT) {
-    Serial.println("[MQTT] Not connected to broker. Event logged to Serial only.");
+  if (!eventOutbox.enqueue(eventId, payload, WiFi.status() == WL_CONNECTED)) {
+    Serial.println("[OUTBOX] Full; event dropped (see droppedEvents)");
   }
-
-  // Optional HTTP fallback
-  postEventToLocalHttp(payload);
 }
+
 
 void onMqttCommand(char* topic, byte* payload, unsigned int length) {
-  char cmd[64];
-  size_t copyLen = length < sizeof(cmd) - 1 ? length : sizeof(cmd) - 1;
-  memcpy(cmd, payload, copyLen);
-  cmd[copyLen] = '\0';
-
-  Serial.printf("\n>>> [MQTT TEST COMMAND RECEIVED] Topic: %s | Command: '%s' <<<\n", topic, cmd);
-  if (strstr(cmd, "pick") != nullptr) {
-    lanes[0].stablePresent = false;
-    lanes[0].candidatePresent = false;
-    triggerShelfEvent(lanes[0], "PICK");
-  } else if (strstr(cmd, "put") != nullptr) {
-    lanes[0].stablePresent = true;
-    lanes[0].candidatePresent = true;
-    triggerShelfEvent(lanes[0], "PUT_BACK");
-  } else if (strstr(cmd, "water_pick") != nullptr) {
-    lanes[1].stablePresent = false;
-    lanes[1].candidatePresent = false;
-    triggerShelfEvent(lanes[1], "PICK");
-  } else if (strstr(cmd, "water_put") != nullptr) {
-    lanes[1].stablePresent = true;
-    lanes[1].candidatePresent = true;
-    triggerShelfEvent(lanes[1], "PUT_BACK");
-  }
+  if (length >= 64) return;
+  char command[64] = {};
+  memcpy(command, payload, length);
+  if (strcmp(topic, TOPIC_ACKS) == 0) { eventOutbox.acknowledge(command); return; }
+  if (!SHELF_ENABLE_TEST_COMMANDS || strcmp(topic, TOPIC_COMMAND) != 0) return;
+  uint8_t lane;
+  const char* type;
+  if (shelfTestCommand(command, lane, type)) triggerShelfEvent(lanes[lane], type);
 }
+
 
 // ----------------------------------------------------------------------------
 // 9. Switch Sampling (Active-Low Debounce)
@@ -611,14 +604,26 @@ void probeAllPins() {
   }
 }
 
+void sampleShelfInputs(void*) {
+  for (;;) {
+    for (Lane& lane : lanes) sampleLane(lane);
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(500);
+  if (!eventOutbox.begin()) {
+    Serial.println("Cannot allocate event outbox");
+    while (true) delay(1000);
+  }
+
 
   // Initialize NimBLE stack FIRST before querying MAC or scan
   NimBLEDevice::init(SHELF_ID);
 
-  bootId = static_cast<uint16_t>(esp_random() & 0xffff);
+  bootId = esp_random();
 
   Serial.println("\n==================================================================");
   Serial.println("     Basketly — Local MQTT & Shelf Firmware (SHELF-01)           ");
@@ -633,6 +638,7 @@ void setup() {
   // Configure MQTT Client
   mqttClient.setServer(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   mqttClient.setBufferSize(1024);
+  mqttClient.setSocketTimeout(2);
   mqttClient.setCallback(onMqttCommand);
 
   // Initialize probe pins to catch wrong pin wiring
@@ -655,16 +661,18 @@ void setup() {
 
   // Register Wi-Fi Access Points (Primary Router 2.4 GHz + Fallback Hotspot)
   WiFi.mode(WIFI_STA);
-  wifiMulti.addAP("3510", "75492549");
-  wifiMulti.addAP("Sn2", "12345678");
-  #ifdef WIFI_SSID
-    wifiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
-  #endif
-  #ifdef WIFI_FALLBACK_SSID
-    wifiMulti.addAP(WIFI_FALLBACK_SSID, WIFI_FALLBACK_PASSWORD);
-  #endif
-  Serial.println("[Wi-Fi] Auto-connecting to available network (3510 / Sn2)...");
+  if (strcmp(WIFI_SSID, "YOUR_WIFI_SSID") != 0 && strlen(WIFI_SSID)) wifiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
+#ifdef WIFI_FALLBACK_SSID
+  wifiMulti.addAP(WIFI_FALLBACK_SSID, WIFI_FALLBACK_PASSWORD);
+#endif
 
+
+  Serial.println("[Wi-Fi] Connecting using local secrets.h configuration");
+
+  if (xTaskCreate(sampleShelfInputs, "shelf-inputs", 4096, nullptr, 2, nullptr) != pdPASS) {
+    Serial.println("Cannot start independent sensor task");
+    while (true) delay(1000);
+  }
   // Initialize BLE Scanner
   pBLEScan = NimBLEDevice::getScan();
   pBLEScan->setScanCallbacks(&scanCallbacks, true);
@@ -685,14 +693,12 @@ void loop() {
   // Maintain Wi-Fi and Local MQTT connections
   maintainWifi();
   maintainMqtt();
+  pumpEvents();
 
   // Probe all GPIOs for testing / wrong-pin detection
   probeAllPins();
 
   // Sample switches
-  for (Lane& lane : lanes) {
-    sampleLane(lane);
-  }
 
   // Periodic Telemetry (1 Hz)
   if (now - lastTelemetryMs >= 1000) {

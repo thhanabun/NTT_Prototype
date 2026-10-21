@@ -39,3 +39,8 @@ constexpr char DEVICE_PRIVATE_KEY[] = R"PEM(
 PASTE_DEVICE_PRIVATE_KEY_HERE
 -----END RSA PRIVATE KEY-----
 )PEM";
+
+// UUID fallback is used only when a role MAC is empty. Configure your own UUID.
+#define SHELF_PROJECT_UUID "A1B2C3D4-E5F6-4A1B-8C2D-1234567890AB"
+// Explicit opt-in for local MQTT simulation commands. Keep disabled for real shelf use.
+#define SHELF_ENABLE_TEST_COMMANDS 0

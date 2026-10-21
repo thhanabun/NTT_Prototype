@@ -9,3 +9,6 @@ infra/.aws-sam/
 data/
 tmp/
 *.log
+
+.venv-laya/
+firmware/esp32/**/secrets.h
