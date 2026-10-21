@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
+    "dev:mock": "node scripts/dev-mock.mjs",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint .",
