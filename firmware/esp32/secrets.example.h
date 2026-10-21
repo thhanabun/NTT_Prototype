@@ -19,3 +19,10 @@ constexpr char DEVICE_PRIVATE_KEY[] = R"PEM(
 PASTE_DEVICE_PRIVATE_KEY_HERE
 -----END RSA PRIVATE KEY-----
 )PEM";
+
+// Configure all basket tags with this UUID and the matching major/minor values.
+constexpr char IBEACON_UUID[] = "A1B2C3D4-E5F6-4A1B-8C2D-1234567890AB";
+constexpr uint16_t BASKET_A_MAJOR = 1;
+constexpr uint16_t BASKET_A_MINOR = 1;
+constexpr uint16_t BASKET_B_MAJOR = 1;
+constexpr uint16_t BASKET_B_MINOR = 2;

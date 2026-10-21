@@ -5,9 +5,21 @@
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
+    "model:laya": "powershell -NoProfile -File scripts/start-laya.ps1",
+    "verify:laya": "node scripts/verify-laya.mjs",
+    "verify:full-flow": "node scripts/verify-full-flow.mjs",
+    "bridge:iot": "node scripts/iot-bridge.mjs",
     "test": "node --test"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1154.0",
+    "@aws-sdk/lib-dynamodb": "^3.1154.0",
+    "mqtt": "^5.16.1"
+  },
+  "devDependencies": {
+    "aedes": "1.2.0"
   }
 }

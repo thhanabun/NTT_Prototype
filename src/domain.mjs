@@ -10,6 +10,7 @@ const PRODUCT_BY_LANE = {
 const BASKETS = ["A", "B"];
 const RSSI_CLEAR_MARGIN_DB = 10;
 const CUSTOMER_CONFIRM_THRESHOLD = 0.75;
+const AUDIT_LOG_LIMIT = 500;
 
 export function createStore() {
   return {
@@ -23,6 +24,7 @@ export function createStore() {
     events: [],
     cases: [],
     orders: [],
+    auditLog: [],
     seenEventIds: [],
     caseSequence: 0,
     shelf: {
@@ -38,6 +40,20 @@ export function createStore() {
 
 function isoNow() {
   return new Date().toISOString();
+}
+
+export function addAuditEntry(store, action, actor, details = {}) {
+  const entry = {
+    auditId: "AUD-" + randomUUID().slice(0, 12).toUpperCase(),
+    at: isoNow(),
+    action,
+    actor,
+    details,
+  };
+  store.auditLog ||= [];
+  store.auditLog.unshift(entry);
+  store.auditLog = store.auditLog.slice(0, AUDIT_LOG_LIMIT);
+  return entry;
 }
 
 function activeSession(store, basketId) {
@@ -84,6 +100,12 @@ function createCase(store, event, details) {
   };
   addTimeline(caseItem, "CASE_CREATED", { nextAction: caseItem.nextAction, reason: caseItem.reason });
   store.cases.unshift(caseItem);
+  addAuditEntry(store, "CASE_CREATED", "FSM", {
+    caseId: caseItem.caseId,
+    eventId: event.eventId,
+    type: caseItem.type,
+    nextAction: caseItem.nextAction,
+  });
   return caseItem;
 }
 
@@ -91,26 +113,6 @@ function chooseBasket(rssi) {
   if (!rssi || !Number.isFinite(rssi.A) || !Number.isFinite(rssi.B)) return null;
   if (rssi.A === rssi.B) return null;
   return rssi.A > rssi.B ? "A" : "B";
-}
-
-function makeAgentRecommendation(store, event, rssi, margin) {
-  const candidate = chooseBasket(rssi);
-  const confidence = candidate
-    ? Math.min(0.92, 0.72 + margin * 0.05)
-    : 0.55;
-  const hasSession = candidate && Boolean(activeSession(store, candidate));
-  return {
-    candidate,
-    confidence,
-    nextAction:
-      hasSession && confidence >= CUSTOMER_CONFIRM_THRESHOLD ? "CUSTOMER_CONFIRM" : "STAFF_HITL",
-    proposedAction: event.eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
-    toolCalls: [
-      { name: "get_shelf_event", status: "OK" },
-      { name: "get_basket_evidence", status: "OK" },
-      { name: "get_cart_history", status: "OK" },
-    ],
-  };
 }
 
 function recordEvent(store, event) {
@@ -127,7 +129,13 @@ export function processShelfEvent(store, input) {
   const eventType = String(input.eventType || "").toUpperCase();
   const sku = PRODUCT_BY_LANE[String(input.laneId || "").toUpperCase()];
   if (!eventId) throw new Error("eventId is required");
-  if (store.seenEventIds.includes(eventId)) return { duplicate: true, eventId };
+  if (store.seenEventIds.includes(eventId)) {
+    addAuditEntry(store, "DUPLICATE_EVENT_IGNORED", "FSM", { eventId });
+    return { duplicate: true, auditOnly: true, eventId };
+  }
+  if (input.delayed !== undefined && typeof input.delayed !== "boolean") {
+    throw new Error("delayed must be a boolean");
+  }
   if (!sku) throw new Error("laneId must be LANE-1 or LANE-2");
   if (input.sku && input.sku !== sku) throw new Error("sku does not match laneId");
   if (!["PICK", "PUT_BACK"].includes(eventType)) throw new Error("eventType must be PICK or PUT_BACK");
@@ -147,13 +155,36 @@ export function processShelfEvent(store, input) {
     eventType,
     timestamp: input.timestamp || isoNow(),
     receivedAt: isoNow(),
+    delayed: input.delayed === true,
     rssi,
   };
 
   store.seenEventIds.push(eventId);
   store.seenEventIds = store.seenEventIds.slice(-2000);
   recordEvent(store, event);
+  addAuditEntry(store, "SHELF_EVENT_RECEIVED", "DEVICE", {
+    eventId: event.eventId,
+    shelfId: event.shelfId,
+    laneId: event.laneId,
+    sku: event.sku,
+    eventType: event.eventType,
+    delayed: event.delayed,
+  });
   store.shelf.fsmState = "PROCESSING_" + eventType;
+
+  if (event.delayed) {
+    const caseItem = createCase(store, event, {
+      type: "DELAYED_EVENT",
+      candidate: null,
+      confidence: 0,
+      nextAction: "STAFF_HITL",
+      proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
+      evidence: { rssi, zone: "DELAYED", delayed: true },
+      reason: "The device marked this event delayed or backlogged; its proximity evidence is not safe for automatic assignment.",
+    });
+    store.shelf.fsmState = "WAITING_STAFF";
+    return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
+  }
 
   if (!Number.isFinite(rssi.A) || !Number.isFinite(rssi.B)) {
     const caseItem = createCase(store, event, {
@@ -202,17 +233,25 @@ export function processShelfEvent(store, input) {
     }
 
     store.shelf.fsmState = "CART_UPDATED";
+    addAuditEntry(store, "CART_UPDATED", "FSM", {
+      eventId: event.eventId,
+      basketId: candidate,
+      sku: event.sku,
+      eventType: event.eventType,
+    });
     return { duplicate: false, event, disposition: "CONFIRMED", basketId: candidate };
   }
 
-  const recommendation = makeAgentRecommendation(store, event, rssi, margin);
   const caseItem = createCase(store, event, {
     type: eventType === "PICK" ? "AMBIGUOUS_PICK" : "AMBIGUOUS_PUT_BACK",
-    ...recommendation,
+    candidate: null,
+    confidence: 0,
+    nextAction: "INVESTIGATE",
+    proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
     evidence: { rssi, marginDb: margin, zone: "AMBIGUOUS" },
-    reason: "RSSI difference is below the initial 10 dB clear-zone threshold.",
+    reason: "RSSI difference is below the clear-zone threshold; the case manager will inspect supporting evidence.",
   });
-  store.shelf.fsmState = caseItem.status === "WAITING_CUSTOMER" ? "WAITING_CUSTOMER" : "WAITING_STAFF";
+  store.shelf.fsmState = "AGENT_INVESTIGATING";
   return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
 }
 
@@ -229,12 +268,14 @@ export function startSession(store, basketId) {
   store.sessions.unshift(session);
   store.activeSessions[basketId] = session.sessionId;
   store.carts[basketId] = {};
+  addAuditEntry(store, "SESSION_STARTED", "SHOPPER", { basketId, sessionId: session.sessionId });
   return session;
 }
 
 function findCase(store, caseId) {
   const caseItem = store.cases.find((item) => item.caseId === caseId);
   if (!caseItem) throw new Error("Case not found");
+  if (caseItem.agent?.status === "RUNNING") throw new Error("Agent investigation is still in progress");
   if (!["WAITING_CUSTOMER", "OPEN_STAFF"].includes(caseItem.status)) {
     throw new Error("Case is already closed");
   }
@@ -250,21 +291,34 @@ export function customerDecision(store, caseId, answer) {
       caseItem.nextAction = "CLOSE";
       caseItem.resolution = { actor: "CUSTOMER", decision: "YES", basketId: caseItem.candidate };
       addTimeline(caseItem, "CUSTOMER_CONFIRMED", { basketId: caseItem.candidate });
+      addAuditEntry(store, "CUSTOMER_CONFIRMED", "CUSTOMER", {
+        caseId,
+        basketId: caseItem.candidate,
+        eventId: caseItem.eventId,
+      });
+      addAuditEntry(store, "CART_VALIDATED", "VALIDATOR", { caseId, basketId: caseItem.candidate });
     } else {
       caseItem.status = "OPEN_STAFF";
       caseItem.nextAction = "STAFF_HITL";
       caseItem.reason = "Customer confirmed, but cart validation failed.";
       addTimeline(caseItem, "VALIDATION_FAILED", { nextAction: "STAFF_HITL" });
+      addAuditEntry(store, "CART_VALIDATION_FAILED", "VALIDATOR", { caseId, nextAction: "STAFF_HITL" });
     }
   } else if (answer === "NO") {
     caseItem.status = "OPEN_STAFF";
     caseItem.nextAction = "STAFF_HITL";
     caseItem.reason = "Customer declined the suggestion; staff review is required.";
     addTimeline(caseItem, "CUSTOMER_DECLINED", { nextAction: "STAFF_HITL" });
+    addAuditEntry(store, "CUSTOMER_DECLINED", "CUSTOMER", { caseId, eventId: caseItem.eventId });
   } else {
     throw new Error("answer must be YES or NO");
   }
   caseItem.updatedAt = isoNow();
+  addAuditEntry(store, "CASE_STATUS_CHANGED", "WORKFLOW", {
+    caseId,
+    status: caseItem.status,
+    nextAction: caseItem.nextAction,
+  });
   store.shelf.fsmState = caseItem.status === "CLOSED" ? "CART_UPDATED" : "WAITING_STAFF";
   return caseItem;
 }
@@ -279,15 +333,27 @@ export function staffDecision(store, caseId, decision, basketId) {
     }
     caseItem.resolution = { actor: "STAFF", decision, basketId: selectedBasket };
     addTimeline(caseItem, "STAFF_APPROVED", { basketId: selectedBasket });
+    addAuditEntry(store, "STAFF_APPROVED", "STAFF", {
+      caseId,
+      basketId: selectedBasket,
+      eventId: caseItem.eventId,
+    });
+    addAuditEntry(store, "CART_VALIDATED", "VALIDATOR", { caseId, basketId: selectedBasket });
   } else if (decision === "REJECT") {
     caseItem.resolution = { actor: "STAFF", decision };
     addTimeline(caseItem, "STAFF_REJECTED");
+    addAuditEntry(store, "STAFF_REJECTED", "STAFF", { caseId, eventId: caseItem.eventId });
   } else {
     throw new Error("decision must be APPROVE or REJECT");
   }
   caseItem.status = "CLOSED";
   caseItem.nextAction = "CLOSE";
   caseItem.updatedAt = isoNow();
+  addAuditEntry(store, "CASE_CLOSED", "WORKFLOW", {
+    caseId,
+    decision,
+    resolution: caseItem.resolution,
+  });
   store.shelf.fsmState = decision === "APPROVE" ? "CART_UPDATED" : "CASE_CLOSED";
   return caseItem;
 }
@@ -324,6 +390,11 @@ export function checkout(store, basketId) {
   session.closedAt = order.createdAt;
   store.activeSessions[basketId] = null;
   store.shelf.fsmState = "MOCK_CHECKOUT";
+  addAuditEntry(store, "MOCK_CHECKOUT_COMPLETED", "SHOPPER", {
+    orderId: order.orderId,
+    basketId,
+    total: order.total,
+  });
   return order;
 }
 
@@ -357,6 +428,7 @@ export function snapshot(store) {
     cases: store.cases.slice(0, 30),
     recentEvents: store.events.slice(0, 20),
     recentOrders: store.orders.slice(0, 10),
+    auditLog: (store.auditLog || []).slice(0, 100),
     policy: { clearMarginDb: RSSI_CLEAR_MARGIN_DB, customerConfirmThreshold: CUSTOMER_CONFIRM_THRESHOLD },
   };
 }

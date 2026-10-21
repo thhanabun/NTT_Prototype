@@ -1,0 +1,42 @@
+{
+  "functions": [
+    {
+      "name": "get_basket_decision",
+      "description": "Call the same self-hosted Laya decision model used locally for an ambiguous shelf event. Returns candidate, option probabilities and model identity; never changes a cart.",
+      "parameters": {
+        "eventId": {
+          "description": "Source event ID of the ambiguous case.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_shelf_event",
+      "description": "Read the immutable shelf event that opened a case.",
+      "parameters": {
+        "eventId": {
+          "description": "Shelf event ID attached to the case.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_basket_evidence",
+      "description": "Read basket RSSI, zone, active sessions, and event metadata for the shelf event.",
+      "parameters": {
+        "eventId": {
+          "description": "Shelf event ID attached to the case.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_cart_history",
+      "description": "Read current basket carts, sessions, recent orders, and case resolutions.",
+      "parameters": {}
+    }
+  ]
+}

@@ -2,11 +2,15 @@
 
 A two-basket, two-lane retail demo. A shelf event updates a shopper cart only when the deterministic policy can identify an active basket with clear evidence. Ambiguous or missing evidence stays pending and requires customer or staff confirmation. The amount shown at checkout includes confirmed items only.
 
-The [primary IoT roadmap](docs/iot-roadmap.md) sets the hardware delivery order: ESP32 and two switches into the local app first, three DX-CP101 beacons second, and AWS IoT Core third. Follow that roadmap for IoT implementation; the cloud architecture below remains the longer-term target.
+The [primary IoT roadmap](docs/iot-roadmap.md) sets the hardware: ESP32-WROOM-32, KW11-N/KW12 roller microswitches and iBeacon Bluetooth IP67 tags. The `codex/fsm-iotcore` branch sends shelf events through AWS IoT Core to a local bridge and the existing deterministic cart FSM.
 
 ## Run locally
 
-Requirements: Node.js 20 or newer. No package install or cloud account is needed.
+Requirements: Node.js 20+ and Python 3.12 recommended. Work in the codex/fsm-iotcore checkout. The HTTP server now selects real Laya inference by default. Install Node dependencies with npm ci, and start the model service in a separate terminal:
+
+    powershell -NoProfile -File scripts/start-laya.ps1 -Install
+
+After the first setup, npm run model:laya starts the cached model. Then start the app in another terminal:
 
     npm start
 
@@ -24,7 +28,7 @@ The QR camera uses the browser BarcodeDetector API where available and accepts a
 ## Safety policy
 
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
-- RSSI inside that margin is ambiguous. The local case-manager mock records its evidence and tool calls; a customer must confirm before the item reaches the cart.
+- RSSI inside that margin is ambiguous. Laya runs a real typed decision after the evidence tools; a person must confirm before the item reaches the cart. Model errors route to staff without a mock fallback. Set AGENT_PROVIDER=mock explicitly only for a software simulation.
 - Missing RSSI, tied evidence, a missing session, or a cart conflict routes to staff review.
 - No pending case contributes to a payable total. An unresolved case with no basket candidate blocks both baskets until staff closes it.
 - Duplicate event IDs are idempotent. PUT_BACK never makes a cart quantity negative.
@@ -34,49 +38,80 @@ The QR camera uses the browser BarcodeDetector API where available and accepts a
 
 The local harness gives the team a testable vertical slice while AWS credentials and the parts are being prepared:
 
-    Browser PWA ── HTTP API + Server-Sent Events ── Node domain/FSM ── in-memory store
+    Browser PWA ── HTTP API + Server-Sent Events ── Node domain/FSM ── local JSON or DynamoDB
                                                        ↑
                                                event simulator
 
-The intended cloud path remains AWS-native:
+The implemented device path is:
 
-    ESP32 ── MQTT/TLS ── AWS IoT Core ── Lambda ── DynamoDB
-                                                      ├── API Gateway HTTP / WebSocket
-                                                      └── Step Functions ── Bedrock case manager
+    ESP32 ── MQTT/TLS ── AWS IoT Core ── local MQTT bridge ── POST /api/events ── deterministic FSM
+                                               └── application ACK after local API success
+
+The longer-term hosted target remains:
+
+    AWS IoT Core ── Lambda ── DynamoDB / API Gateway / Step Functions / Bedrock
 
 | Area | Prototype source in this repository | AWS target from the plan |
 | --- | --- | --- |
 | Shopper and staff UI | Installable-style PWA shell, native browser APIs, responsive CSS | Next.js App Router, TypeScript, TailwindCSS, shadcn/ui |
 | Local event/API runtime | Node.js standard library, Server-Sent Events | API Gateway, Lambda, AppSync or API Gateway WebSocket |
 | Transaction policy | Deterministic FSM in src/domain.mjs | Lambda + Step Functions Standard |
-| Ambiguous-case simulation | Local evidence/recommendation mock; no external model call | Amazon Bedrock Agent and Lambda tools |
-| State | Local JSON store (ignored by Git) | DynamoDB |
-| Shelf device | ESP32 Arduino firmware draft | AWS IoT Core MQTT/TLS |
+| Ambiguous-case decision | Real self-hosted Laya by default in the HTTP server; Jev and explicit mock remain optional | Same Laya API as a read-only tool called by an agent using a Bedrock foundation model |
+| State | Local JSON by default; opt-in DynamoDB versioned state store | DynamoDB records and transactional workflows |
+| Shelf device and transport | ESP32 Arduino firmware + local IoT bridge | AWS IoT Core MQTT/TLS |
 | Staff login | Omitted for localhost demo | Cognito |
 | Payment | Mock order only | No real payment in prototype |
 
-The local path is executable without downloading dependencies. It is not an AWS deployment and does not call Bedrock. The firmware has not been compiled or flashed, and no IoT certificates are included. See firmware/README.md before connecting hardware.
+The local app does not require AWS in its default mode. Set `STORE_BACKEND=dynamodb` to use the DynamoDB adapter; create the table and grant the app's AWS identity access first, following [the DynamoDB setup](infra/dynamodb/README.md). The AWS bridge uses MQTT.js. AWS IoT resources/certificates, firmware compilation/flash and physical calibration still need to be completed locally. No real certificates are included. This path does not deploy Lambda, API Gateway, Step Functions or Bedrock.
 
-The requested Next.js dependency set was not present in this empty workspace, and the npm registry did not respond from this environment. To keep the prototype runnable here, the local harness uses the Node.js standard library; the table above keeps the planned Next.js/AWS target explicit.
+To use Jev for ambiguous cases, set `AGENT_PROVIDER=jev` and `TYPESAFE_API_KEY` in the server environment before `npm start`. `TYPESAFE_MODEL` optionally selects a model; the default is `jev-latest`. Jev receives only the case event, basket evidence, and cart/session history. Its recommendation is advisory: the local policy requires an active session, a matching RSSI candidate, confidence of at least 0.75, and no delayed-event or PUT_BACK conflict before asking the customer. Invalid responses, API errors, and timeouts fail closed to staff review. The key stays on the server and is never sent to the PWA.
+
+The Laya checkpoint, weight hash and Python runtime versions are pinned in infra/laya/model.json and requirements-laya.txt. Run npm run verify:laya against the running model for a real HTTP/DB/HITL/audit check. It writes data/laya-live-report.json and keeps isolated demo state; model responses are not injected. npm test covers errors and contract guards using fixtures.
+
+Run `npm run verify:full-flow` for the signal path over real local MQTT/TCP: scripted hardware -> production bridge -> compute/FSM -> actual Laya -> HITL/cart/DB/audit and two SSE clients. It also runs the Lambda handlers locally and checks slow-model retries, the real client timeout, malformed signals, restart and checkout. See [the full-flow check and its coverage boundaries](docs/full-flow-test.md). Aedes is a test-only development dependency; this does not test or deploy AWS IoT Core.
+
+The initial real-model sample did not reliably distinguish all three A/B/tie scenarios, so model correctness is not an acceptance claim. The deterministic policy kept every uncertain result in staff review. See [local-to-cloud model choices and limits](docs/local-to-bedrock.md) before moving to AWS.
+
+The local app uses the Node.js standard library in local JSON mode. DynamoDB mode uses AWS SDK for JavaScript v3; the optional IoT bridge uses MQTT.js.
 
 ## Source layout
 
 - src/domain.mjs — event validation, idempotency, cart FSM, case policy, HITL decisions and mock checkout.
+- src/application.mjs — application service shared by the HTTP API and integration tests.
 - src/server.mjs — localhost HTTP API, static PWA host and realtime event stream.
+- src/store-repository.mjs — local JSON and optimistic-locking DynamoDB persistence adapters.
 - public/ — shopper and staff views, PWA manifest, native camera scanning and event simulator.
-- firmware/esp32/smart_shelf.ino — ESP32 switch debounce, BLE RSSI median and MQTT event publisher.
+- firmware/esp32/smart_shelf.ino — ESP32 switch debounce, iBeacon RSSI median, bounded outbox and MQTT application-ACK retry.
+- scripts/iot-bridge.mjs — AWS IoT Core MQTT-to-local-API bridge.
+- infra/aws-iot/policies/ — restricted shelf-device and bridge policies.
+- infra/dynamodb/ — encrypted on-demand state table, scoped IAM policy, and setup guide.
+- infra/lambda/ — Lambda handlers for evidence/decision tools, shared real-model case manager, audit writer and validator.
+- infra/bedrock/ — function schema and safety instructions for configuring a Bedrock Agent.
+- infra/step-functions/ — Standard workflow definition for investigation, HITL callbacks, validation and audit close.
+- src/agent/ — mock case manager and evidence tools shared by the local server and Lambda handlers.
+- src/agent/jev.mjs — optional server-side Jev decision provider for ambiguous cases.
+- src/agent/laya.mjs — real Laya HTTP client; bounded typed input and selected-option probability.
+- src/agent/investigate-stored-case.mjs — the same investigation/policy path used by the app and cloud Lambda.
+- infra/laya/ — pinned checkpoint manifest and container recipe for the same model in the cloud.
+- src/logger.mjs — structured application logs for CloudWatch-compatible stdout collection.
 - tests/domain.test.mjs — acceptance checks for clear/duplicate, ambiguous, low-confidence, missing-RSSI and PUT_BACK flows.
+- tests/agent-tools.test.mjs and tests/integration-flow.test.mjs — Lambda contract checks and bridge-to-cart/HITL/audit integration flow.
+- tests/store-repository.test.mjs — local persistence and DynamoDB optimistic-write checks.
 - docs/event-contract.md — shared device/API event contract and deterministic decision table.
 
 ## Delivery phases
 
 | Phase | State in this implementation |
 | --- | --- |
-| 1 · Software first | Local simulator, event API, cart, shopper view, staff monitor and live updates implemented. IoT Core/DynamoDB deployment remains to be wired after AWS credentials are available. |
-| 2 · Agentic flow | Customer confirmation, staff review, audit timeline and validator behavior implemented locally. A real Bedrock Agent, Lambda tools and Step Functions deployment remain unconfigured; local suggestions are labeled as simulation. |
-| 3 · Hardware | ESP32 firmware draft covers two lane sensors, debounce, five-sample RSSI median, Wi-Fi and MQTT/TLS. Physical wiring and end-to-end demonstration remain to be done with the ordered devices. |
+| 1 · Software first | Local simulator, event API, cart, shopper view, staff monitor and live updates implemented. |
+| 2 · Agentic flow | Real local Laya inference, evidence tools, audit and HITL/validator run locally. The same Laya adapter is exposed by the Lambda decision tool. Bedrock orchestration and AWS deployment remain future work; the model's retail decision accuracy still needs evaluation. |
+| 3 · Hardware / IoT | Firmware and MQTT bridge source cover two switch lanes and two iBeacon basket tags. AWS resources/certificates, compile/flash and physical end-to-end checks remain. |
 | 4 · Audit and stability | Local case timeline and software acceptance tests are included. The 20–30 physical cycles, AWS retention/budget controls and CloudTrail checks remain hardware/cloud work. |
 | 5 · Demo freeze | Rehearse the three journeys in this PWA. Cloud deployment, physical failure rehearsal and backup video are not performed from this workspace. |
+
+## Optional DynamoDB mode
+
+The same API and FSM can use DynamoDB for persistence. This prototype stores the compact application state in one versioned item and uses conditional writes to prevent lost updates. Local JSON remains the default. See [DynamoDB setup and limits](infra/dynamodb/README.md) before switching modes.
 
 ## Check the software acceptance rules
 
@@ -86,4 +121,4 @@ The tests use Node's built-in test runner. For physical acceptance, repeat PICK/
 
 ## Next cloud implementation checkpoint
 
-Provision a development AWS account and region, create an IoT thing/certificate and least-privilege topic policy, then add the deployable SAM/CDK stack for DynamoDB, IoT Rules, Lambda, HTTP/WebSocket APIs and the Step Functions HITL callbacks. Configure a Bedrock Agent only after those deterministic paths work; deploy budget alarms and short log retention before running scenarios against cloud resources.
+Provision the DynamoDB table and scoped application access using [the DynamoDB guide](infra/dynamodb/README.md), then provision the IoT Thing, least-privilege policies and separate X.509 certificates using [the AWS IoT guide](infra/aws-iot/README.md). Lambda handler packaging, Bedrock Agent setup and Step Functions task-token callbacks still need AWS resource configuration; see [the Lambda guide](infra/lambda/README.md). Compile and flash the firmware for a physical end-to-end run.
