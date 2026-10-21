@@ -5,7 +5,8 @@
   "main": "broker.mjs",
   "type": "module",
   "scripts": {
-    "start": "node broker.mjs"
+    "start": "node broker.mjs",
+    "monitor": "node monitor.mjs"
   },
   "dependencies": {
     "aedes": "^1.2.0",
