@@ -25,6 +25,10 @@ Open http://127.0.0.1:3000. The web app and API are served by the same Node proc
 
 The QR camera uses the browser BarcodeDetector API where available and accepts a QR containing a URL parameter basket=A or basket=B. The two basket buttons are the manual fallback for browsers without native QR scanning.
 
+## Next.js Shopper and Staff app
+
+The integrated frontend is in `web/` on port 3001; the API remains on port 3000. Run `npm ci` and `npm run dev:mock` in `web/` after starting the model and API above. `LOCAL_API_ORIGIN` selects the backend. See [web/README.md](web/README.md). Admin login is an explicitly enabled local simulation; it is not API authorization.
+
 ## Safety policy
 
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
@@ -53,13 +57,13 @@ The longer-term hosted target remains:
 
 | Area | Prototype source in this repository | AWS target from the plan |
 | --- | --- | --- |
-| Shopper and staff UI | Installable-style PWA shell, native browser APIs, responsive CSS | Next.js App Router, TypeScript, TailwindCSS, shadcn/ui |
+| Shopper and staff UI | Next.js Shopper/Staff in web/; original PWA retained on port 3000 | Next.js App Router, TypeScript, TailwindCSS, shadcn/ui |
 | Local event/API runtime | Node.js standard library, Server-Sent Events | API Gateway, Lambda, AppSync or API Gateway WebSocket |
 | Transaction policy | Deterministic FSM in src/domain.mjs | Lambda + Step Functions Standard |
 | Ambiguous-case decision | Real self-hosted Laya by default in the HTTP server; Jev and explicit mock remain optional | Same Laya API as a read-only tool called by an agent using a Bedrock foundation model |
 | State | Local JSON by default; opt-in DynamoDB versioned state store | DynamoDB records and transactional workflows |
 | Shelf device and transport | ESP32 Arduino firmware + local IoT bridge | AWS IoT Core MQTT/TLS |
-| Staff login | Omitted for localhost demo | Cognito |
+| Staff login | Explicit development-only mock login; production Admin disabled | Cognito |
 | Payment | Mock order only | No real payment in prototype |
 
 The local app does not require AWS in its default mode. Set `STORE_BACKEND=dynamodb` to use the DynamoDB adapter; create the table and grant the app's AWS identity access first, following [the DynamoDB setup](infra/dynamodb/README.md). The AWS bridge uses MQTT.js. AWS IoT resources/certificates, firmware compilation/flash and physical calibration still need to be completed locally. No real certificates are included. This path does not deploy Lambda, API Gateway, Step Functions or Bedrock.
@@ -80,6 +84,7 @@ The local app uses the Node.js standard library in local JSON mode. DynamoDB mod
 - src/application.mjs — application service shared by the HTTP API and integration tests.
 - src/server.mjs — localhost HTTP API, static PWA host and realtime event stream.
 - src/store-repository.mjs — local JSON and optimistic-locking DynamoDB persistence adapters.
+- web/ — Next.js Shopper, Staff dashboard, mock login and shared realtime API adapter.
 - public/ — shopper and staff views, PWA manifest, native camera scanning and event simulator.
 - firmware/esp32/local_shelf/local_shelf.ino and firmware/esp32/aws_shelf/aws_shelf.ino — ESP32 switch debounce, iBeacon RSSI median, bounded outbox and MQTT application-ACK retry.
 - scripts/iot-bridge.mjs — AWS IoT Core MQTT-to-local-API bridge.
@@ -125,3 +130,5 @@ Provision the DynamoDB table and scoped application access using [the DynamoDB g
 
 
 Hardware PR integration review and actual verification results: [hardware protocol review](docs/hardware-protocol-review.md). The old smart_shelf.ino entry point is replaced by separate local/AWS sketches; esp32.ino delegates to the local implementation. Configure the current secrets.example.h before building.
+
+Full local integration and verification: [system integration report](docs/system-integration.md).
