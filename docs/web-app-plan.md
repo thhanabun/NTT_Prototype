@@ -325,4 +325,18 @@ Shopper and Admin now subscribe to the existing local SSE endpoint through one s
 
 No backend business rules or AWS resources were changed. Native realtime tests use isolated local persistence and test-only diagnostics in a temporary server copy. Real-phone QR verification remains a separate manual check.
 
-Agreed stopping point: Phases 1–6 are implemented locally. Wait for the backend/cloud team's API, authentication, realtime transport, region, permissions, and test-budget agreement before starting Phase 7. Phase 8 hosting remains later work.
+Agreed stopping point: Phases 1–6 are implemented locally. Phase 7A may prepare mock Admin login locally. Wait for the backend/cloud team's API, authentication, realtime transport, region, permissions, and test-budget agreement before Phase 7B/7C cloud integration. Phase 8 hosting remains later work.
+
+### Phase 7 implementation scope
+
+| Part | Issue title | Dependency |
+| --- | --- | --- |
+| 7A | Build the Admin Login UI with a Local Mock Session | Local frontend only |
+| 7B | Integrate Real Authentication and the AWS API | Agreed backend identity, roles, API contract, region, permissions, test budget |
+| 7C | Integrate Authorized Cloud Realtime | Agreed transport, scoped payloads, subscription auth and retry policy |
+
+Phase 7A adds `/admin/login`, a fictional publicly documented staff test account, field validation, password visibility, submitting/invalid-credential/storage-error states, a 30-minute tab-local mock session, logout, and expiry simulation. Gate `/admin` before mounting its dashboard or subscribing to local state; leave Shopper guest-accessible. Require an explicit development flag and disable mock Admin access in production regardless of that flag. Never save passwords or call an identity provider/model from the mock flow.
+
+This gate is a UI simulation, not backend authentication or authorization. The existing local API and old demo stay unauthenticated. No public staff registration, real accounts, password recovery, cloud deployment, IAM/AWS credentials, or Agent changes are included. Real staff roles and shopper-owned data enforcement must be implemented with the backend team in Phase 7B. Login alone does not authorize API requests or realtime subscriptions.
+
+Phase 7A verification covers direct entry before login with no state/SSE requests, form validation and keyboard use, login and refresh persistence, logout/back navigation, automatic and simulated expiry, malformed/unavailable storage, independent-tab behavior, live subscription cleanup, guest Shopper, responsive layouts, and unavailable Admin in normal-dev/production mode. Existing Shopper/Admin/realtime journeys must continue to pass. The Phase 7A pull request is reviewed and merged by the user.
