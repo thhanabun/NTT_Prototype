@@ -62,7 +62,10 @@ constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
 // ----------------------------------------------------------------------------
 constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
 constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
-constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // 80 ms stable debounce
+constexpr uint32_t SWITCH_DEBOUNCE_MS = 40; // 40 ms responsive debounce
+
+// Candidate GPIO probe list to detect accidental wrong pin insertion
+constexpr uint8_t PROBE_PINS[] = {25, 26, 27, 14, 13, 32, 33, 4, 18, 19, 21, 22, 23};
 
 // ----------------------------------------------------------------------------
 // 3. BLE Beacons Configuration (3 Tags: Basket A, Basket B, Expensive Product)
@@ -333,15 +336,28 @@ void publishTelemetry() {
   const int raw0 = digitalRead(lanes[0].pin);
   const int raw1 = digitalRead(lanes[1].pin);
 
+  // Scan all probe pins to see if any are pulled to GND
+  char gndBuf[64] = "[]";
+  String gndList = "";
+  for (uint8_t p : PROBE_PINS) {
+    if (digitalRead(p) == LOW) {
+      if (gndList.length() > 0) gndList += ",";
+      gndList += String(p);
+    }
+  }
+  snprintf(gndBuf, sizeof(gndBuf), "[%s]", gndList.c_str());
+
   char telem[384];
   snprintf(telem, sizeof(telem),
     "{\"shelfId\":\"%s\",\"uptimeMs\":%lu,"
     "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d},"
                "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d}],"
+    "\"gndPins\":%s,"
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     SHELF_ID, static_cast<unsigned long>(millis()),
     lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false", raw0,
     lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false", raw1,
+    gndBuf,
     freshA   ? String(rssiA).c_str()   : "null",
     freshB   ? String(rssiB).c_str()   : "null",
     freshExp ? String(rssiExp).c_str() : "null");
@@ -539,6 +555,19 @@ void printDashboard() {
 // ----------------------------------------------------------------------------
 // 11. Setup
 // ----------------------------------------------------------------------------
+void probeAllPins() {
+  static int lastState[sizeof(PROBE_PINS)] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  for (size_t i = 0; i < sizeof(PROBE_PINS); ++i) {
+    const uint8_t p = PROBE_PINS[i];
+    const int val = digitalRead(p);
+    if (lastState[i] != -1 && lastState[i] != val) {
+      Serial.printf(">>> [PIN ACTIVITY] GPIO %d changed to %s <<<\n",
+                    p, val == LOW ? "LOW (GND - PRESSED)" : "HIGH (3.3V - RELEASED)");
+    }
+    lastState[i] = val;
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(500);
@@ -561,6 +590,11 @@ void setup() {
   // Configure MQTT Client
   mqttClient.setServer(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   mqttClient.setBufferSize(1024);
+
+  // Initialize probe pins to catch wrong pin wiring
+  for (uint8_t p : PROBE_PINS) {
+    pinMode(p, INPUT_PULLUP);
+  }
 
   // Initialize switches without firing events
   for (Lane& lane : lanes) {
@@ -603,6 +637,9 @@ void loop() {
   // Maintain Wi-Fi and Local MQTT connections
   maintainWifi();
   maintainMqtt();
+
+  // Probe all GPIOs for testing / wrong-pin detection
+  probeAllPins();
 
   // Sample switches
   for (Lane& lane : lanes) {

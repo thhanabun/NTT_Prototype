@@ -32,10 +32,14 @@ client.on('message', (topic, message) => {
       const l1Raw = l1.raw === 0 ? '\x1b[32m0 (GND/Pressed)\x1b[0m' : '\x1b[33m1 (3.3V/Open)\x1b[0m';
       const l2Raw = l2.raw === 0 ? '\x1b[32m0 (GND/Pressed)\x1b[0m' : '\x1b[33m1 (3.3V/Open)\x1b[0m';
 
+      const gndInfo = data.gndPins && data.gndPins.length > 0
+        ? ` | \x1b[1;35m[GND PINS: ${data.gndPins.join(', ')}]\x1b[0m`
+        : '';
+
       process.stdout.write(
         `\r[Uptime ${Math.floor(data.uptimeMs / 1000)}s] ` +
         `Coke (P26): ${l1Status} raw=${l1Raw} | ` +
-        `Water (P27): ${l2Status} raw=${l2Raw} | ` +
+        `Water (P27): ${l2Status} raw=${l2Raw}${gndInfo} | ` +
         `Beacon A: ${data.rssi?.A ?? '-'} dBm   `
       );
     }
