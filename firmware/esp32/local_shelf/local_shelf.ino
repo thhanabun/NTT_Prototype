@@ -7,6 +7,22 @@
 #include <NimBLEDevice.h>
 #include <cmath>
 
+enum BeaconRole {
+  ROLE_BASKET_A = 0,
+  ROLE_BASKET_B = 1,
+  ROLE_EXPENSIVE_ITEM = 2,
+  ROLE_COUNT = 3
+};
+
+struct Lane {
+  uint8_t pin;
+  const char* laneId;
+  const char* sku;
+  bool stablePresent;
+  bool candidatePresent;
+  uint32_t candidateSince;
+};
+
 // ============================================================================
 // Basketly — Main Smart Shelf Firmware (Local MQTT & USB Serial Testing)
 // File: firmware/esp32/esp32.ino
@@ -56,13 +72,26 @@ const uint16_t LOCAL_HTTP_PORT = 3000;
 // MQTT Topics matching AWS IoT schema
 constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
 constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
+constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/+/cmd";
 
 // ----------------------------------------------------------------------------
 // 2. Hardware Microswitch Pins (Roller switches: COM -> GND, NO -> GPIO pin)
 // ----------------------------------------------------------------------------
 constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
 constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
-constexpr uint32_t SWITCH_DEBOUNCE_MS = 40; // 40 ms responsive debounce
+constexpr uint32_t SWITCH_DEBOUNCE_MS = 15; // 15 ms ultra-responsive debounce
+
+// Hardware interrupt counters (captures ANY electrical change, even for 1 microsecond)
+volatile uint32_t cokeEdgeCount = 0;
+volatile uint32_t waterEdgeCount = 0;
+
+void IRAM_ATTR isrCoke() {
+  cokeEdgeCount++;
+}
+
+void IRAM_ATTR isrWater() {
+  waterEdgeCount++;
+}
 
 // Candidate GPIO probe list to detect accidental wrong pin insertion
 constexpr uint8_t PROBE_PINS[] = {25, 26, 27, 14, 13, 32, 33, 4, 18, 19, 21, 22, 23};
@@ -87,13 +116,6 @@ constexpr int CLEAR_MARGIN_DB      = 10;   // 10 dB clear lead threshold
 // ----------------------------------------------------------------------------
 // 4. Data Types & State
 // ----------------------------------------------------------------------------
-enum BeaconRole {
-  ROLE_BASKET_A = 0,
-  ROLE_BASKET_B = 1,
-  ROLE_EXPENSIVE_ITEM = 2,
-  ROLE_COUNT = 3
-};
-
 struct TrackedBeacon {
   const char* label;
   String targetMac;
@@ -113,15 +135,6 @@ TrackedBeacon trackedBeacons[ROLE_COUNT] = {
   {"Basket A",       targetBasketAMac,       BASKET_A_MAJOR,       BASKET_A_MINOR,       "", 0, {}, 0, 0, 0, -59, 0},
   {"Basket B",       targetBasketBMac,       BASKET_B_MAJOR,       BASKET_B_MINOR,       "", 0, {}, 0, 0, 0, -59, 0},
   {"Expensive Item", targetExpensiveItemMac, EXPENSIVE_ITEM_MAJOR, EXPENSIVE_ITEM_MINOR, "", 0, {}, 0, 0, 0, -59, 0}
-};
-
-struct Lane {
-  uint8_t pin;
-  const char* laneId;
-  const char* sku;
-  bool stablePresent;
-  bool candidatePresent;
-  uint32_t candidateSince;
 };
 
 Lane lanes[] = {
@@ -314,6 +327,8 @@ void maintainMqtt() {
 
   if (mqttClient.connect(clientId)) {
     Serial.println("\x1b[32m[MQTT] >>> CONNECTED TO LOCAL BROKER! <<<\x1b[0m");
+    mqttClient.subscribe(TOPIC_COMMAND);
+    mqttClient.subscribe("smartbasket/shelf/SHELF-01/cmd");
     // Publish online birth announcement
     char birthPayload[128];
     snprintf(birthPayload, sizeof(birthPayload),
@@ -347,17 +362,19 @@ void publishTelemetry() {
   }
   snprintf(gndBuf, sizeof(gndBuf), "[%s]", gndList.c_str());
 
-  char telem[384];
+  char telem[512];
   snprintf(telem, sizeof(telem),
     "{\"shelfId\":\"%s\",\"uptimeMs\":%lu,"
     "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d},"
                "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d}],"
     "\"gndPins\":%s,"
+    "\"edges\":{\"coke\":%lu,\"water\":%lu},"
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     SHELF_ID, static_cast<unsigned long>(millis()),
     lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false", raw0,
     lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false", raw1,
     gndBuf,
+    (unsigned long)cokeEdgeCount, (unsigned long)waterEdgeCount,
     freshA   ? String(rssiA).c_str()   : "null",
     freshB   ? String(rssiB).c_str()   : "null",
     freshExp ? String(rssiExp).c_str() : "null");
@@ -449,6 +466,32 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
 
   // Optional HTTP fallback
   postEventToLocalHttp(payload);
+}
+
+void onMqttCommand(char* topic, byte* payload, unsigned int length) {
+  char cmd[64];
+  size_t copyLen = length < sizeof(cmd) - 1 ? length : sizeof(cmd) - 1;
+  memcpy(cmd, payload, copyLen);
+  cmd[copyLen] = '\0';
+
+  Serial.printf("\n>>> [MQTT TEST COMMAND RECEIVED] Topic: %s | Command: '%s' <<<\n", topic, cmd);
+  if (strstr(cmd, "pick") != nullptr) {
+    lanes[0].stablePresent = false;
+    lanes[0].candidatePresent = false;
+    triggerShelfEvent(lanes[0], "PICK");
+  } else if (strstr(cmd, "put") != nullptr) {
+    lanes[0].stablePresent = true;
+    lanes[0].candidatePresent = true;
+    triggerShelfEvent(lanes[0], "PUT_BACK");
+  } else if (strstr(cmd, "water_pick") != nullptr) {
+    lanes[1].stablePresent = false;
+    lanes[1].candidatePresent = false;
+    triggerShelfEvent(lanes[1], "PICK");
+  } else if (strstr(cmd, "water_put") != nullptr) {
+    lanes[1].stablePresent = true;
+    lanes[1].candidatePresent = true;
+    triggerShelfEvent(lanes[1], "PUT_BACK");
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -590,11 +633,16 @@ void setup() {
   // Configure MQTT Client
   mqttClient.setServer(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   mqttClient.setBufferSize(1024);
+  mqttClient.setCallback(onMqttCommand);
 
   // Initialize probe pins to catch wrong pin wiring
   for (uint8_t p : PROBE_PINS) {
     pinMode(p, INPUT_PULLUP);
   }
+
+  // Attach hardware interrupts on switch pins to capture any edge
+  attachInterrupt(digitalPinToInterrupt(COKE_SWITCH_PIN), isrCoke, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(WATER_SWITCH_PIN), isrWater, CHANGE);
 
   // Initialize switches without firing events
   for (Lane& lane : lanes) {
