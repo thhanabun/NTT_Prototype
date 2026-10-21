@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: DynamoDB state table for the Smart Basket prototype Node API.
+
+Parameters:
+  Stage:
+    Type: String
+    Default: prototype
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Short environment name used in the table name.
+
+Resources:
+  SmartBasketStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "smartbasket-${Stage}-state"
+      AttributeDefinitions:
+        - AttributeName: stateKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: stateKey
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Application
+          Value: SmartBasketPrototype
+        - Key: Stage
+          Value: !Ref Stage
+
+Outputs:
+  StateTableName:
+    Description: DynamoDB table name used by STORE_BACKEND=dynamodb.
+    Value: !Ref SmartBasketStateTable
+  StateTableArn:
+    Description: Attach the scoped application IAM policy to the app's AWS identity.
+    Value: !GetAtt SmartBasketStateTable.Arn

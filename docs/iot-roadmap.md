@@ -5,10 +5,10 @@ Accepted on 2026-10-09. This is the primary plan for IoT work in Basketly. It ta
 ## Delivery order and equipment
 
 1. ESP32 and two switches: real shelf events into the local app.
-2. Three DX-CP101 BLE beacons: Basket A, Basket B and one high-value item.
+2. Three iBeacon Bluetooth IP67 tags: Basket A, Basket B and one high-value item.
 3. AWS IoT Core: MQTT/TLS device communication, with the local app retained for validation.
 
-Use one ESP32-WROOM-32, two KW11-N/KW12 roller microswitches and three DX-CP101 beacons. The first physical demo has one product per switch. Two-item lane counting is a later mechanical upgrade.
+Use one ESP32-WROOM-32, one KW11-N and one KW12 roller microswitch, and three iBeacon Bluetooth IP67 tags. The first physical demo has one product per switch. Two-item lane counting is a later mechanical upgrade.
 
 The high-value item's beacon initially provides shelf proximity observations. It does not prove which basket carries the item. Another location requires another receiver. BLE is the prototype choice for this item; a future Wiliot integration is outside these milestones.
 
@@ -27,13 +27,13 @@ Confirm COM and NO using terminal markings or a continuity test. Configure both 
 
 ### Firmware and connection
 
-- Extend the existing sketch with SERIAL, LOCAL_HTTP and AWS_MQTT transport modes. BLE can be disabled independently.
+- The local sketch supports MQTT and optional HTTP using local secrets.h; the AWS sketch uses MQTT/TLS. Both retain events until application acknowledgement.
 - Validate switches through USB serial first; then POST events to the existing /api/events endpoint.
 - Run the laptop server with HOST=0.0.0.0 on a private network. Configure the ESP32 with the laptop's LAN address; both devices use the same network.
 - Preserve the existing event fields: event ID, shelf, lane, SKU, event type and basket RSSI. Before beacons arrive, send rssi: {A: null, B: null}.
 - Initialize switch states at startup without emitting an event. Require 80 ms of stable input before emitting PICK or PUT_BACK.
 - Sample switches independently of network requests so reconnects cannot hide transitions.
-- Retain the eight-event RAM queue. Retry the same event ID until API acknowledgement; expose overflow and validation failures.
+- Retain up to eight events in RAM. Retry the same event ID until the local API bridge acknowledges ingestion; expose queue overflow over USB serial.
 - Generate event IDs using a boot identifier and sequence number. Omit the device timestamp until time is synchronized.
 - With no BLE evidence, route events to existing staff review. Staff can approve events into an active basket; do not synthesize basket readings.
 
@@ -52,6 +52,8 @@ Completion: removing/replacing either product appears in the staff dashboard and
 - Scan continuously using NimBLE-Arduino. Store timestamped samples and take the median of up to five readings from the preceding five seconds.
 - Send null when a basket has no fresh samples. Start with the existing 10 dB basket comparison threshold and calibrate it on the physical shelf.
 - Preserve existing confirmation/review behavior for missing, tied or ambiguous basket evidence.
+
+The current cart-event firmware uses the Basket A/B tags only. The third high-value-item telemetry/tag monitor is a separate scope and is not required to assign cart events.
 
 ### Telemetry and app interfaces
 
@@ -75,7 +77,9 @@ Show last-seen time and RSSI history. Label the receiver SHELF-01. Reception mea
 - Have the bridge acknowledge events only after successful API ingestion; firmware retains queued events until that acknowledgement arrives.
 - Mark queued events as delayed and route them to staff review, preventing old proximity evidence from automatically changing carts.
 
-This establishes a real AWS device path. Lambda/DynamoDB and a hosted application are a subsequent backend milestone.
+The source implementation is in `scripts/iot-bridge.mjs`, `infra/aws-iot/policies/` and `firmware/esp32/local_shelf/local_shelf.ino` and `firmware/esp32/aws_shelf/aws_shelf.ino`. AWS resource creation, certificates and physical verification remain operator steps.
+
+This establishes the AWS device path and now includes an optional DynamoDB persistence adapter for the existing Node API. The API still runs locally and consumes the state through one versioned prototype item. Lambda/API Gateway, a normalized multi-item data model, Step Functions and a hosted application are subsequent backend milestones.
 
 ## Verification and acceptance
 
@@ -94,6 +98,6 @@ RAM-queued events can be lost on power failure. Persistent buffering, two-item l
 
 - [ESP32 listing](https://www.modulemore.com/product/128/esp32-wroom-32-dev-board-wifi-bt-ble-mcu)
 - [Roller microswitch listing](https://www.modulemore.com/product/2128/%E0%B8%A5%E0%B8%B4%E0%B8%A1%E0%B8%B4%E0%B8%95%E0%B8%AA%E0%B8%A7%E0%B8%B4%E0%B8%95%E0%B8%8B%E0%B9%8C-limit-switch-kw11-n-kw12-micro-switch-with-red-wheel)
-- [DX-CP101 manufacturer manual](https://www.szdx-smart.com/static/upload/2026/03/20/202603207486.pdf)
+- iBeacon Bluetooth IP67 tags: configure a shared UUID and unique major/minor values using the tag vendor's supported app before pairing with the firmware.
 - [Espressif GPIO documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/gpio.html)
 - [AWS IoT certificates](https://docs.aws.amazon.com/iot/latest/developerguide/x509-client-certs.html)

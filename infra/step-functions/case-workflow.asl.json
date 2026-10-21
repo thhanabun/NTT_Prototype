@@ -1,0 +1,134 @@
+{
+  "Comment": "Smart Basket case investigation and human approval workflow. The API must resume callback tasks with SendTaskSuccess after a validated customer/staff decision.",
+  "StartAt": "Investigate",
+  "States": {
+    "Investigate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName.$": "$.caseManagerFunctionArn",
+        "Payload": { "caseId.$": "$.caseId" }
+      },
+      "ResultSelector": {
+        "caseId.$": "$.Payload.caseId",
+        "candidate.$": "$.Payload.candidate",
+        "confidence.$": "$.Payload.confidence",
+        "nextAction.$": "$.Payload.nextAction",
+        "proposedAction.$": "$.Payload.proposedAction",
+        "reason.$": "$.Payload.reason"
+      },
+      "ResultPath": "$.investigation",
+      "Next": "RouteByPolicy"
+    },
+    "RouteByPolicy": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.investigation.nextAction",
+          "StringEquals": "CUSTOMER_CONFIRM",
+          "Next": "CustomerConfirmation"
+        },
+        {
+          "Variable": "$.investigation.nextAction",
+          "StringEquals": "STAFF_HITL",
+          "Next": "StaffApproval"
+        }
+      ],
+      "Default": "InvalidResolution"
+    },
+    "CustomerConfirmation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "TimeoutSeconds": 120,
+      "Parameters": {
+        "FunctionName.$": "$.customerHandoffFunctionArn",
+        "Payload": {
+          "taskToken.$": "$$.Task.Token",
+          "caseId.$": "$.caseId",
+          "caseType": "CUSTOMER_CONFIRM",
+          "candidate.$": "$.investigation.candidate",
+          "confidence.$": "$.investigation.confidence"
+        }
+      },
+      "ResultPath": "$.humanDecision",
+      "Next": "Validate",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.customerTimeout",
+          "Next": "StaffApproval"
+        }
+      ]
+    },
+    "StaffApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName.$": "$.staffHandoffFunctionArn",
+        "Payload": {
+          "taskToken.$": "$$.Task.Token",
+          "caseId.$": "$.caseId",
+          "caseType": "STAFF_HITL",
+          "candidate.$": "$.investigation.candidate",
+          "confidence.$": "$.investigation.confidence",
+          "reason.$": "$.investigation.reason"
+        }
+      },
+      "ResultPath": "$.humanDecision",
+      "Next": "Validate"
+    },
+    "Validate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName.$": "$.validatorFunctionArn",
+        "Payload": {
+          "caseId.$": "$.caseId",
+          "decision.$": "$.humanDecision"
+        }
+      },
+      "ResultSelector": {
+        "caseId.$": "$.Payload.caseId",
+        "valid.$": "$.Payload.valid",
+        "status.$": "$.Payload.status",
+        "message.$": "$.Payload.message"
+      },
+      "ResultPath": "$.validation",
+      "Next": "RouteValidation"
+    },
+    "RouteValidation": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.validation.valid",
+          "BooleanEquals": true,
+          "Next": "Close"
+        }
+      ],
+      "Default": "InvalidResolution"
+    },
+    "Close": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName.$": "$.auditWriterFunctionArn",
+        "Payload": {
+          "action": "CASE_WORKFLOW_COMPLETED",
+          "actor": "STEP_FUNCTIONS",
+          "details": {
+            "caseId.$": "$.caseId",
+            "valid.$": "$.validation.valid",
+            "status.$": "$.validation.status"
+          }
+        }
+      },
+      "ResultPath": "$.audit",
+      "End": true
+    },
+    "InvalidResolution": {
+      "Type": "Fail",
+      "Error": "SmartBasket.InvalidResolution",
+      "Cause": "The case has no valid, recorded human resolution."
+    }
+  }
+}

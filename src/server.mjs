@@ -1,38 +1,23 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  checkout,
-  createStore,
-  customerDecision,
-  processShelfEvent,
-  snapshot,
-  staffDecision,
-  startSession,
-} from "./domain.mjs";
+import { createRepository } from "./store-repository.mjs";
+import { createPrototypeApplication } from "./application.mjs";
+import { logEvent } from "./logger.mjs";
 
 const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));
 const dataDir = resolve(root, "../data");
-const statePath = resolve(dataDir, "demo-state.json");
+const statePath = resolve(process.env.STORE_PATH || resolve(dataDir, "demo-state.json"));
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || "127.0.0.1";
-function loadStore() {
-  try {
-    const stored = JSON.parse(readFileSync(statePath, "utf8"));
-    if (stored.products && stored.shelf && stored.carts && stored.cases) return stored;
-  } catch {}
-  return createStore();
-}
-
-function saveStore() {
-  mkdirSync(dataDir, { recursive: true });
-  writeFileSync(statePath, JSON.stringify(store));
-}
-
-let store = loadStore();
+const repository = createRepository({
+  backend: process.env.STORE_BACKEND || "local",
+  statePath,
+  tableName: process.env.DYNAMODB_TABLE_NAME,
+});
 const subscribers = new Set();
+let application;
 
 function sendJson(response, status, value) {
   response.writeHead(status, {
@@ -43,9 +28,16 @@ function sendJson(response, status, value) {
 }
 
 function publish() {
-  const message = "event: state\ndata: " + JSON.stringify(snapshot(store)) + "\n\n";
+  const message = "event: state\ndata: " + JSON.stringify(application.getSnapshot()) + "\n\n";
   for (const response of subscribers) response.write(message);
 }
+
+application = createPrototypeApplication({
+  repository,
+  onStateChange: publish,
+  agentProvider: process.env.AGENT_PROVIDER || "laya",
+});
+await application.init();
 
 async function readJson(request) {
   const chunks = [];
@@ -61,9 +53,10 @@ async function readJson(request) {
 
 async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/state") {
-    return sendJson(response, 200, snapshot(store));
+    return sendJson(response, 200, await application.getState());
   }
   if (request.method === "GET" && url.pathname === "/api/stream") {
+    const state = await application.getState();
     response.writeHead(200, {
       "content-type": "text/event-stream",
       "cache-control": "no-cache, no-transform",
@@ -71,7 +64,7 @@ async function handleApi(request, response, url) {
       "x-accel-buffering": "no",
     });
     response.write("retry: 1500\n\n");
-    response.write("event: state\ndata: " + JSON.stringify(snapshot(store)) + "\n\n");
+    response.write("event: state\ndata: " + JSON.stringify(state) + "\n\n");
     subscribers.add(response);
     const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
     response.on("close", () => {
@@ -81,47 +74,35 @@ async function handleApi(request, response, url) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/audit") {
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit")) || 100));
+    const caseId = url.searchParams.get("caseId");
+    const eventId = url.searchParams.get("eventId");
+    return sendJson(response, 200, await application.getAudit({ caseId, eventId, limit }));
+  }
+
   const body = await readJson(request);
   if (request.method === "POST" && url.pathname === "/api/sessions") {
-    const session = startSession(store, String(body.basketId || "").toUpperCase());
-    saveStore();
-    publish();
+    const session = await application.startSession(String(body.basketId || "").toUpperCase());
     return sendJson(response, 201, { session });
   }
   if (request.method === "POST" && url.pathname === "/api/events") {
-    const result = processShelfEvent(store, body);
-    if (!result.duplicate) {
-      saveStore();
-      publish();
-    }
+    const result = await application.processShelfEvent(body);
     return sendJson(response, 200, result);
   }
   if (request.method === "POST" && url.pathname === "/api/reset") {
-    store = createStore();
-    saveStore();
-    publish();
+    await application.reset();
     return sendJson(response, 200, { ok: true });
   }
   if (request.method === "POST" && url.pathname === "/api/checkout") {
-    const order = checkout(store, String(body.basketId || "").toUpperCase());
-    saveStore();
-    publish();
+    const order = await application.checkout(String(body.basketId || "").toUpperCase());
     return sendJson(response, 200, { order });
   }
 
   const caseRoute = url.pathname.match(/^\/api\/cases\/([^/]+)\/(customer|staff)$/);
   if (request.method === "POST" && caseRoute) {
     const caseId = decodeURIComponent(caseRoute[1]);
-    const caseItem = caseRoute[2] === "customer"
-      ? customerDecision(store, caseId, String(body.answer || "").toUpperCase())
-      : staffDecision(
-          store,
-          caseId,
-          String(body.decision || "").toUpperCase(),
-          String(body.basketId || "").toUpperCase(),
-        );
-    saveStore();
-    publish();
+    const caseItem = await application.decideCase(caseId, caseRoute[2], body);
     return sendJson(response, 200, { case: caseItem });
   }
   return sendJson(response, 404, { error: "API route not found" });
@@ -170,6 +151,11 @@ const server = createServer(async (request, response) => {
     }
     await serveStatic(response, url.pathname);
   } catch (error) {
+    logEvent("ERROR", "HTTP_REQUEST_FAILED", {
+      method: request.method,
+      path: request.url,
+      message: error.message || "Request failed",
+    });
     const status = error instanceof SyntaxError ? 400 : 409;
     if (!response.headersSent) sendJson(response, status, { error: error.message || "Request failed" });
     else response.end();
