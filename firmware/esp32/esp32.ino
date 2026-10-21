@@ -330,15 +330,18 @@ void publishTelemetry() {
   const int8_t rssiB = getMedianRssi(ROLE_BASKET_B, freshB);
   const int8_t rssiExp = getMedianRssi(ROLE_EXPENSIVE_ITEM, freshExp);
 
+  const int raw0 = digitalRead(lanes[0].pin);
+  const int raw1 = digitalRead(lanes[1].pin);
+
   char telem[384];
   snprintf(telem, sizeof(telem),
     "{\"shelfId\":\"%s\",\"uptimeMs\":%lu,"
-    "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s},"
-               "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s}],"
+    "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d},"
+               "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d}],"
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     SHELF_ID, static_cast<unsigned long>(millis()),
-    lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false",
-    lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false",
+    lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false", raw0,
+    lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false", raw1,
     freshA   ? String(rssiA).c_str()   : "null",
     freshB   ? String(rssiB).c_str()   : "null",
     freshExp ? String(rssiExp).c_str() : "null");
@@ -436,10 +439,13 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
 // 9. Switch Sampling (Active-Low Debounce)
 // ----------------------------------------------------------------------------
 void sampleLane(Lane& lane) {
-  const bool present = (digitalRead(lane.pin) == LOW);
+  const int rawPin = digitalRead(lane.pin);
+  const bool present = (rawPin == LOW);
   const uint32_t now = millis();
 
   if (present != lane.candidatePresent) {
+    Serial.printf("[SWITCH] Pin %d (%s) raw level -> %d (%s)\n",
+                  lane.pin, lane.laneId, rawPin, present ? "LOW/CLOSED" : "HIGH/OPEN");
     lane.candidatePresent = present;
     lane.candidateSince = now;
     return;
@@ -487,10 +493,14 @@ void printDashboard() {
                 LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   Serial.println("------------------------------------------------------------------");
   Serial.println(" PHYSICAL SWITCHES:");
-  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d)\n",
-                lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "PRESENT" : "EMPTY", lanes[0].pin);
-  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d)\n",
-                lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "PRESENT" : "EMPTY", lanes[1].pin);
+  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d | Raw Pin: %d [%s])\n",
+                lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "PRESENT" : "EMPTY",
+                lanes[0].pin, digitalRead(lanes[0].pin),
+                digitalRead(lanes[0].pin) == LOW ? "GND / PRESSED" : "3.3V / OPEN");
+  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d | Raw Pin: %d [%s])\n",
+                lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "PRESENT" : "EMPTY",
+                lanes[1].pin, digitalRead(lanes[1].pin),
+                digitalRead(lanes[1].pin) == LOW ? "GND / PRESSED" : "3.3V / OPEN");
 
   Serial.println(" BLE BEACONS (3 Tags):");
   // Basket A

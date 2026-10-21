@@ -9,7 +9,13 @@
 
 // ============================================================================
 // Basketly — Main Smart Shelf Firmware (Local MQTT & USB Serial Testing)
-// File: firmware/esp32/local_shelf/local_shelf.ino
+// File: firmware/esp32/esp32.ino
+// 
+// Use this sketch for:
+//   1. Local testing with USB Serial Monitor.
+//   2. Local MQTT publishing (Port 1883, non-TLS) to your local broker / laptop.
+//   3. Optional HTTP POST fallback to laptop prototype (/api/events).
+//   For AWS IoT Core MQTT/TLS deployment, see: firmware/esp32/aws_shelf/aws_shelf.ino
 // ============================================================================
 
 // ----------------------------------------------------------------------------
@@ -21,16 +27,14 @@
 #elif __has_include("../secrets.h")
   #include "../secrets.h"
   #define HAS_LOCAL_CONFIG 1
-#elif __has_include("../wifi_test/secrets.h")
-  #include "../wifi_test/secrets.h"
+#elif __has_include("wifi_test/secrets.h")
+  #include "wifi_test/secrets.h"
   #define HAS_LOCAL_CONFIG 1
 #endif
 
 #ifndef HAS_LOCAL_CONFIG
-  constexpr char WIFI_SSID[] = "3510";
-  constexpr char WIFI_PASSWORD[] = "75492549";
-  constexpr char WIFI_FALLBACK_SSID[] = "Sn2";
-  constexpr char WIFI_FALLBACK_PASSWORD[] = "12345678";
+  constexpr char WIFI_SSID[] = "Sn2";
+  constexpr char WIFI_PASSWORD[] = "12345678";
   constexpr char LOCAL_MQTT_HOST[] = "192.168.100.15";
   constexpr uint16_t LOCAL_MQTT_PORT = 1883;
   constexpr char BASKET_A_MAC[]       = "48:87:2d:9e:3e:c5";
@@ -38,15 +42,18 @@
   constexpr char EXPENSIVE_ITEM_MAC[] = "48:87:2d:9e:3e:49";
 #endif
 
+// Target MAC String references for auto-normalizing comparison
 String targetBasketAMac       = BASKET_A_MAC;
 String targetBasketBMac       = BASKET_B_MAC;
 String targetExpensiveItemMac = EXPENSIVE_ITEM_MAC;
 
+// Enable Local MQTT and/or HTTP
 bool ENABLE_LOCAL_MQTT = true;
 bool ENABLE_LOCAL_HTTP = false;
 const char* LOCAL_HTTP_HOST = "192.168.100.15";
 const uint16_t LOCAL_HTTP_PORT = 3000;
 
+// MQTT Topics matching AWS IoT schema
 constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
 constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
 
@@ -60,6 +67,7 @@ constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // 80 ms stable debounce
 // ----------------------------------------------------------------------------
 // 3. BLE Beacons Configuration (3 Tags: Basket A, Basket B, Expensive Product)
 // ----------------------------------------------------------------------------
+// Standard iBeacon Major / Minor identities (docs/iot-roadmap.md)
 constexpr uint16_t BASKET_A_MAJOR       = 1;
 constexpr uint16_t BASKET_A_MINOR       = 1;
 constexpr uint16_t BASKET_B_MAJOR       = 1;
@@ -292,7 +300,7 @@ void maintainMqtt() {
   }
 
   const uint32_t now = millis();
-  if (now - lastMqttRetryMs < 3000) return;
+  if (now - lastMqttRetryMs < 5000) return; // Retry every 5s without blocking
   lastMqttRetryMs = now;
 
   char clientId[32];
@@ -303,13 +311,14 @@ void maintainMqtt() {
 
   if (mqttClient.connect(clientId)) {
     Serial.println("\x1b[32m[MQTT] >>> CONNECTED TO LOCAL BROKER! <<<\x1b[0m");
+    // Publish online birth announcement
     char birthPayload[128];
     snprintf(birthPayload, sizeof(birthPayload),
              "{\"shelfId\":\"%s\",\"status\":\"ONLINE\",\"bootId\":\"%04x\"}",
              SHELF_ID, bootId);
     mqttClient.publish(TOPIC_TELEMETRY, birthPayload);
   } else {
-    Serial.printf("[MQTT] Connect failed (state=%d), retrying in 3s\n", mqttClient.state());
+    Serial.printf("[MQTT] Connect failed (rc=%d), retry in 5s\n", mqttClient.state());
   }
 }
 
@@ -321,15 +330,18 @@ void publishTelemetry() {
   const int8_t rssiB = getMedianRssi(ROLE_BASKET_B, freshB);
   const int8_t rssiExp = getMedianRssi(ROLE_EXPENSIVE_ITEM, freshExp);
 
+  const int raw0 = digitalRead(lanes[0].pin);
+  const int raw1 = digitalRead(lanes[1].pin);
+
   char telem[384];
   snprintf(telem, sizeof(telem),
     "{\"shelfId\":\"%s\",\"uptimeMs\":%lu,"
-    "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s},"
-               "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s}],"
+    "\"lanes\":[{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d},"
+               "{\"laneId\":\"%s\",\"sku\":\"%s\",\"present\":%s,\"raw\":%d}],"
     "\"rssi\":{\"A\":%s,\"B\":%s,\"HV01\":%s}}",
     SHELF_ID, static_cast<unsigned long>(millis()),
-    lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false",
-    lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false",
+    lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "true" : "false", raw0,
+    lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "true" : "false", raw1,
     freshA   ? String(rssiA).c_str()   : "null",
     freshB   ? String(rssiB).c_str()   : "null",
     freshExp ? String(rssiExp).c_str() : "null");
@@ -376,6 +388,7 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   char eventId[40];
   snprintf(eventId, sizeof(eventId), "esp32-%04x-%04lu", bootId, static_cast<unsigned long>(++eventSeq));
 
+  // Build JSON payload conforming to schema
   char payload[384];
   snprintf(payload, sizeof(payload),
     "{\"eventId\":\"%s\",\"shelfId\":\"%s\",\"laneId\":\"%s\",\"sku\":\"%s\","
@@ -386,6 +399,7 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
     freshB   ? String(rssiB).c_str()   : "null",
     freshExp ? String(rssiExp).c_str() : "null");
 
+  // Visual Event Banner on Serial Monitor
   Serial.println("\n******************************************************************");
   Serial.printf(">>> [EVENT TRIGGERED] %s (%s): %s <<<\n", lane.laneId, lane.sku, eventType);
   Serial.printf("  Event ID   : %s\n", eventId);
@@ -406,6 +420,7 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
   Serial.printf("  JSON       : %s\n", payload);
   Serial.println("******************************************************************");
 
+  // Dispatch via Local MQTT
   if (ENABLE_LOCAL_MQTT && mqttClient.connected()) {
     if (mqttClient.publish(TOPIC_EVENTS, payload)) {
       Serial.printf("[MQTT] >>> Published event to %s <<<\n", TOPIC_EVENTS);
@@ -416,6 +431,7 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
     Serial.println("[MQTT] Not connected to broker. Event logged to Serial only.");
   }
 
+  // Optional HTTP fallback
   postEventToLocalHttp(payload);
 }
 
@@ -423,10 +439,13 @@ void triggerShelfEvent(const Lane& lane, const char* eventType) {
 // 9. Switch Sampling (Active-Low Debounce)
 // ----------------------------------------------------------------------------
 void sampleLane(Lane& lane) {
-  const bool present = (digitalRead(lane.pin) == LOW);
+  const int rawPin = digitalRead(lane.pin);
+  const bool present = (rawPin == LOW);
   const uint32_t now = millis();
 
   if (present != lane.candidatePresent) {
+    Serial.printf("[SWITCH] Pin %d (%s) raw level -> %d (%s)\n",
+                  lane.pin, lane.laneId, rawPin, present ? "LOW/CLOSED" : "HIGH/OPEN");
     lane.candidatePresent = present;
     lane.candidateSince = now;
     return;
@@ -474,10 +493,14 @@ void printDashboard() {
                 LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   Serial.println("------------------------------------------------------------------");
   Serial.println(" PHYSICAL SWITCHES:");
-  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d)\n",
-                lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "PRESENT" : "EMPTY", lanes[0].pin);
-  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d)\n",
-                lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "PRESENT" : "EMPTY", lanes[1].pin);
+  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d | Raw Pin: %d [%s])\n",
+                lanes[0].laneId, lanes[0].sku, lanes[0].stablePresent ? "PRESENT" : "EMPTY",
+                lanes[0].pin, digitalRead(lanes[0].pin),
+                digitalRead(lanes[0].pin) == LOW ? "GND / PRESSED" : "3.3V / OPEN");
+  Serial.printf("   - %s (%-5s) : [ %-7s ] (Pin %d | Raw Pin: %d [%s])\n",
+                lanes[1].laneId, lanes[1].sku, lanes[1].stablePresent ? "PRESENT" : "EMPTY",
+                lanes[1].pin, digitalRead(lanes[1].pin),
+                digitalRead(lanes[1].pin) == LOW ? "GND / PRESSED" : "3.3V / OPEN");
 
   Serial.println(" BLE BEACONS (3 Tags):");
   // Basket A
@@ -520,6 +543,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
 
+  // Initialize NimBLE stack FIRST before querying MAC or scan
   NimBLEDevice::init(SHELF_ID);
 
   bootId = static_cast<uint16_t>(esp_random() & 0xffff);
@@ -534,9 +558,11 @@ void setup() {
   Serial.printf("Target Tags   : Basket A, Basket B, Expensive Item\n");
   Serial.println("==================================================================\n");
 
+  // Configure MQTT Client
   mqttClient.setServer(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   mqttClient.setBufferSize(1024);
 
+  // Initialize switches without firing events
   for (Lane& lane : lanes) {
     pinMode(lane.pin, INPUT_PULLUP);
     lane.stablePresent = (digitalRead(lane.pin) == LOW);
@@ -545,6 +571,7 @@ void setup() {
     Serial.printf("[INIT] %s (%s): %s\n", lane.laneId, lane.sku, lane.stablePresent ? "PRESENT" : "EMPTY");
   }
 
+  // Register Wi-Fi Access Points (Primary Router 2.4 GHz + Fallback Hotspot)
   WiFi.mode(WIFI_STA);
   wifiMulti.addAP("3510", "75492549");
   wifiMulti.addAP("Sn2", "12345678");
@@ -556,6 +583,7 @@ void setup() {
   #endif
   Serial.println("[Wi-Fi] Auto-connecting to available network (3510 / Sn2)...");
 
+  // Initialize BLE Scanner
   pBLEScan = NimBLEDevice::getScan();
   pBLEScan->setScanCallbacks(&scanCallbacks, true);
   pBLEScan->setActiveScan(true);
@@ -572,18 +600,22 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
 
+  // Maintain Wi-Fi and Local MQTT connections
   maintainWifi();
   maintainMqtt();
 
+  // Sample switches
   for (Lane& lane : lanes) {
     sampleLane(lane);
   }
 
+  // Periodic Telemetry (1 Hz)
   if (now - lastTelemetryMs >= 1000) {
     lastTelemetryMs = now;
     publishTelemetry();
   }
 
+  // Periodically display monitor dashboard (every 2 seconds)
   if (now - lastDashboardMs >= 2000) {
     lastDashboardMs = now;
     printDashboard();
