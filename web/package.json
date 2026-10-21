@@ -9,7 +9,8 @@
     "start": "next start -p 3001",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "node tests/shopper.e2e.mjs && node tests/admin.e2e.mjs && node tests/realtime.e2e.mjs",
+    "test:e2e": "node tests/auth.e2e.mjs && node tests/shopper.e2e.mjs && node tests/admin.e2e.mjs && node tests/realtime.e2e.mjs",
+    "test:auth": "node tests/auth.e2e.mjs",
     "test:admin": "node tests/admin.e2e.mjs",
     "test:realtime": "node tests/realtime.e2e.mjs"
   },

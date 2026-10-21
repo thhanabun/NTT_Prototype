@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { startLocalApi } from './helpers/local-api.mjs';
+import { loginAdmin } from './helpers/mock-login.mjs';
 
 const api = await startLocalApi();
 let browser;
@@ -33,6 +34,7 @@ try {
   };
   const detail = () => page.getByRole('region', { name: /^CASE-/ });
   await page.goto(`${process.env.SHOPPER_TEST_ORIGIN ?? 'http://localhost:3001'}/admin`);
+  await loginAdmin(page);
   await page.getByRole('heading', { name: 'ไม่มีเคสในหมวดนี้' }).waitFor();
   await post('/api/sessions', { basketId: 'A' });
   await post('/api/sessions', { basketId: 'B' });

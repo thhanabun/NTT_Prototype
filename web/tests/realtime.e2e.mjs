@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { startLocalApi } from './helpers/local-api.mjs';
+import { loginAdmin } from './helpers/mock-login.mjs';
 
 const frontend=process.env.SHOPPER_TEST_ORIGIN ?? 'http://localhost:3001';
 const api=await startLocalApi({corsOrigin:new URL(frontend).origin});
@@ -51,6 +52,7 @@ try {
       } catch {await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Test backend stopped'})});}
     });
     await page.goto(frontend+path);
+    if (path === '/admin') await loginAdmin(page);
     await page.getByRole('status').filter({hasText:'Realtime connected'}).waitFor();
     return page;
   }
