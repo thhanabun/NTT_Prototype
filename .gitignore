@@ -3,6 +3,7 @@ node_modules/
 .env.*
 !.env.example
 firmware/esp32/secrets.h
+firmware/esp32/wifi_test/secrets.h
 firmware/esp32/certs/
 infra/.aws-sam/
 data/
