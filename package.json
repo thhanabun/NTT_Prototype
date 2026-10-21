@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "broker": "node tools/mqtt-broker/broker.mjs"
   },
   "engines": {
     "node": ">=20"

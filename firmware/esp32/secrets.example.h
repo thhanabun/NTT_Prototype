@@ -10,8 +10,10 @@
 constexpr char WIFI_SSID[] = "YOUR_WIFI_SSID";
 constexpr char WIFI_PASSWORD[] = "YOUR_WIFI_PASSWORD";
 
-// 2. Local HTTP Backend (Milestone 1 & 2 testing with your laptop)
-constexpr char LOCAL_SERVER_HOST[] = "192.168.1.100";
+// 2. Local MQTT Broker & HTTP Backend (Local testing with your laptop)
+constexpr char LOCAL_MQTT_HOST[]   = "192.168.100.15"; // Laptop IP on same Wi-Fi
+constexpr uint16_t LOCAL_MQTT_PORT = 1883;             // Default MQTT port
+constexpr char LOCAL_SERVER_HOST[] = "192.168.100.15";
 constexpr uint16_t LOCAL_SERVER_PORT = 3000;
 
 // 3. BLE Beacon MAC Addresses (3 Tags: 2 Baskets + 1 Expensive Product)
