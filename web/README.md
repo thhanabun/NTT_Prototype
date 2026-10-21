@@ -14,17 +14,35 @@ In another terminal, start the frontend from this directory:
 
 ```sh
 npm install
-npm run dev
+npm run dev:mock
 ```
 
 The frontend runs at <http://127.0.0.1:3001>. In development, it forwards same-origin `/api/*` requests, including the `/api/stream` Server-Sent Events connection, to `http://127.0.0.1:3000`.
 
 Set `LOCAL_API_ORIGIN` in `.env.local` to change the backend origin. The default is `http://127.0.0.1:3000`; `.env.example` documents that default.
 
+`dev:mock` explicitly enables the development-only Admin login simulation. Plain `npm run dev` leaves Admin unavailable unless `NEXT_PUBLIC_ENABLE_MOCK_AUTH=true` is set in `.env.local`; restart the dev server after changing this flag. Shopper remains accessible either way. Production builds always disable mock login, even if the flag is true. Real Admin access remains unavailable in production until backend authentication is implemented.
+
+## Admin mock login (Phase 7A)
+
+Open `/admin`; signed-out visitors go to `/admin/login` before the dashboard mounts or starts its API/SSE subscription. Use this fictional, publicly displayed test account only:
+
+- Email: `admin@basketly.test`
+- Password: `BasketlyDemo123!`
+
+The form validates empty fields and email format, supports password visibility and keyboard submission, simulates a 500 ms local login delay, and shows incorrect-credential or unavailable-storage errors. It makes no authentication requests and never stores the password.
+
+Successful login stores only the mock email and expiry in this tab's `sessionStorage`. It lasts 30 minutes, survives refresh in that tab, and has no cross-tab synchronization. Browser-created duplicate tabs may initially copy sessionStorage. Logout removes it. **Mock session controls → จำลอง session หมดอายุ** exercises the expiry flow; real expiry also runs on a timer and is checked on focus/page visibility changes. Logout/expiry unmounts Admin and releases its live subscription when no other screen in that tab needs it. New independent tabs start signed out.
+
+This is a UI simulation, not authentication or authorization: the local backend and old port-3000 demo remain unauthenticated, and mock storage can be edited in developer tools. Do not expose the local demo as a protected service. There is no registration, password recovery, real identity provider, AWS credential, Cognito call, Bedrock call, or backend business-rule change in this phase.
+
+For Phase 7B, agree on staff roles, the identity provider, login/logout/session-expiry flows, API authorization, and shopper-owned session access with the backend team. Replace the mock session module and connect the real API/auth adapter; retain the login UI states. Phase 7C will adapt realtime transport and subscription authorization. Phase 8 handles hosting.
+
 ## Routes and API layer
 
 - `/shopper` is the starting route for the shopper workflow.
 - `/admin` is the starting route for the operations dashboard.
+- `/admin/login` is the development mock login form when explicitly enabled.
 - `src/lib/api/types.ts` mirrors the local contract in `../docs/web-app-plan.md`.
 - `src/lib/api/client.ts` contains typed local HTTP requests. `src/lib/api/live-state.ts` owns the shared named `state` event stream and snapshot store.
 
@@ -32,7 +50,7 @@ Both `/shopper` (Phase 4) and `/admin` (Phase 5) use the local backend. `/shoppe
 
 ## Admin local workflow (Phase 5)
 
-Open `http://localhost:3001/admin` with the root backend on port 3000. The dashboard displays reported shelf status, workflow state, active baskets, confirmed carts, RSSI evidence, cases, timelines, and recent events. Both screens now receive automatic updates through Phase 6 realtime. The refresh button remains available for recovery or explicit reload.
+Open `http://localhost:3001/admin` with the root backend on port 3000 and the frontend started with `npm run dev:mock`. Sign in using the mock account above. The dashboard displays reported shelf status, workflow state, active baskets, confirmed carts, RSSI evidence, cases, timelines, and recent events. Both screens receive automatic updates through Phase 6 realtime. The refresh button remains available for recovery or explicit reload.
 
 1. Start Basket A/B sessions in Shopper; Admin basket cards link to the correct Shopper basket.
 2. Expand **Local simulator** at the bottom of Admin (development mode only), choose a lane, and send an event. Simulator events update both Admin and Shopper automatically when realtime is connected.
@@ -43,7 +61,7 @@ Open `http://localhost:3001/admin` with the root backend on port 3000. The dashb
 
 Buttons are locked while mutations are in progress or fresh data is unavailable. Errors retain the last snapshot and refresh authoritative data; an uncertain decision response is not retried automatically.
 
-Limits are shown honestly: case metrics count only the loaded snapshot (up to 30 cases); activity contains up to 20 recent events. RSSI is proximity evidence, not exact location. ONLINE is a backend-reported value without a health timeout. Agent evidence/tool calls are a local mock, not a Bedrock invocation. Staff authentication is not implemented for this localhost demo and remains a cloud/backend integration dependency.
+Limits are shown honestly: case metrics count only the loaded snapshot (up to 30 cases); activity contains up to 20 recent events. RSSI is proximity evidence, not exact location. ONLINE is a backend-reported value without a health timeout. Agent evidence/tool calls are a local mock, not a Bedrock invocation. Phase 7A adds mock staff login UI; real staff authentication and API authorization remain cloud/backend integration dependencies.
 
 Neither route requires AWS for these phases. The frontend uses the same local API through its development proxy; the old port-3000 browser app remains available for comparison.
 
@@ -52,7 +70,7 @@ Neither route requires AWS for these phases. The frontend uses the same local AP
 1. Start the root backend on port 3000 and this frontend on port 3001.
 2. Open `/shopper`, select Basket A or B, and start a session. The selection is stored locally when browser storage is available and reflected in `?basket=A` or `?basket=B`.
 3. Open `/admin` on port 3001, expand Local simulator, and send an event (the original port-3000 simulator also works). Products on the Shopper screen are informational and are not add-to-cart buttons.
-4. Click **อัปเดตตะกร้า** (Refresh basket) to load the latest cart/cases. There is no polling or EventSource subscription on this screen yet; automatic realtime belongs to Phase 6.
+4. Cart/case updates arrive automatically through Phase 6 SSE. Click **อัปเดตตะกร้า** (Refresh basket) for an explicit refresh or recovery. There is no periodic polling.
 5. For an ambiguous event, answer YES/NO. Mutations refresh the server snapshot automatically. YES may still route to staff if backend validation fails; NO routes to staff without changing the cart.
 6. Resolve staff cases in `/admin`; Shopper receives the result automatically. Cases without a candidate can block both baskets.
 7. Mock checkout requires an active session, confirmed items, and backend `payable` status. It creates a local mock order, clears the cart, closes the session, and displays a receipt. No payment is processed.
@@ -81,7 +99,7 @@ Verification commands: `npm run lint`, `npm run typecheck`, and `npm run build`.
 
 ## Browser integration checks
 
-With the frontend dev server running on port 3001:
+With `npm run dev:mock` running on port 3001:
 
 ```sh
 npx playwright install chromium
@@ -92,7 +110,7 @@ The first command downloads a local testing browser; it does not use AWS. `SHOPP
 
 The suite starts a copy of the real backend on an ephemeral port with temporary persistence, forwards only the test browser's API requests to it, and cleans it up. It does not reset the team's `data/demo-state.json` or change the frontend proxy configuration.
 
-`npm run test:e2e` runs Shopper, Admin, and native realtime suites; `npm run test:admin` runs only Admin. Admin checks overview/evidence/filtering, approval/rejection, missing-session/return guards, duplicate submissions, simulator events, stale/concurrent-case/uncertain-response recovery, Shopper consistency, and mobile/desktop/landscape layout. Its server helper is in `tests/helpers/local-api.mjs`. The HTTP workflow suites disable EventSource to verify the manual fallback; `test:realtime` verifies native SSE separately.
+`npm run test:e2e` runs mock auth, Shopper, Admin, and native realtime suites; `npm run test:auth` runs only auth and `npm run test:admin` runs only Admin. Admin/realtime tests sign in through the public mock form. Auth checks include no pre-login API/SSE, validation, keyboard submission, refresh, logout/back navigation, expiry, independent tabs, blocked/invalid storage, live cleanup, guest Shopper, and responsive layout. Set `AUTH_TEST_MODE=disabled` and `SHOPPER_TEST_ORIGIN` to a normal-dev or production server to verify Admin stays unavailable even with a forged mock session. Admin checks overview/evidence/filtering, approval/rejection, missing-session/return guards, duplicate submissions, simulator events, stale/concurrent-case/uncertain-response recovery, Shopper consistency, and mobile/desktop/landscape layout. Its server helper is in `tests/helpers/local-api.mjs`. The HTTP workflow suites disable EventSource to verify the manual fallback; `test:realtime` verifies native SSE separately.
 
 Checks cover session/cart integration, confirmed and duplicate events, customer YES/NO, returns, multiple cases, unknown-zone blocking, duplicate submissions, checkout/receipt/reload, failed requests and uncertain-response recovery, invalid JSON, QR fallback, simulated camera detection/denial/cleanup, responsive widths, and browser runtime/console errors. Camera APIs are simulated for repeatability; physical QR labels and a real phone camera still need a manual device check.
 
@@ -112,4 +130,4 @@ Shopper and Admin share a `useSyncExternalStore` snapshot store within each brow
 
 `npm run test:realtime` uses real native EventSource connections and three tabs against an isolated real backend. Test-only CORS/diagnostic routes are added to its temporary server copy, never to `src/server.mjs`. Checks include shared journeys, one stream per tab, no idle polling, late-GET ordering, backend stop/restart with retained state, stale mutation guards, the retry cap, no mutation replay, responsive connection states, and client-side navigation cleanup.
 
-The team stops after Phase 6 until the cloud backend/API/authentication contract is ready. Phase 7?8 and AWS deployments have not started.
+Phases 1–6 are implemented locally. Phase 7A adds local mock login only; Phase 7B/7C cloud API/auth/realtime integration and Phase 8 hosting wait for the backend/cloud contract and a test-budget agreement. No AWS resources are provisioned or invoked by mock login.
