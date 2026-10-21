@@ -1,15 +1,12 @@
 {
   "name": "mqtt-broker",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Basketly Local MQTT Broker & Event Forwarder",
+  "main": "broker.mjs",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node broker.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "aedes": "^1.2.0",
     "mqtt": "^5.16.1"
