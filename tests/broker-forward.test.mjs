@@ -1,6 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { forwardShelfEvent } from "../tools/mqtt-broker/forward-event.mjs";
+
+test("AWS device policy permits the hardware events/telemetry topics and only its own client", () => {
+  const policy = JSON.parse(readFileSync(new URL("../infra/aws-iot/policies/device.json", import.meta.url)));
+  const connect = policy.Statement.find((item) => item.Action === "iot:Connect");
+  assert.equal(connect.Resource, "arn:aws:iot:REGION:ACCOUNT_ID:client/SHELF-01");
+  const publish = policy.Statement.find((item) => item.Action === "iot:Publish");
+  assert.deepEqual(publish.Resource, [
+    "arn:aws:iot:REGION:ACCOUNT_ID:topic/smartbasket/shelf/SHELF-01/events",
+    "arn:aws:iot:REGION:ACCOUNT_ID:topic/smartbasket/shelf/SHELF-01/telemetry",
+  ]);
+});
 
 test("Hardware broker ACK follows successful API ingestion; retries preserve ID/delayed evidence", async () => {
   const steps = [];

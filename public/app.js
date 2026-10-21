@@ -178,8 +178,10 @@ function renderCase(item) {
   const evidenceText = "RSSI A <strong>" + (Number.isFinite(rssi.A) ? rssi.A + " dBm" : "—") +
     "</strong> · B <strong>" + (Number.isFinite(rssi.B) ? rssi.B + " dBm" : "—") + "</strong>" +
     (Number.isFinite(item.evidence.marginDb) ? "<br>Signal margin <strong>" + item.evidence.marginDb + " dB</strong>" : "<br>Zone <strong>unknown</strong>");
-  const toolChips = item.toolCalls.length
-    ? '<div class="case-tools">' + item.toolCalls.map((tool) => '<span class="tool-chip">✓ ' + esc(tool.name) + '</span>').join("") + "</div>"
+  const calls = item.toolCalls || [];
+  const toolChips = calls.length
+    ? '<div class="case-tools">' + calls.map((tool) => '<span class="tool-chip' + (tool.status === "OK" ? "" : " tool-error") + '" title="' + esc(tool.summary || tool.status) + '">' +
+      (tool.status === "OK" ? "✓ " : "× ") + esc(tool.name) + '</span>').join("") + "</div>"
     : '<div class="case-tools"><span class="tool-chip">Deterministic policy</span></div>';
   let actions = "";
   if (isStaff) {
@@ -194,9 +196,13 @@ function renderCase(item) {
   const statusText = isStaff ? "STAFF REVIEW" : isCustomer ? "WAITING CUSTOMER" : "CLOSED";
   const resolution = item.resolution ? " · " + item.resolution.actor + " " + item.resolution.decision +
     (item.resolution.basketId ? " · Basket " + item.resolution.basketId : "") : "";
+  const agentBadge = item.agent
+    ? '<span class="agent-badge">' + esc(item.agent.provider) + ' AGENT · ' + esc(item.agent.status) + '</span>'
+    : "";
   const timeline = item.timeline.map((entry) =>
     '<div class="timeline-entry"><span>' + timeAgo(entry.at) + '</span><strong>' + esc(entry.action.replaceAll("_", " ")) +
-    '</strong>' + (entry.nextAction ? '<small>→ ' + esc(entry.nextAction) + '</small>' : "") + '</div>',
+    '</strong>' + (entry.tool ? '<small>· ' + esc(entry.tool) + '</small>' : "") +
+    (entry.nextAction ? '<small>→ ' + esc(entry.nextAction) + '</small>' : "") + '</div>',
   ).join("");
   return '<article class="case-item"><div class="case-main"><div class="case-ident"><span class="case-icon' + (isStaff ? " staff" : "") + '">' +
     (isStaff ? "!" : "✳") + '</span><div><strong>' + esc(item.type.replaceAll("_", " ")) + '</strong><small>' + esc(product.name) + ' · ' + item.eventType + '</small>' +
@@ -205,7 +211,7 @@ function renderCase(item) {
     Math.round(item.confidence * 100) + '%</strong></div><div class="confidence-bar"><i style="width:' + Math.round(item.confidence * 100) + '%"></i></div>' + toolChips +
     '</div>' + actions + '</div><div class="case-details"><span class="case-status' + statusClass + '">' + statusText +
     '</span><span>Suggestion <strong>' + esc(item.candidate ? "Basket " + item.candidate : "No basket") + " · " + esc(item.proposedAction) +
-    '</strong></span><span>Next <strong>' + esc(item.nextAction) + '</strong></span><span>' + esc(item.reason) + esc(resolution) + '</span>' +
+    '</strong></span><span>Next <strong>' + esc(item.nextAction) + '</strong></span>' + agentBadge + '<span>' + esc(item.reason) + esc(resolution) + '</span>' +
     '<details class="case-timeline"><summary>Case timeline · ' + item.timeline.length + '</summary><div class="timeline-list">' + timeline + '</div></details></div></article>';
 }
 
@@ -219,18 +225,24 @@ function renderCases() {
 }
 
 function renderEvents() {
-  byId("event-list").innerHTML = state.recentEvents.length
-    ? state.recentEvents.slice(0, 6).map((event) => {
-      const product = state.products.find((item) => item.sku === event.sku);
-      const itemCase = state.cases.find((item) => item.eventId === event.eventId);
-      const detail = itemCase
-        ? itemCase.type.replaceAll("_", " ") + " · " + itemCase.status.replaceAll("_", " ")
-        : "SHELF-01 · " + (event.eventType === "PICK" ? "Confirmed by RSSI policy" : "Shelf sensor");
-      return '<div class="event-row"><span class="event-sign ' + (event.eventType === "PUT_BACK" ? "put" : "") + '">' +
-        (event.eventType === "PICK" ? "↗" : "↙") + '</span><div class="event-copy"><strong>' + esc(event.eventType) + ' · ' + esc(product.name) +
-        '</strong><small>' + esc(detail) + '</small></div><span class="event-time">' + timeAgo(event.receivedAt) + '</span></div>';
+  const entries = (state.auditLog || []).slice(0, 8);
+  byId("event-list").innerHTML = entries.length
+    ? entries.map((entry) => {
+      const details = entry.details || {};
+      const summary = [
+        details.eventType && details.sku ? details.eventType + " · " + details.sku : "",
+        details.basketId ? "Basket " + details.basketId : "",
+        details.tool ? details.tool + (details.summary ? " · " + details.summary : "") : "",
+        details.confidence !== undefined ? "Confidence " + Math.round(details.confidence * 100) + "%" : "",
+        details.caseId || details.eventId || details.orderId || "",
+        details.decision || "",
+      ].filter(Boolean).join(" · ") || entry.actor;
+      return '<div class="event-row"><span class="event-sign audit-sign">' +
+        (entry.action.includes("FAILED") ? "!" : entry.action.includes("AGENT") ? "✳" : "◉") +
+        '</span><div class="event-copy"><strong>' + esc(entry.action.replaceAll("_", " ")) +
+        '</strong><small>' + esc(summary) + '</small></div><span class="event-time">' + timeAgo(entry.at) + '</span></div>';
     }).join("")
-    : '<div class="no-cases">No shelf events yet. Open a basket session and send a simulator event.</div>';
+    : '<div class="no-cases">No audit events yet. Start a session or send a shelf event.</div>';
 }
 
 function render() {

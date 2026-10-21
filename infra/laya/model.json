@@ -1,0 +1,10 @@
+{
+  "repository": "convaiinnovations/laya",
+  "checkpoint": "typed-decisions",
+  "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+  "weightsSha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+  "license": "Apache-2.0",
+  "layaVersion": "0.4.12",
+  "transformersVersion": "5.17.0",
+  "torchVersion": "2.14.1"
+}
