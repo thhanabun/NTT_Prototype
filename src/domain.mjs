@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { deviceState } from "./device-state.mjs";
 
 const PRODUCT_BY_LANE = {
   "LANE-1": "COKE",
@@ -403,7 +404,7 @@ export function checkout(store, basketId) {
   return order;
 }
 
-export function snapshot(store) {
+export function snapshot(store, now = Date.now()) {
   const baskets = BASKETS.map((basketId) => {
     const lines = Object.entries(store.carts[basketId]).map(([sku, quantity]) => ({
       sku,
@@ -428,7 +429,7 @@ export function snapshot(store) {
 
   return {
     products: Object.values(store.products),
-    shelf: { ...store.shelf },
+    shelf: { ...store.shelf, device: deviceState(store, now) },
     baskets,
     cases: store.cases.slice(0, 30),
     recentEvents: store.events.slice(0, 20),

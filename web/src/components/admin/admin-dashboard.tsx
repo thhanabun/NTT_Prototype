@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CircleAlert, Clock3, LoaderCircle, Radio, RefreshCw, ShoppingBasket, Signal, Store } from "lucide-react";
+import { CircleAlert, Clock3, LoaderCircle, Radio, RefreshCw, ShoppingBasket, Store } from "lucide-react";
 import { useAdmin } from "./use-admin";
 import { CaseDetails, caseStatusLabel, formatTime } from "./case-details";
 import { StaffActions } from "./staff-actions";
 import { LocalSimulator } from "./local-simulator";
 import { StatQuery } from "./stat-query";
+import { ShelfMonitor } from "./shelf-monitor";
 import { ConnectionStatus } from "@/components/connection-status";
 import styles from "./admin.module.css";
 
@@ -29,11 +30,11 @@ export function AdminDashboard() {
       {admin.notice && <p className={styles.notice} role="status">{admin.notice}</p>}
       {admin.loading && <p className={styles.loading} role="status"><LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> กำลังโหลดข้อมูลร้าน…</p>}
       <section className={styles.metrics} aria-label="Store metrics">
-        {[{label:"SHELF REPORTED STATUS",value:state?.shelf.status ?? "—",icon:Store,note:state?.shelf.shelfId ?? "รอข้อมูล"},{label:"ACTIVE BASKETS",value:state?.baskets.filter((basket)=>basket.session).length ?? "—",icon:ShoppingBasket,note:"Basket A / Basket B"},{label:"OPEN CASES (LOADED)",value:state ? openCases.length : "—",icon:CircleAlert,note:"จากเคสล่าสุดที่โหลด"},{label:"WORKFLOW STATE",value:state?.shelf.fsmState ?? "—",icon:Radio,note:"Deterministic backend policy"}].map(({label,value,icon:Icon,note})=><article className={styles.metric} key={label}><div><span>{label}</span><Icon size={18} aria-hidden="true" /></div><strong>{value}</strong><p>{note}</p></article>)}
+        {[{label:"DEVICE HEARTBEAT",value:state?.shelf.device?.status ?? "UNKNOWN",icon:Store,note:state?.shelf.shelfId ?? "รอข้อมูล"},{label:"ACTIVE BASKETS",value:state?.baskets.filter((basket)=>basket.session).length ?? "—",icon:ShoppingBasket,note:"Basket A / Basket B"},{label:"OPEN CASES (LOADED)",value:state ? openCases.length : "—",icon:CircleAlert,note:"จากเคสล่าสุดที่โหลด"},{label:"WORKFLOW STATE",value:state?.shelf.fsmState ?? "—",icon:Radio,note:"Deterministic backend policy"}].map(({label,value,icon:Icon,note})=><article className={styles.metric} key={label}><div><span>{label}</span><Icon size={18} aria-hidden="true" /></div><strong>{value}</strong><p>{note}</p></article>)}
       </section>
       <StatQuery />
       <div className={styles.overviewGrid}>
-        <section className={styles.card} aria-labelledby="proximity-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>SHELF EVIDENCE</p><h2 id="proximity-heading">Basket proximity</h2></div><Signal size={23} aria-hidden="true" /></div><p className={styles.muted}>RSSI เป็นหลักฐานความใกล้ ไม่ใช่ตำแหน่งที่แน่นอน</p>{(["A","B"] as const).map((id)=>{const reading=state?.shelf.rssi[id];return <div className={styles.signalRow} key={id}><span>Basket {id}</span><div className={styles.signalTrack}><span style={{width:reading===null || reading===undefined ? "0%" : `${Math.max(3,Math.min(100,(reading+100)*1.5))}%`}} /></div><strong>{reading??"—"}{reading!==null && reading!==undefined ? " dBm" : ""}</strong></div>;})}<p className={styles.footnote}>Last shelf event: {formatTime(state?.recentEvents[0]?.receivedAt)}<br />สถานะ ONLINE เป็นค่าที่ backend รายงาน ยังไม่มี heartbeat ตรวจ offline อัตโนมัติ</p></section>
+        <ShelfMonitor shelf={state?.shelf} />
         <section className={styles.card} aria-labelledby="baskets-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>BASKETS</p><h2 id="baskets-heading">ตะกร้าในร้าน</h2></div><ShoppingBasket size={23} aria-hidden="true" /></div><div className={styles.basketGrid}>{state?.baskets.map((basket)=><article className={styles.basket} key={basket.basketId}><div><h3>Basket {basket.basketId}</h3><span className={`${styles.badge} ${basket.session?styles.green:styles.neutral}`}>{basket.session?"Active":"Idle"}</span></div><strong className={styles.basketTotal}>{money(basket.total)}</strong><p>{basket.lines.reduce((sum,line)=>sum+line.quantity,0)} confirmed items · {basket.unresolvedCaseCount} pending</p>{basket.lines.length ? <ul>{basket.lines.map(line=><li key={line.sku}>{line.name} ×{line.quantity}<span>{money(line.subtotal)}</span></li>)}</ul>:<p className={styles.muted}>ยังไม่มีสินค้าที่ยืนยัน</p>}<p className={styles.footnote}>{!basket.session?"ต้องเริ่ม session":basket.unresolvedCaseCount?"รอเคสก่อน checkout":basket.lines.length&&basket.payable?"พร้อม mock checkout":"ตะกร้าว่าง"}</p><Link href={`/shopper?basket=${basket.basketId}`}>เปิด Shopper →</Link></article>)}</div></section>
       </div>
       <div className={styles.caseGrid}>

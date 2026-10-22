@@ -80,10 +80,45 @@ For repeatable browser/MQTT verification, stop the demo Next.js dev server in th
 
 ## Remaining boundaries
 
-- Physical ESP32/switch/BLE signals, shelf calibration and Wi-Fi behavior still require real hardware integration. Firmware compilation was verified in the preceding Hardware review; this change reran native protocol/debounce tests.
+- The original system run used simulated signals. The later live-state check below confirms an actual ESP32 event on the web; calibrated basket attribution, all physical switch/Agent scenarios and Wi-Fi failure behavior remain separate hardware acceptance work.
 - AWS IoT Core TLS, deployed Lambda, live DynamoDB, Step Functions callbacks, Bedrock orchestration, Cognito and cloud hosting were not exercised or deployed. Local Lambda code/SDK contracts are not evidence of live AWS integration.
 - Real Laya returned `NONE` for all three browser system scenarios; all correctly required Staff HITL. Real-model customer confirmation was not reached. Customer YES/NO is covered separately by explicit fixtures, and model attribution accuracy is not established.
 - Local API access remains unauthenticated. Mock login is only a development UI simulation; production Admin remains disabled. The Next.js API proxy remains development-only.
-- MQTT telemetry is logged; device heartbeat/offline inference is not wired to the dashboard. Displayed shelf status remains backend-reported.
+- See the telemetry integration update below for current device heartbeat/offline behavior; transaction FSM and device liveness are separate states.
 - Dependency audit reported nine high findings in development tooling (the braces/glob dependency chain used by shadcn and ESLint). Runtime dependencies had zero findings. No forced major dependency downgrade was applied.
 - Checkout is a mock payment. Audit retention and case/event snapshot limits remain those of the existing prototype.
+
+## Live hardware state update — 22 October 2026
+
+The event path was already connected: physical ESP32 event IDs appeared in the persisted FSM/cases and the web snapshot. The missing path was current device telemetry: it was stored for evidence but did not publish a realtime web update.
+
+```mermaid
+flowchart LR
+  ESP[ESP32 switches / BLE scan] --> MQTT[Local MQTT broker]
+  MQTT -->|events + application ACK| FSM[Compute / transaction FSM]
+  MQTT -->|telemetry, approximately 1 Hz| Collector[Telemetry collector]
+  FSM --> DB[Local JSON repository]
+  Collector --> DB
+  DB --> Snapshot[State snapshot]
+  Snapshot -->|native SSE + Next.js API proxy| Web[Shopper / Admin]
+  Snapshot --> Device[Current device state]
+  Device -->|silence over 5 seconds| Offline[OFFLINE, clear stale sensor readings]
+```
+
+- `shelf.device` exposes current DEVICE heartbeat, RSSI A/B/HV01, two switch lanes, uptime, queue and dropped-event count. Admin's **LIVE HARDWARE / Basket proximity** card renders these values from the same live state as carts and cases.
+- Only DEVICE telemetry supplies the hardware heartbeat. Mock telemetry is retained as labelled investigation evidence and cannot impersonate a live-device update.
+- No DEVICE sample means `UNKNOWN`. A received sample is `ONLINE` for five seconds, then `OFFLINE`; an approximately one-second server timer publishes expiry without waiting for a GET. Stale RSSI, lanes and counters are cleared until telemetry returns.
+- Current readings cannot rewrite an earlier event's RSSI, transaction FSM, Agent evidence or cart. Missing Basket B remains `ZONE_UNKNOWN` / Staff HITL rather than guessing another basket. `shelf.status` and `shelf.lastSeenAt` remain legacy transaction fields; use `shelf.device` for liveness.
+- Restart a running plain `npm start` API once to load this change. Keep its existing `STORE_PATH`, `AGENT_PROVIDER` and `AGENT_MODE`; no database reset is needed. Next.js dev reloads the UI changes.
+
+### Repeatable telemetry/browser check
+
+With the team's Next.js dev server running on 3001, execute `npm --prefix web run test:telemetry` from the root. It creates a temporary isolated API/database and MQTT broker, then uses real Chromium, the production MQTT forwarder, HTTP ingestion and native SSE. HTTP browser requests and the SSE destination are directed to that isolated API; this test does not exercise the Next.js API proxy or mutate the team's live data.
+
+The test covers current RSSI/switch updates, persistence, clear PICK, duplicate delivery, PUT_BACK, missing-tag staff escalation/checkout blocking, heartbeat expiry/recovery, and Admin layout at 320/390/768/1440 pixels. Its signals and development login are fixtures, and it does not invoke the real model. Reports and desktop/mobile hardware-card images are retained under ignored `data/web-telemetry-*/`.
+
+Verification for this update: root tests **53/53 passed**; web lint, typecheck and production build passed; all four existing browser suites and the new MQTT/telemetry browser test passed. The first production-build attempt hit a Windows generated-directory permission error and succeeded on retry with filesystem access. One repeated-login attempt timed out during the concurrent build; the subsequent sequential four-suite run passed. These failed attempts are not counted as passes. This update does not repeat real-model inference or cloud deployment verification.
+
+Read-only inspection of the running team's web (real Next.js same-origin proxy and native SSE, no API interception or mutations) confirmed actual event `esp32-59ea2f64-0034` displayed in Recent Activity, persisted case `CASE-039` (`ZONE_UNKNOWN` / `OPEN_STAFF`) and `WAITING_STAFF`, with both cart totals zero. Basket B was missing from that event's RSSI. Evidence: ignored `data/live-event-web-1792667989562/report.json` and its Admin screenshot.
+
+After the user restarted the API, physical telemetry was verified on the actual Admin at **2026-10-22 18:32:20 Bangkok**. `shelf.device` was `ONLINE` with DEVICE provenance; UI telemetry advanced from `11:32:17.446Z` to `11:32:20.405Z` and uptime from 4074 to 4077 seconds without refreshing. Basket A was -76 dBm, Basket B/HV01 unavailable, both lanes EMPTY, queue/dropped counts zero. A single native SSE connection used the real Next.js proxy; there were no browser runtime errors or API mutations. The transaction FSM remained `WAITING_STAFF` with both carts zero. Evidence: ignored `data/live-hardware-web-1792668735334/report.json` and desktop/mobile hardware-card screenshots. Physical switch transitions, unplug/reconnect and real-model investigations were not triggered during this read-only check; those must not be inferred from the isolated signal tests.

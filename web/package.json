@@ -14,6 +14,7 @@
     "test:admin": "node tests/admin.e2e.mjs",
     "test:stats": "node tests/stats.e2e.mjs",
     "test:realtime": "node tests/realtime.e2e.mjs",
+    "test:telemetry": "node tests/telemetry.e2e.mjs",
     "test:system": "node tests/system.e2e.mjs",
     "test:system:agentic": "node tests/system.e2e.mjs --agentic"
   },

@@ -82,6 +82,17 @@ export interface Shelf {
   fsmState: string;
   rssi: RssiReadings;
   lastEventId: string | null;
+  device?: {
+    status: "UNKNOWN" | "ONLINE" | "OFFLINE";
+    lastSeenAt: string | null;
+    source: "DEVICE" | null;
+    timeoutMs: number;
+    rssi: RssiReadings;
+    lanes: { laneId: string; present: boolean }[];
+    uptimeMs: number | null;
+    queueDepth: number | null;
+    droppedEvents: number | null;
+  };
 }
 
 export interface Evidence {

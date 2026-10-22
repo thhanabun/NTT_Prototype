@@ -84,6 +84,7 @@ export function createPrototypeApplication({
       const { result, store: next } = await repository.mutate(draft => ingest(draft, input));
       store = next;
       logger("INFO", "EVIDENCE_RECEIVED", { kind, shelfId: result.shelfId, source: result.source });
+      if (kind === "telemetry" && result.source === "DEVICE") notifyStateChange();
       return { ok: true };
     },
 

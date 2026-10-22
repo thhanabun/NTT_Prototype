@@ -19,6 +19,7 @@ const repository = createRepository({
 });
 const subscribers = new Set();
 let application;
+let lastPublishedDeviceStatus;
 
 function sendJson(response, status, value) {
   response.writeHead(status, {
@@ -29,6 +30,7 @@ function sendJson(response, status, value) {
 }
 
 function publish() {
+  lastPublishedDeviceStatus = application.getSnapshot().shelf.device.status;
   const message = "event: state\ndata: " + JSON.stringify(application.getSnapshot()) + "\n\n";
   for (const response of subscribers) response.write(message);
 }
@@ -40,6 +42,12 @@ application = createPrototypeApplication({
   agentPlanner: process.env.AGENT_MODE === "workflow" ? undefined : requestLayaToolDecision,
 });
 await application.init();
+lastPublishedDeviceStatus = application.getSnapshot().shelf.device.status;
+
+// Detect silence without writing fake heartbeat records or polling the database.
+setInterval(() => {
+  if (application.getSnapshot().shelf.device.status !== lastPublishedDeviceStatus) publish();
+}, 1000).unref();
 
 async function readJson(request) {
   const chunks = [];
