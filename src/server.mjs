@@ -84,6 +84,9 @@ async function handleApi(request, response, url) {
   }
 
   const body = await readJson(request);
+  if (request.method === "POST" && url.pathname === "/api/stats/query") {
+    return sendJson(response, 200, await application.queryStatistics(body));
+  }
   if (request.method === "POST" && url.pathname === "/api/telemetry") {
     return sendJson(response, 200, await application.ingestEvidence("telemetry", body));
   }

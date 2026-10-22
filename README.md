@@ -35,6 +35,8 @@ The HTTP server now uses a model-directed evidence loop for ambiguous cases: Lay
 
 Optional real CPU **YOLO11n** is available as `inspect_vision_evidence`. Start `npm run model:vision` in another terminal, then `npm run mock:evidence -- vision` with API, broker, Laya and Basket A/B sessions running. See [vision setup, mock-frame provenance and limits](docs/vision-evidence.md).
 
+The Admin **Stat Query Chat** uses real Laya to select read-only daily-sales/product-ranking queries and bar/line/table views. It aggregates completed mock-checkout orders from the full DB, with a separately labelled demo dataset and query audit. See [examples, execution and checks](docs/stat-query.md).
+
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
 - RSSI inside that margin is ambiguous. Laya runs a real typed decision after the evidence tools; a person must confirm before the item reaches the cart. Model errors route to staff without a mock fallback. Set AGENT_PROVIDER=mock explicitly only for a software simulation.
 - Missing RSSI, tied evidence, a missing session, or a cart conflict routes to staff review.

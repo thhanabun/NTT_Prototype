@@ -1,7 +1,7 @@
 import { BASKET_DECISION_QUESTION, basketDecisionState } from "./decision-contract.mjs";
 
-async function requestChoice({
-  state, question, answerKey, label, signal,
+export async function requestLayaChoices({
+  state, questions, label = "choice", signal,
   endpoint = process.env.LAYA_ENDPOINT || "http://127.0.0.1:8000/v1/systemone",
   apiKey = process.env.LAYA_API_KEY,
   model = process.env.LAYA_MODEL || "typed-decisions",
@@ -17,7 +17,7 @@ async function requestChoice({
     body: JSON.stringify({
       model,
       state,
-      questions: { [answerKey]: question },
+      questions,
       max_len: 1024,
     }),
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000),
@@ -25,27 +25,35 @@ async function requestChoice({
   if (!response.ok) throw new Error("Laya API returned HTTP " + response.status);
 
   const payload = await response.json();
-  const answer = payload?.answers?.[answerKey];
-  const probabilities = answer?.probabilities;
-  const choices = Object.keys(question.criteria);
-  if (answer?.type !== "choice" || !choices.includes(answer.choice) ||
+  const selections = {};
+  for (const [answerKey, question] of Object.entries(questions)) {
+    const answer = payload?.answers?.[answerKey];
+    const probabilities = answer?.probabilities;
+    const choices = Object.keys(question.criteria);
+    if (answer?.type !== "choice" || !choices.includes(answer.choice) ||
       !probabilities || !choices.every((key) =>
         Number.isFinite(probabilities[key]) && probabilities[key] >= 0 && probabilities[key] <= 1) ||
       Math.abs(choices.reduce((sum, key) => sum + probabilities[key], 0) - 1) > 0.01) {
-    throw new Error(`Laya API returned an invalid ${label} probability distribution`);
+      throw new Error(`Laya API returned an invalid ${label} probability distribution`);
+    }
+    selections[answerKey] = { choice: answer.choice, confidence: probabilities[answer.choice],
+      probabilities: Object.fromEntries(choices.map(key => [key, probabilities[key]])) };
   }
 
   // Laya confidence is normalized entropy; policy uses the selected option probability.
   return {
-    choice: answer.choice,
-    confidence: probabilities[answer.choice],
+    selections,
     confidenceSource: "selected_option_probability",
-    probabilities: Object.fromEntries(choices.map(key => [key, probabilities[key]])),
     model: payload.model || model,
     requestDurationMs: Math.round(performance.now() - started),
     ...(payload.routing ? { routing: payload.routing } : {}),
     ...(payload.usage ? { usage: payload.usage } : {}),
   };
+}
+
+async function requestChoice({ question, answerKey, ...options }) {
+  const { selections, ...metadata } = await requestLayaChoices({ ...options, questions: { [answerKey]: question } });
+  return { ...selections[answerKey], ...metadata };
 }
 
 export async function requestLayaBasketDecision({ context, ...options }) {

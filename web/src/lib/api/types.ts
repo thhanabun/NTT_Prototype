@@ -1,4 +1,29 @@
 export type BasketId = "A" | "B";
+
+export interface StatsPlan {
+  tool: "query_daily_sales" | "query_top_products";
+  metric: "revenue" | "quantity";
+  chart: "bar" | "line" | "table";
+  startDate: string;
+  endDate: string;
+  limit: number;
+  timeZone: "Asia/Bangkok";
+}
+
+export interface StatsResponse {
+  queryId: string;
+  generatedAt: string;
+  source: "DEMO" | "MOCK_CHECKOUT_ORDERS";
+  plan: StatsPlan;
+  model: { name: string; requestDurationMs: number; selections: Record<string, { choice: string; confidence: number; probabilities: Record<string, number> }> };
+  result: {
+    rows: { key: string; label: string; value: number; revenue: number; quantity: number; orderCount: number }[];
+    totals: { revenue: number; quantity: number; orderCount: number };
+    availableGroups: number;
+    unit: "THB" | "units";
+    empty: boolean;
+  };
+}
 export type Sku = "COKE" | "WATER";
 export type EventType = "PICK" | "PUT_BACK";
 export type CaseStatus = "WAITING_CUSTOMER" | "OPEN_STAFF" | "CLOSED";

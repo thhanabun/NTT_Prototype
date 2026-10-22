@@ -3,8 +3,10 @@ import { requestJevBasketDecision } from "./agent/jev.mjs";
 import { requestLayaBasketDecision } from "./agent/laya.mjs";
 import { logEvent } from "./logger.mjs";
 import { ingestTelemetry, ingestCameraEvidence } from "./evidence.mjs";
+import { queryStatistics, planStatsQuery } from "./stats-query.mjs";
 import {
   checkout,
+  addAuditEntry,
   createStore,
   customerDecision,
   processShelfEvent,
@@ -21,6 +23,7 @@ export function createPrototypeApplication({
   jevDecision = requestJevBasketDecision,
   layaDecision = requestLayaBasketDecision,
   agentPlanner,
+  statsPlanner = planStatsQuery,
 }) {
   if (!repository) throw new Error("repository is required");
   const selectedAgentProvider = String(agentProvider).toLowerCase();
@@ -54,6 +57,17 @@ export function createPrototypeApplication({
         (!caseId || entry.details?.caseId === caseId) && (!eventId || entry.details?.eventId === eventId),
       ).slice(0, count);
       return { items };
+    },
+
+    async queryStatistics(input) {
+      const response = await queryStatistics(repository, input, { planner: statsPlanner });
+      const { store: next } = await repository.mutate(draft => addAuditEntry(draft, "STAT_QUERY_COMPLETED", "STAFF", {
+        queryId: response.queryId, source: response.source, plan: response.plan, model: response.model.name, matchedOrders: response.result.totals.orderCount,
+      }));
+      store = next;
+      logger("INFO", "STAT_QUERY_COMPLETED", { queryId: response.queryId, source: response.source, tool: response.plan.tool });
+      notifyStateChange();
+      return response;
     },
 
     async startSession(basketId) {

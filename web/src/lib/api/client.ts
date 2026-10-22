@@ -6,6 +6,8 @@ import type {
   ProcessShelfEventResult,
   Session,
   ShelfEventInput,
+  StatsPlan,
+  StatsResponse,
 } from "@/lib/api/types";
 
 export class ApiError extends Error {
@@ -88,4 +90,8 @@ export function submitShelfEvent(event: ShelfEventInput): Promise<ProcessShelfEv
 
 export function resetDemo(): Promise<{ ok: true }> {
   return post("/api/reset", {});
+}
+
+export function queryStatistics(message: string, source: "orders" | "demo", previousPlan?: StatsPlan): Promise<StatsResponse> {
+  return request("/api/stats/query", { method: "POST", body: JSON.stringify({ message, source, previousPlan }), signal: AbortSignal.timeout(35_000) });
 }
