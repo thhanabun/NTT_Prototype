@@ -70,15 +70,26 @@ int main() {
   assert(shelfPresencePayload(presence, sizeof(presence), "SHELF-01", 42, 123456, seenA, staleB));
   assert(std::string(presence) ==
     "{\"shelfId\":\"SHELF-01\",\"seq\":42,\"uptimeMs\":123456,"
-    "\"rssi\":{\"A\":-55,\"B\":null},\"ageMs\":{\"A\":120,\"B\":null},\"anchors\":{}}");
+    "\"rssi\":{\"A\":-55.0,\"B\":null},\"ageMs\":{\"A\":120,\"B\":null},\"anchors\":{}}");
   char tinyPresence[16];
   assert(!shelfPresencePayload(tinyPresence, sizeof(tinyPresence), "SHELF-01", 1, 1, seenA, staleB));
 
-  ShelfAnchorReading heard[] = {{2, -61}, {3, -74}};
+  ShelfAnchorReading heard[] = {{2, -61.25f}, {3, -74}};
   assert(shelfPresencePayload(presence, sizeof(presence), "SHELF-01", 7, 9, seenA, staleB, heard, 2));
-  assert(std::string(presence).find("\"anchors\":{\"SHELF-02\":-61,\"SHELF-03\":-74}}") != std::string::npos);
+  assert(std::string(presence).find("\"anchors\":{\"SHELF-02\":-61.2,\"SHELF-03\":-74.0}}") != std::string::npos);
   char shortPresence[120];
   assert(!shelfPresencePayload(shortPresence, sizeof(shortPresence), "SHELF-01", 7, 9, seenA, staleB, heard, 2));
+
+  // Trimmed mean drops the top and bottom quarter: one reflection spike barely moves it.
+  int8_t burst[12] = {-60, -61, -60, -62, -61, -40, -60, -61, -90, -60, -62, -61};
+  uint32_t burstAt[12];
+  for (int i = 0; i < 12; ++i) burstAt[i] = 1000 + i * 50;
+  bool burstFresh = false;
+  const float trimmed = shelfFreshTrimmedMean(burst, burstAt, 12, 1600, 2000, burstFresh);
+  assert(burstFresh && trimmed > -61.5f && trimmed < -60.4f);
+  assert(shelfFreshTrimmedMean(burst, burstAt, 12, 9000, 2000, burstFresh) == 0 && !burstFresh);
+  // Median still works on the longer (12-sample) history.
+  assert(shelfFreshMedian(burst, burstAt, 12, 1600, burstFresh) == -61 && burstFresh);
 
   assert(shelfIdNumber("SHELF-03") == 3 && shelfIdNumber("SHELF-12") == 12);
   assert(shelfIdNumber("SHELF") == -1 && shelfIdNumber("SHELF-00") == -1 && shelfIdNumber("SHELF-1000") == -1);

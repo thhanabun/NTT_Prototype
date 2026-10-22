@@ -4,7 +4,7 @@ The store map shows **which shelf a basket is near**, not an (x, y) position. Ea
 
 ```
 ESP32 (SHELF-01, SHELF-02 …)
-  └─ MQTT  smartbasket/shelf/<id>/presence   (QoS0, every 500 ms)
+  └─ MQTT  smartbasket/shelf/<id>/presence   (QoS0, every 200 ms)
         └─ broker  tools/mqtt-broker/broker.mjs
               └─ POST /api/presence          (latest report wins, no ACK)
                     └─ src/presence.mjs      (zone + hysteresis, in memory)
@@ -22,7 +22,7 @@ Topic: `smartbasket/shelf/<SHELF_ID>/presence`
  "rssi":{"A":-55,"B":null},"ageMs":{"A":120,"B":null}}
 ```
 
-- `rssi` is the existing 5-sample median (`shelfFreshMedian`). It is `null` when the basket has not been heard for 5 s.
+- `rssi` is a trimmed mean (top and bottom quarter dropped) of up to 12 samples from the last 2.5 s (`shelfFreshTrimmedMean`), sent with one decimal. It is `null` when the basket has not been heard recently. Pick/put-back events still use the 5 s median.
 - `ageMs` is the time since that basket's last BLE packet. The server uses it so late MQTT delivery cannot make an old reading look fresh.
 - The payload is built by `shelfPresencePayload()` in `firmware/esp32/shelf_protocol.h` and covered by `tests/firmware/protocol_test.cpp`.
 
@@ -34,7 +34,7 @@ The 1 Hz `/telemetry` topic stays as it was. It carries diagnostics only and is 
 |---|---|---|
 | `SHELF_DEVICE_ID` | `"SHELF-01"` | Shelf ID used in every MQTT topic and in the client ID |
 | `SHELF_ENABLE_SWITCHES` | `1` | `0` = BLE presence only, never sends PICK/PUT_BACK |
-| `SHELF_PRESENCE_INTERVAL_MS` | `500` | Presence publish interval |
+| `SHELF_PRESENCE_INTERVAL_MS` | `200` | Presence publish interval |
 
 ### Adding a second shelf (presence only)
 
@@ -100,7 +100,7 @@ Calibrate these on site:
 1. Run the broker with `LOG_PRESENCE=true`.
 2. Stand with a basket where a shopper would pick from the shelf. Note the RSSI and set `ENTER` about 3 dB weaker than that.
 3. Walk to the aisle position that should count as "left the shelf". Set `EXIT` at that RSSI.
-4. Set the DX-CP101 beacons to advertise every 100–300 ms. With the 5-sample median, the map then reacts in about 1 s.
+4. Set the DX-CP101 beacons to advertise every 100–300 ms. With the 2.5 s trimmed mean, the map then reacts in about 1 s.
 
 ## Tests
 
@@ -123,7 +123,7 @@ ESP32 anchor beacon ──RSSI──▶ other ESP32s                          �
 
 ### Anchors measure each other
 
-- With `SHELF_ENABLE_ANCHOR_BEACON 1` (the default), each ESP32 advertises an iBeacon every 100–150 ms:
+- With `SHELF_ENABLE_ANCHOR_BEACON 1` (the default), each ESP32 advertises an iBeacon every 40–60 ms, and scans 50 ms of every 60 ms:
   - UUID `BA5C7E70-0000-4000-8000-00000000A0C0`
   - major `0xA5C0`
   - minor = shelf number
@@ -150,3 +150,14 @@ ESP32 anchor beacon ──RSSI──▶ other ESP32s                          �
 | `POSITION_ANCHOR_TX_POWER` | -59 | RSSI@1m assumed by auto-placement |
 
 API: `GET /api/presence` → `positioning: { model, links, positions: { A: { x, y, radius, xM, yM, errorM, anchors } } }`. `GET /api/positioning/auto-place` → proposed anchor positions (map units). Positions update on the existing `event: presence` stream, at most every 400 ms, and only after a move of about 25 cm or more.
+
+### Calibrating the scale (tuning page)
+
+The ESP32-to-ESP32 distances on `/admin/tuning` use `RSSI@1m` and `n`. Defaults are -59 dBm and 2.2, which rarely match a given board and room. To set the scale:
+
+1. Place the ESP32s where they will be mounted, at least 2–3 m apart.
+2. Tape-measure one or more pairs and type the distance in the **ระยะจริง (ม.)** column.
+3. Press **ปรับสเกลตามระยะจริงและบันทึก**:
+   - One pair sets `RSSI@1m` (saved as `anchorTxPower`).
+   - Two or more pairs at different distances also fit `n`.
+4. The plot, auto-placement and the Admin map editor then use the saved scale.

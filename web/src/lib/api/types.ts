@@ -210,6 +210,8 @@ export interface AnchorLink {
 
 export interface PositioningTuning {
   basketTxPower: number | null;
+  // ESP32-to-ESP32 RSSI at 1 m, calibrated from tape-measured distances.
+  anchorTxPower: number | null;
   n: number | null;
   alpha: number | null;
 }

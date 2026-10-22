@@ -51,4 +51,4 @@ PASTE_DEVICE_PRIVATE_KEY_HERE
 // 1 = roller switches wired (sends PICK/PUT_BACK). 0 = BLE presence only, e.g. SHELF-02.
 #define SHELF_ENABLE_SWITCHES 1
 // Presence report interval to smartbasket/shelf/<id>/presence.
-#define SHELF_PRESENCE_INTERVAL_MS 500
+#define SHELF_PRESENCE_INTERVAL_MS 200

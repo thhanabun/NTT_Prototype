@@ -129,7 +129,7 @@ export function createPresenceTracker(options = {}) {
         const key = `${shelfId}>${other}`;
         const previous = anchorLinks.get(key);
         const fresh = previous && t - previous.at <= linkStaleMs;
-        anchorLinks.set(key, { rssi: fresh ? previous.rssi + (value - previous.rssi) * 0.2 : value, at: t });
+        anchorLinks.set(key, { rssi: fresh ? previous.rssi + (value - previous.rssi) * 0.5 : value, at: t });
       }
       return { changed: evaluate(t) };
     },

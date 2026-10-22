@@ -80,3 +80,25 @@ export function alignTo(measured: Map<string, Point>, reference: Map<string, Poi
   }
   return best!.result;
 }
+
+// Fits RSSI@1m (and n when distances vary enough) from pairs with tape-measured distances.
+// Same rules as fitPathLoss in src/positioning.mjs.
+export function fitScale(samples: { rssi: number; meters: number }[], fallbackN: number) {
+  const usable = samples.filter((s) => Number.isFinite(s.rssi) && Number.isFinite(s.meters) && s.meters >= 0.2);
+  if (!usable.length) return null;
+  const logs = usable.map((s) => Math.log10(s.meters));
+  const meanLog = logs.reduce((a, b) => a + b, 0) / logs.length;
+  const meanRssi = usable.reduce((a, s) => a + s.rssi, 0) / usable.length;
+  const spread = Math.sqrt(logs.reduce((a, l) => a + (l - meanLog) ** 2, 0) / logs.length);
+  let n = fallbackN;
+  let txPower = meanRssi + 10 * n * meanLog;
+  let fittedN = false;
+  if (usable.length >= 2 && spread >= 0.08) {
+    const slope = usable.reduce((a, s, i) => a + (logs[i] - meanLog) * (s.rssi - meanRssi), 0) / logs.reduce((a, l) => a + (l - meanLog) ** 2, 0);
+    const candidate = -slope / 10;
+    if (candidate >= 1.4 && candidate <= 4.5) { n = candidate; txPower = meanRssi - slope * meanLog; fittedN = true; }
+  }
+  const model = { txPower: Math.round(txPower * 10) / 10, n: Math.round(n * 100) / 100 };
+  const errors = usable.map((s) => rssiToMeters(s.rssi, model) - s.meters);
+  return { ...model, fittedN, pairs: usable.length, rmsErrorM: Math.sqrt(errors.reduce((a, e) => a + e * e, 0) / errors.length) };
+}

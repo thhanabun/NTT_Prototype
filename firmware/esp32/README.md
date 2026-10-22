@@ -94,7 +94,7 @@ arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --inp
 
 ## Store map presence (local_shelf)
 
-- `local_shelf.ino` publishes basket RSSI to `smartbasket/shelf/<SHELF_ID>/presence` every 500 ms (QoS0, not queued). The broker forwards it to `/api/presence`, and the server pushes shelf zones to phones over SSE. See [`docs/store-map-presence.md`](../../docs/store-map-presence.md).
+- `local_shelf.ino` publishes basket RSSI to `smartbasket/shelf/<SHELF_ID>/presence` every 200 ms (QoS0, not queued). The broker forwards it to `/api/presence`, and the server pushes shelf zones to phones over SSE. See [`docs/store-map-presence.md`](../../docs/store-map-presence.md).
 - The shelf ID comes from `SHELF_DEVICE_ID` in `secrets.h` (default `SHELF-01`). Every topic is built from it.
 - For a presence-only board, set `SHELF_DEVICE_ID "SHELF-02"` and `SHELF_ENABLE_SWITCHES 0`.
 - `aws_shelf.ino` still uses fixed `SHELF-01` topics and has no presence topic.

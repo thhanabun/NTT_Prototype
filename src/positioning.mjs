@@ -197,11 +197,17 @@ export function validateTuning(input) {
     const value = input[key];
     if (value === null || value === undefined || value === "") return null;
     if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${label} must be a number`);
-    const [low, high] = TUNING_LIMITS[key === "basketTxPower" ? "txPower" : key];
+    const [low, high] = TUNING_LIMITS[key.endsWith("TxPower") ? "txPower" : key];
     if (value < low || value > high) throw new Error(`${label} must be between ${low} and ${high}`);
     return Math.round(value * 100) / 100;
   };
-  return { basketTxPower: pick("basketTxPower", "Basket RSSI at 1 m"), n: pick("n", "Path-loss n"), alpha: pick("alpha", "Smoothing") };
+  return {
+    basketTxPower: pick("basketTxPower", "Basket RSSI at 1 m"),
+    // ESP32-to-ESP32 RSSI at 1 m, set from real tape-measured distances on the tuning page.
+    anchorTxPower: pick("anchorTxPower", "ESP32 RSSI at 1 m"),
+    n: pick("n", "Path-loss n"),
+    alpha: pick("alpha", "Smoothing"),
+  };
 }
 
 export function createPositioner({ basketTxPower = null, basketOffsetDb = 0, alpha = 0.35, moveThresholdM = 0.25, staleMs = 5000, getTuning = () => ({}) } = {}) {
@@ -269,7 +275,7 @@ export function createPositioner({ basketTxPower = null, basketOffsetDb = 0, alp
       return {
         model: { txPower: model.txPower, n: model.n, calibrated: model.calibrated, samples: model.samples },
         basketModel: { txPower: basketModel.txPower, n: basketModel.n, source: basketModel.source },
-        tuning: { basketTxPower: null, n: null, alpha: null, ...(getTuning() ?? {}) },
+        tuning: { basketTxPower: null, anchorTxPower: null, n: null, alpha: null, ...(getTuning() ?? {}) },
         links: links.map((link) => ({
           a: link.a, b: link.b, rssi: link.rssi,
           rssiMeters: Math.round(rssiToMeters(link.rssi, model) * 100) / 100,

@@ -129,7 +129,9 @@ async function handleApi(request, response, url) {
   }
   // Suggested ESP32 positions from anchor-to-anchor RSSI; Admin reviews them before saving.
   if (request.method === "GET" && url.pathname === "/api/positioning/auto-place") {
-    return sendJson(response, 200, proposeAnchors(layoutStore.get(), presence.links(), anchorModel));
+    const tuning = tuningStore.get();
+    const model = { txPower: tuning.anchorTxPower ?? anchorModel.txPower, n: tuning.n ?? anchorModel.n };
+    return sendJson(response, 200, proposeAnchors(layoutStore.get(), presence.links(), model));
   }
   if (request.method === "GET" && url.pathname === "/api/positioning/tuning") {
     return sendJson(response, 200, tuningStore.get());

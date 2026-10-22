@@ -9,7 +9,7 @@ import { DEFAULT_STORE_LAYOUT, anchorPoint, metersPerUnit } from "@/lib/store-la
 import { AnchorTriangle } from "./anchor-triangle";
 import styles from "./tuning.module.css";
 
-const POLL_MS = 1000;
+const POLL_MS = 500;
 const HISTORY_MS = 60_000;
 const STATS_MS = 30_000;
 const BASKETS: BasketId[] = ["A", "B"];
@@ -22,8 +22,8 @@ const basketKey = (basketId: string, shelfId: string) => `basket:${basketId}:${s
 const short = (shelfId: string) => shelfId.replace("SHELF-", "ESP ");
 const meters = (rssi: number, model: { txPower: number; n: number }) => Math.min(60, Math.max(0.1, 10 ** ((model.txPower - rssi) / (10 * model.n))));
 
-function stats(samples: Sample[] | undefined, now: number) {
-  const recent = (samples ?? []).filter((s) => now - s.t <= STATS_MS).map((s) => s.rssi);
+function stats(samples: Sample[] | undefined, now: number, windowMs = STATS_MS) {
+  const recent = (samples ?? []).filter((s) => now - s.t <= windowMs).map((s) => s.rssi);
   if (!recent.length) return null;
   const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
   const sd = Math.sqrt(recent.reduce((a, b) => a + (b - mean) ** 2, 0) / recent.length);
@@ -51,6 +51,8 @@ export function TuningPage() {
   const [history, setHistory] = useState<History>(new Map());
   const [now, setNow] = useState(() => Date.now());
   const [pollError, setPollError] = useState("");
+  // How many seconds of RSSI the ESP32 triangle averages: short follows movement, long is steadier.
+  const [responseMs, setResponseMs] = useState(3000);
   const historyRef = useRef<History>(new Map());
 
   // Poll while this page is open: SSE only pushes when zones move, tuning needs every reading.
@@ -110,7 +112,7 @@ export function TuningPage() {
           <h1>ปรับจูนระยะ ESP32 และ BLE<span>.</span></h1>
           <p>ดูว่า ESP32 แต่ละตัวห่างกันเท่าไร และห่างจากตะกร้าเท่าไร จาก RSSI จริงทุกวินาที แล้วปรับโมเดลระยะให้ตรงกับร้าน</p>
         </div>
-        <span className={styles.liveBadge}>{pollError ? <><CircleAlert size={14} aria-hidden="true" /> {pollError}</> : <><Activity size={14} aria-hidden="true" /> อัปเดตทุก 1 วินาที</>}</span>
+        <span className={styles.liveBadge}>{pollError ? <><CircleAlert size={14} aria-hidden="true" /> {pollError}</> : <><Activity size={14} aria-hidden="true" /> อัปเดตทุก 0.5 วินาที</>}</span>
       </div>
 
       <section className={styles.cards} aria-label="สรุปโมเดล">
@@ -120,8 +122,9 @@ export function TuningPage() {
         <article><span>ขนาดร้านบนผัง</span><strong>{(layout.width * scale).toFixed(1)}<small> × {(layout.height * scale).toFixed(1)} ม.</small></strong><p>แก้ได้ที่ Admin → แก้ไขแผนผังร้าน</p></article>
       </section>
 
-      <AnchorTriangle links={positioning?.links ?? []} layout={layout} tunedN={positioning?.tuning?.n ?? null}
-        meanRssi={(a, b) => stats(history.get(linkKey(a, b)), now)?.mean ?? null} />
+      <AnchorTriangle links={positioning?.links ?? []} layout={layout} tuning={positioning?.tuning ?? null}
+        meanRssi={(a, b) => stats(history.get(linkKey(a, b)), now, responseMs)?.mean ?? null}
+        responseMs={responseMs} onResponseChange={setResponseMs} />
 
       <section className={styles.card} aria-labelledby="anchor-heading">
         <div className={styles.cardHead}><div><p className={styles.eyebrow}>ESP32 ↔ ESP32</p><h2 id="anchor-heading">ระยะระหว่าง ESP32</h2></div><Radio size={22} aria-hidden="true" /></div>
@@ -245,7 +248,7 @@ function Calibrator({ history, historyRef, shelfIds, n, tuning }: {
     setBusy(true);
     setMessage("");
     try {
-      await saveTuning({ basketTxPower: result.txPower, n: tuning?.n ?? null, alpha: tuning?.alpha ?? null });
+      await saveTuning({ anchorTxPower: null, n: null, alpha: null, ...tuning, basketTxPower: result.txPower });
       setMessage(`ตั้ง RSSI@1ม. ของตะกร้าเป็น ${result.txPower} dBm แล้ว ตำแหน่งจะคำนวณใหม่ทันที`);
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ");
@@ -299,6 +302,7 @@ function ManualTuning({ tuning, basketModel, model }: {
   const [message, setMessage] = useState("");
   const values = draft ?? {
     basketTxPower: tuning?.basketTxPower?.toString() ?? "",
+    anchorTxPower: tuning?.anchorTxPower?.toString() ?? "",
     n: tuning?.n?.toString() ?? "",
     alpha: tuning?.alpha?.toString() ?? "",
   };
@@ -323,13 +327,14 @@ function ManualTuning({ tuning, basketModel, model }: {
       <p className={styles.muted}>เว้นว่าง = ให้ระบบคำนวณเอง ระยะ = 10^((RSSI@1ม. − RSSI) / (10 × n))</p>
       <div className={styles.form}>
         {field("basketTxPower", "RSSI@1ม. ของตะกร้า (dBm)", `อัตโนมัติ (${basketModel.txPower})`, 0.5)}
+        {field("anchorTxPower", "RSSI@1ม. ของ ESP32 (dBm)", "อัตโนมัติ (-59)", 0.5)}
         {field("n", "n (path-loss, 1.4–4.5)", `อัตโนมัติ (${model.n})`, 0.05)}
         {field("alpha", "การกรองตำแหน่ง (0.05–1)", "อัตโนมัติ (0.35)", 0.05)}
       </div>
       <p className={styles.footnote}>n ต่ำ = สัญญาณลดช้า (ห้องโล่ง) · n สูง = ลดเร็ว (มีชั้นวางหรือคนบัง) · การกรองต่ำ = หมุดนิ่งแต่ตามช้า</p>
       <div className={styles.actions}>
         <button type="button" className={styles.primary} disabled={busy || !draft}
-          onClick={() => void run(() => saveTuning({ basketTxPower: parse(values.basketTxPower), n: parse(values.n), alpha: parse(values.alpha) }), "บันทึกค่าแล้ว")}>
+          onClick={() => void run(() => saveTuning({ basketTxPower: parse(values.basketTxPower), anchorTxPower: parse(values.anchorTxPower), n: parse(values.n), alpha: parse(values.alpha) }), "บันทึกค่าแล้ว")}>
           <Save size={16} aria-hidden="true" /> บันทึก
         </button>
         <button type="button" className={styles.secondary} disabled={busy}

@@ -82,19 +82,43 @@ inline bool shelfBeaconUuidMatches(const uint8_t* bytes, size_t length, const ch
   return count == 16 && high < 0 && memcmp(bytes + 4, decoded, 16) == 0;
 }
 
+// Largest RSSI history any caller keeps.
+constexpr uint8_t SHELF_RSSI_MAX_SAMPLES = 16;
+
+// Sorts the samples newer than maxAgeMs into out[]; returns how many.
+inline uint8_t shelfFreshSorted(const int8_t* values, const uint32_t* times, uint8_t count,
+                                uint32_t now, uint32_t maxAgeMs, int8_t* out) {
+  uint8_t used = 0;
+  for (uint8_t i = 0; i < count && i < SHELF_RSSI_MAX_SAMPLES; ++i) {
+    if (uint32_t(now - times[i]) <= maxAgeMs) out[used++] = values[i];
+  }
+  for (uint8_t i = 0; i < used; ++i) for (uint8_t j = i + 1; j < used; ++j) {
+    if (out[j] < out[i]) { auto value = out[i]; out[i] = out[j]; out[j] = value; }
+  }
+  return used;
+}
+
+// Median of samples from the last 5 s (shelf pick/put-back evidence).
 inline int8_t shelfFreshMedian(const int8_t* values, const uint32_t* times, uint8_t count,
                               uint32_t now, bool& fresh) {
-  int8_t samples[5];
-  uint8_t used = 0;
-  for (uint8_t i = 0; i < count && i < 5; ++i) {
-    if (uint32_t(now - times[i]) <= 5000) samples[used++] = values[i];
-  }
+  int8_t samples[SHELF_RSSI_MAX_SAMPLES];
+  const uint8_t used = shelfFreshSorted(values, times, count, now, 5000, samples);
+  fresh = used > 0;
+  return fresh ? samples[used / 2] : 0;
+}
+
+// Mean after dropping the highest and lowest quarter of recent samples. Finer than a
+// median (fractions of a dB) and still robust to single reflections. Used for positioning.
+inline float shelfFreshTrimmedMean(const int8_t* values, const uint32_t* times, uint8_t count,
+                                   uint32_t now, uint32_t maxAgeMs, bool& fresh) {
+  int8_t samples[SHELF_RSSI_MAX_SAMPLES];
+  const uint8_t used = shelfFreshSorted(values, times, count, now, maxAgeMs, samples);
   fresh = used > 0;
   if (!fresh) return 0;
-  for (uint8_t i = 0; i < used; ++i) for (uint8_t j = i + 1; j < used; ++j) {
-    if (samples[j] < samples[i]) { auto value = samples[i]; samples[i] = samples[j]; samples[j] = value; }
-  }
-  return samples[used / 2];
+  const uint8_t drop = used >= 4 ? used / 4 : 0;
+  int sum = 0;
+  for (uint8_t i = drop; i < used - drop; ++i) sum += samples[i];
+  return static_cast<float>(sum) / static_cast<float>(used - 2 * drop);
 }
 
 // Builds "smartbasket/shelf/<shelfId>/<suffix>". Returns false if it does not fit.
@@ -105,7 +129,7 @@ inline bool shelfTopic(char* out, size_t size, const char* shelfId, const char* 
 
 struct ShelfBeaconReading {
   bool fresh;
-  int8_t rssi;     // median RSSI, valid only when fresh
+  float rssi;      // trimmed-mean RSSI, valid only when fresh
   uint32_t ageMs;  // time since the last packet, valid only when fresh
 };
 
@@ -113,7 +137,7 @@ struct ShelfBeaconReading {
 // calibrate distance and to place the ESP32s on the map automatically.
 struct ShelfAnchorReading {
   uint8_t number;  // other shelf number, e.g. 2 for SHELF-02
-  int8_t rssi;     // median RSSI of fresh samples
+  float rssi;      // trimmed-mean RSSI of fresh samples
 };
 
 // Every shelf ESP32 advertises an iBeacon with this UUID and major; minor = shelf number.
@@ -156,8 +180,8 @@ inline bool shelfPresencePayload(char* out, size_t size, const char* shelfId, ui
                                  const ShelfBeaconReading& b,
                                  const ShelfAnchorReading* anchors = nullptr, uint8_t anchorCount = 0) {
   char rssiA[8] = "null", rssiB[8] = "null", ageA[12] = "null", ageB[12] = "null";
-  if (a.fresh) { snprintf(rssiA, sizeof(rssiA), "%d", a.rssi); snprintf(ageA, sizeof(ageA), "%lu", static_cast<unsigned long>(a.ageMs)); }
-  if (b.fresh) { snprintf(rssiB, sizeof(rssiB), "%d", b.rssi); snprintf(ageB, sizeof(ageB), "%lu", static_cast<unsigned long>(b.ageMs)); }
+  if (a.fresh) { snprintf(rssiA, sizeof(rssiA), "%.1f", static_cast<double>(a.rssi)); snprintf(ageA, sizeof(ageA), "%lu", static_cast<unsigned long>(a.ageMs)); }
+  if (b.fresh) { snprintf(rssiB, sizeof(rssiB), "%.1f", static_cast<double>(b.rssi)); snprintf(ageB, sizeof(ageB), "%lu", static_cast<unsigned long>(b.ageMs)); }
   int written = snprintf(out, size,
     "{\"shelfId\":\"%s\",\"seq\":%lu,\"uptimeMs\":%lu,"
     "\"rssi\":{\"A\":%s,\"B\":%s},\"ageMs\":{\"A\":%s,\"B\":%s},\"anchors\":{",
@@ -166,8 +190,8 @@ inline bool shelfPresencePayload(char* out, size_t size, const char* shelfId, ui
   if (written <= 0 || static_cast<size_t>(written) >= size) return false;
   size_t used = static_cast<size_t>(written);
   for (uint8_t i = 0; i < anchorCount; ++i) {
-    written = snprintf(out + used, size - used, "%s\"SHELF-%02u\":%d", i ? "," : "",
-                       static_cast<unsigned>(anchors[i].number), anchors[i].rssi);
+    written = snprintf(out + used, size - used, "%s\"SHELF-%02u\":%.1f", i ? "," : "",
+                       static_cast<unsigned>(anchors[i].number), static_cast<double>(anchors[i].rssi));
     if (written <= 0 || static_cast<size_t>(written) >= size - used) return false;
     used += static_cast<size_t>(written);
   }

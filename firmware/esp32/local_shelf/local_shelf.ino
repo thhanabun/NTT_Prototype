@@ -61,7 +61,7 @@ struct Lane {
 #endif
 // How often the store-map presence report is published.
 #ifndef SHELF_PRESENCE_INTERVAL_MS
-  #define SHELF_PRESENCE_INTERVAL_MS 500
+  #define SHELF_PRESENCE_INTERVAL_MS 200
 #endif
 // Each shelf advertises an anchor iBeacon so the others can measure it (indoor positioning).
 #ifndef SHELF_ENABLE_ANCHOR_BEACON
@@ -150,7 +150,8 @@ constexpr uint16_t EXPENSIVE_ITEM_MINOR = 3;
 constexpr char SHELF_ID[]          = SHELF_DEVICE_ID;
 constexpr char EXPENSIVE_ITEM_ID[] = "HV-001";
 constexpr uint32_t TAG_FRESH_MS    = 5000; // 5000 ms freshness window
-constexpr size_t RSSI_WINDOW       = 5;    // 5-sample rolling median
+constexpr size_t RSSI_WINDOW       = 12;   // rolling history: median for picks, trimmed mean for positioning
+constexpr uint32_t POSITION_RSSI_MAX_AGE_MS = 2500; // positioning uses only the last 2.5 s
 constexpr int CLEAR_MARGIN_DB      = 10;   // 10 dB clear lead threshold
 
 // ----------------------------------------------------------------------------
@@ -239,6 +240,20 @@ int8_t getMedianRssi(BeaconRole role, bool& isFresh) {
   return shelfFreshMedian(values, times, count, millis(), isFresh);
 }
 
+// Finer, recent-only RSSI for the positioning report (picks keep the 5 s median).
+float getTrimmedRssi(BeaconRole role, bool& isFresh) {
+  int8_t values[RSSI_WINDOW];
+  uint32_t times[RSSI_WINDOW];
+  uint8_t count;
+  portENTER_CRITICAL(&bleMux);
+  const auto& beacon = trackedBeacons[role];
+  count = beacon.rssiCount;
+  memcpy(values, beacon.rssiHistory, sizeof(values));
+  memcpy(times, beacon.rssiAt, sizeof(times));
+  portEXIT_CRITICAL(&bleMux);
+  return shelfFreshTrimmedMean(values, times, count, millis(), POSITION_RSSI_MAX_AGE_MS, isFresh);
+}
+
 float estimateDistanceM(int8_t rssi, int8_t txPower) {
   if (rssi == 0) return -1.0f;
   const int8_t power = (txPower != 0) ? txPower : -59;
@@ -294,7 +309,7 @@ uint8_t readAnchors(ShelfAnchorReading* out, uint8_t max) {
   for (const AnchorTrack& track : copy) {
     if (!track.number || count >= max) continue;
     bool fresh = false;
-    const int8_t rssi = shelfFreshMedian(track.rssiHistory, track.rssiAt, track.rssiCount, millis(), fresh);
+    const float rssi = shelfFreshTrimmedMean(track.rssiHistory, track.rssiAt, track.rssiCount, millis(), POSITION_RSSI_MAX_AGE_MS, fresh);
     if (fresh) out[count++] = {track.number, rssi};
   }
   return count;
@@ -314,8 +329,8 @@ void startAnchorBeacon() {
   NimBLEAdvertising* advertising = NimBLEDevice::getAdvertising();
   advertising->setAdvertisementData(data);
   advertising->setConnectableMode(BLE_GAP_CONN_MODE_NON);
-  advertising->setMinInterval(160);  // 100 ms (0.625 ms units)
-  advertising->setMaxInterval(240);  // 150 ms
+  advertising->setMinInterval(64);   // 40 ms (0.625 ms units): more samples per second for the other shelves
+  advertising->setMaxInterval(96);   // 60 ms
   const bool started = advertising->start();
   Serial.printf("[BLE] Anchor beacon %s (minor %d)\n", started ? "advertising" : "FAILED to start", ownShelfNumber);
 }
@@ -509,7 +524,7 @@ void publishTelemetry() {
 // a lost report is fine because the server expires stale readings.
 ShelfBeaconReading readBasket(BeaconRole role) {
   ShelfBeaconReading reading{false, 0, 0};
-  reading.rssi = getMedianRssi(role, reading.fresh);
+  reading.rssi = getTrimmedRssi(role, reading.fresh);
   uint32_t lastSeen;
   portENTER_CRITICAL(&bleMux);
   lastSeen = trackedBeacons[role].lastSeenMs;
@@ -725,7 +740,8 @@ void printDashboard() {
   const uint8_t heardCount = readAnchors(heard, MAX_ANCHORS);
   Serial.printf(" OTHER SHELVES (anchor beacons): %s\n", heardCount ? "" : "none heard");
   for (uint8_t i = 0; i < heardCount; ++i) {
-    Serial.printf("   - SHELF-%02u : %s %d dBm\n", heard[i].number, getSignalBar(heard[i].rssi).c_str(), heard[i].rssi);
+    Serial.printf("   - SHELF-%02u : %s %.1f dBm\n", heard[i].number,
+                  getSignalBar(static_cast<int8_t>(heard[i].rssi)).c_str(), static_cast<double>(heard[i].rssi));
   }
 
   // Expensive Product
@@ -846,8 +862,8 @@ void setup() {
   pBLEScan = NimBLEDevice::getScan();
   pBLEScan->setScanCallbacks(&scanCallbacks, true);
   pBLEScan->setActiveScan(true);
-  pBLEScan->setInterval(100);
-  pBLEScan->setWindow(65);
+  pBLEScan->setInterval(60);  // ms; window/interval = 83 % listening, Wi-Fi keeps the rest
+  pBLEScan->setWindow(50);
   pBLEScan->setDuplicateFilter(false);
   pBLEScan->start(0, false);
   Serial.println("[BLE] Continuous scan started.");

@@ -170,8 +170,10 @@ test("auto-place proposes ESP32 positions from anchor links and keeps the store 
 
 test("tuning validation accepts blanks and rejects values outside physical ranges", async () => {
   const { validateTuning } = await import("../src/positioning.mjs");
-  assert.deepEqual(validateTuning({}), { basketTxPower: null, n: null, alpha: null });
-  assert.deepEqual(validateTuning({ basketTxPower: -63.456, n: 2.8, alpha: "" }), { basketTxPower: -63.46, n: 2.8, alpha: null });
+  assert.deepEqual(validateTuning({}), { basketTxPower: null, anchorTxPower: null, n: null, alpha: null });
+  assert.equal(validateTuning({ anchorTxPower: -47.25 }).anchorTxPower, -47.25);
+  assert.throws(() => validateTuning({ anchorTxPower: -5 }), /ESP32 RSSI at 1 m must be between/);
+  assert.deepEqual(validateTuning({ basketTxPower: -63.456, n: 2.8, alpha: "" }), { basketTxPower: -63.46, anchorTxPower: null, n: 2.8, alpha: null });
   assert.throws(() => validateTuning({ n: 9 }), /n must be between/);
   assert.throws(() => validateTuning({ basketTxPower: "-60" }), /must be a number/);
   assert.throws(() => validateTuning([]), /JSON object/);
@@ -194,7 +196,7 @@ test("fixed n and a tuned basket RSSI@1m override the automatic model", () => {
   positioner.update(layout, [], { A: { "SHELF-01": -60, "SHELF-02": -70 } }, 500);
   const snap = positioner.snapshot(layout);
   assert.deepEqual(snap.basketModel, { txPower: -52, n: 2.5, source: "tuned" });
-  assert.deepEqual(snap.tuning, tuning);
+  assert.deepEqual(snap.tuning, { anchorTxPower: null, ...tuning });
 });
 
 test("tuning store saves, reloads and resets", async () => {
@@ -206,13 +208,13 @@ test("tuning store saves, reloads and resets", async () => {
   try {
     const path = join(directory, "tuning.json");
     const store = createTuningStore({ path, log: () => {} });
-    assert.deepEqual(await store.load(), { basketTxPower: null, n: null, alpha: null });
+    assert.deepEqual(await store.load(), { basketTxPower: null, anchorTxPower: null, n: null, alpha: null });
     await store.save({ basketTxPower: -61, n: 2.4 });
-    assert.deepEqual(await createTuningStore({ path }).load(), { basketTxPower: -61, n: 2.4, alpha: null });
+    assert.deepEqual(await createTuningStore({ path }).load(), { basketTxPower: -61, anchorTxPower: null, n: 2.4, alpha: null });
     await assert.rejects(store.save({ n: 0 }), /n must be between/);
     assert.equal(store.get().n, 2.4);
     await store.reset();
-    assert.deepEqual(await createTuningStore({ path }).load(), { basketTxPower: null, n: null, alpha: null });
+    assert.deepEqual(await createTuningStore({ path }).load(), { basketTxPower: null, anchorTxPower: null, n: null, alpha: null });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

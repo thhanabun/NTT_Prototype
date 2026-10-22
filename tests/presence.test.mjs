@@ -104,7 +104,7 @@ test("anchor links are averaged across both directions and smoothed over time", 
   advance(1000);
   tracker.ingest({ shelfId: "SHELF-01", rssi: {}, anchors: { "SHELF-02": -50 } });
   links = tracker.links();
-  assert.equal(links.find((l) => l.b === "SHELF-02").rssi, -61); // (-58 + -64) / 2 after 20% step
+  assert.equal(links.find((l) => l.b === "SHELF-02").rssi, -59.5); // (-55 + -64) / 2 after a 50% step
   advance(20_000);
   assert.equal(tracker.links().length, 0);
 });

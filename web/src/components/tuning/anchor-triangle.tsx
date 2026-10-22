@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlert, MapPinned, Triangle } from "lucide-react";
-import { saveStoreLayout } from "@/lib/api/client";
+import { CircleAlert, MapPinned, Ruler, Triangle } from "lucide-react";
+import { saveStoreLayout, saveTuning } from "@/lib/api/client";
 import { acceptStoreLayout } from "@/lib/api/live-state";
-import type { AnchorLink, StoreLayout } from "@/lib/api/types";
-import { alignTo, relativePlacement, rssiToMeters, type Point } from "@/lib/positioning";
+import type { AnchorLink, PositioningTuning, StoreLayout } from "@/lib/api/types";
+import { alignTo, fitScale, relativePlacement, rssiToMeters, type Point } from "@/lib/positioning";
 import { anchorPoint, metersPerUnit } from "@/lib/store-layout";
 import styles from "./tuning.module.css";
 
@@ -18,17 +18,28 @@ interface Props {
   // 30-second mean RSSI for a pair, steadier than the latest reading.
   meanRssi: (a: string, b: string) => number | null;
   layout: StoreLayout;
-  tunedN: number | null;
+  tuning: PositioningTuning | null;
+  responseMs: number;
+  onResponseChange: (ms: number) => void;
 }
 
+const RESPONSE_OPTIONS = [{ ms: 3000, label: "เร็ว 3 วิ" }, { ms: 8000, label: "ปกติ 8 วิ" }, { ms: 30000, label: "นิ่ง 30 วิ" }];
+
+const EMPTY_TUNING: PositioningTuning = { basketTxPower: null, anchorTxPower: null, n: null, alpha: null };
+
 // The ESP32s measure each other's RSSI; this turns those distances into points.
-export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
-  const [txPower, setTxPower] = useState(-59);
-  const [nDraft, setNDraft] = useState<string>("");
+export function AnchorTriangle({ links, meanRssi, layout, tuning, responseMs, onResponseChange }: Props) {
+  // Blank drafts follow the saved tuning; typing previews a value without saving it.
+  const [txDraft, setTxDraft] = useState("");
+  const [nDraft, setNDraft] = useState("");
+  const [realDistances, setRealDistances] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-  const n = nDraft.trim() === "" ? (tunedN ?? 2.2) : Number(nDraft);
-  const model = { txPower, n: Number.isFinite(n) && n > 0 ? n : 2.2 };
+  const savedTx = tuning?.anchorTxPower ?? -59;
+  const savedN = tuning?.n ?? 2.2;
+  const tx = txDraft.trim() === "" ? savedTx : Number(txDraft);
+  const n = nDraft.trim() === "" ? savedN : Number(nDraft);
+  const model = { txPower: Number.isFinite(tx) ? tx : savedTx, n: Number.isFinite(n) && n > 0 ? n : savedN };
 
   const rssiFor = new Map(links.map((link) => [pairKey(link.a, link.b), meanRssi(link.a, link.b) ?? link.rssi]));
   const measured = (a: string, b: string) => {
@@ -84,6 +95,30 @@ export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
   const gridY: number[] = [];
   for (let m = Math.ceil(minY); m <= maxY; m += gridStep) gridY.push(m);
 
+  // Pairs measured with a tape measure set the scale: RSSI@1m, and n when distances vary.
+  const measuredPairs = links.flatMap((link) => {
+    const meters = Number(realDistances[pairKey(link.a, link.b)]);
+    const rssi = rssiFor.get(pairKey(link.a, link.b));
+    return meters > 0 && rssi !== undefined ? [{ rssi, meters }] : [];
+  });
+  const scaleFit = fitScale(measuredPairs, model.n);
+
+  async function saveScale() {
+    if (!scaleFit) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      await saveTuning({ ...EMPTY_TUNING, ...tuning, anchorTxPower: scaleFit.txPower, n: scaleFit.fittedN ? scaleFit.n : (tuning?.n ?? null) });
+      setTxDraft("");
+      setNDraft("");
+      setMessage({ ok: true, text: `บันทึกสเกลแล้ว: RSSI@1ม. ${scaleFit.txPower} dBm${scaleFit.fittedN ? `, n ${scaleFit.n}` : ""} (จาก ${scaleFit.pairs} คู่)` });
+    } catch (cause) {
+      setMessage({ ok: false, text: cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function apply() {
     if (!aligned) return;
     if (!window.confirm("ย้ายจุด ESP32 บนแผนผังร้านไปตามตำแหน่งที่วัดได้ และบันทึก?")) return;
@@ -111,7 +146,7 @@ export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
         <div><p className={styles.eyebrow}>ESP32 SELF-MEASURE</p><h2 id="triangle-heading">ESP32 วัดระยะกันเอง</h2></div>
         <Triangle size={22} aria-hidden="true" />
       </div>
-      <p className={styles.muted}>ESP32 แต่ละตัวฟังสัญญาณของกันและกัน แล้วแปลง RSSI (เฉลี่ย 30 วิ) เป็นระยะ จากนั้นวางเป็น 3 จุดตามระยะที่วัดได้ หมุนให้ทิศตรงกับแผนผังร้าน วงกลมโปร่งคือตำแหน่งที่บันทึกบนผังไว้ ใช้เทียบกัน</p>
+      <p className={styles.muted}>ESP32 แต่ละตัวฟังสัญญาณของกันและกัน แล้วแปลง RSSI (เฉลี่ยตามความไวที่เลือก) เป็นระยะ จากนั้นวางเป็น 3 จุดตามระยะที่วัดได้ หมุนให้ทิศตรงกับแผนผังร้าน วงกลมโปร่งคือตำแหน่งที่บันทึกบนผังไว้ ใช้เทียบกัน</p>
 
       <div className={styles.triangleLayout}>
         <div>
@@ -176,31 +211,48 @@ export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
         </div>
 
         <div className={styles.trianglePanel}>
+          <div className={styles.segment} role="group" aria-label="ความไวการตอบสนอง">
+            {RESPONSE_OPTIONS.map((option) => (
+              <button key={option.ms} type="button" aria-pressed={responseMs === option.ms}
+                className={responseMs === option.ms ? styles.segmentOn : ""} onClick={() => onResponseChange(option.ms)}>{option.label}</button>
+            ))}
+          </div>
           <div className={styles.form}>
             <label><span>RSSI@1ม. ของ ESP32</span>
-              <input type="number" step={0.5} value={txPower} onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v)) setTxPower(v); }} /></label>
+              <input type="number" step={0.5} placeholder={`${savedTx}${tuning?.anchorTxPower != null ? " (บันทึกไว้)" : ""}`} value={txDraft} onChange={(e) => setTxDraft(e.target.value)} /></label>
             <label><span>n</span>
-              <input type="number" step={0.05} placeholder={`${tunedN ?? 2.2}`} value={nDraft} onChange={(e) => setNDraft(e.target.value)} /></label>
+              <input type="number" step={0.05} placeholder={`${savedN}`} value={nDraft} onChange={(e) => setNDraft(e.target.value)} /></label>
           </div>
-          <p className={styles.footnote}>ใช้คำนวณภาพนี้เท่านั้น ถ้าวัดระยะจริงระหว่าง ESP32 สองตัวได้ ให้ปรับ RSSI@1ม. จนเส้นนั้นตรงกับระยะจริง แล้วด้านอื่นจะแม่นขึ้นด้วย</p>
+          <p className={styles.footnote}>พิมพ์เพื่อลองดูภาพก่อน (ยังไม่บันทึก) หรือใส่ &quot;ระยะจริง&quot; ที่วัดด้วยตลับเมตรในตาราง แล้วกดปรับสเกล ระบบคำนวณ RSSI@1ม. ให้ (ใส่ 2 คู่ขึ้นไปที่ระยะต่างกัน จะคำนวณ n ให้ด้วย)</p>
 
           <table className={styles.table}>
-            <thead><tr><th>คู่</th><th>RSSI เฉลี่ย</th><th>วัดได้</th><th>บนผัง</th></tr></thead>
+            <thead><tr><th>คู่</th><th>RSSI เฉลี่ย {responseMs / 1000} วิ</th><th>วัดได้</th><th>ระยะจริง (ม.)</th><th>บนผัง</th></tr></thead>
             <tbody>
               {links.map((link) => {
-                const rssi = rssiFor.get(pairKey(link.a, link.b))!;
+                const key = pairKey(link.a, link.b);
+                const rssi = rssiFor.get(key)!;
                 const d = rssiToMeters(rssi, model);
+                const real = Number(realDistances[key]);
                 const pa = mapPoints.get(link.a), pb = mapPoints.get(link.b);
                 const onMap = pa && pb ? Math.hypot(pa.x - pb.x, pa.y - pb.y) : null;
-                return <tr key={pairKey(link.a, link.b)}>
+                return <tr key={key}>
                   <th scope="row">{short(link.a)} ↔ {short(link.b)}</th>
                   <td>{rssi.toFixed(1)} dBm</td>
-                  <td><strong>{d.toFixed(2)} ม.</strong></td>
+                  <td><strong>{d.toFixed(2)} ม.</strong>{real > 0 && <small className={Math.abs(d - real) <= Math.max(0.3, real * 0.15) ? styles.good : styles.fair}> ({d - real >= 0 ? "+" : ""}{(d - real).toFixed(2)})</small>}</td>
+                  <td><input className={styles.cellInput} type="number" inputMode="decimal" min={0.2} max={60} step={0.05} placeholder="—"
+                    aria-label={`ระยะจริง ${short(link.a)} ถึง ${short(link.b)}`} value={realDistances[key] ?? ""}
+                    onChange={(e) => setRealDistances({ ...realDistances, [key]: e.target.value })} /></td>
                   <td>{onMap === null ? "—" : `${onMap.toFixed(2)} ม.`}</td>
                 </tr>;
               })}
             </tbody>
           </table>
+          {scaleFit && <div className={styles.result}>
+            <p>จากระยะจริง {scaleFit.pairs} คู่: RSSI@1ม. = <strong>{scaleFit.txPower} dBm</strong>{scaleFit.fittedN ? <>, n = <strong>{scaleFit.n}</strong></> : ` (n = ${scaleFit.n} คงเดิม)`} · คลาดเฉลี่ย ±{scaleFit.rmsErrorM.toFixed(2)} ม.</p>
+            <button type="button" className={styles.primary} disabled={busy} onClick={() => void saveScale()}>
+              <Ruler size={16} aria-hidden="true" /> ปรับสเกลตามระยะจริงและบันทึก
+            </button>
+          </div>}
           {broken && <p className={styles.warn}>ระยะ 3 ด้านต่อกันเป็นสามเหลี่ยมไม่ได้ แปลว่าสัญญาณบางคู่ผิดเพี้ยน (มีสิ่งบัง หรือเสาอากาศหันผิดทาง) จุดที่เห็นเป็นค่าประมาณที่ใกล้ที่สุด</p>}
 
           <button type="button" className={styles.primary} disabled={!aligned || ids.length < 2 || busy} onClick={() => void apply()}>
