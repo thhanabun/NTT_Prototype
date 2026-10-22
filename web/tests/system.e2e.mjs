@@ -15,12 +15,13 @@ import { loginAdmin } from './helpers/mock-login.mjs';
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const web = resolve(repository, 'web');
 const endpoint = process.env.LAYA_ENDPOINT || 'http://127.0.0.1:8000/v1/systemone';
+const agentic = process.argv.includes('--agentic');
 const healthResponse = await fetch(new URL('/health', endpoint), { signal: AbortSignal.timeout(5000) });
 assert.ok(healthResponse.ok, 'Start npm run model:laya first');
-const api = await startLocalApi({ agentProvider: 'laya' });
+const api = await startLocalApi({ agentProvider: 'laya', agentMode: agentic ? 'agentic' : 'workflow' });
 const directory = resolve(repository, 'data', `web-system-${Date.now()}`);
 await mkdir(directory, { recursive: true });
-const report = { startedAt:new Date().toISOString(), health:await healthResponse.json(), cycles:0, deliveries:0, cases:[], checks:[], errors:[], simulated:['hardware signals', 'human button choices', 'development mock staff login'], notExercised:['physical ESP32/BLE', 'AWS services', 'real payment'] };
+const report = { startedAt:new Date().toISOString(), agentMode:agentic?'AGENTIC':'WORKFLOW', health:await healthResponse.json(), cycles:0, deliveries:0, telemetryMessages:0, cases:[], checks:[], errors:[], simulated:['hardware signals', 'human button choices', 'development mock staff login'], notExercised:['physical ESP32/BLE', 'AWS services', 'real payment'] };
 let browser, device, broker, frontend;
 const brokerLog=[], frontendLog=[];
 function passed(name) { report.checks.push(name); console.log('PASS ' + name); }
@@ -96,6 +97,11 @@ try {
   passed('30 complete MQTT cycles across A/B and Coke/Water; 60 transitions + 30 duplicates, no Agent and no wrong cart');
   const checkout=page=>page.getByRole('button',{name:/Mock checkout/});
   for(const [index,rssi] of [{A:-55,B:-57},{A:-57,B:-55},{A:-56,B:-56}].entries()) {
+    if(agentic)for(let sample=0;sample<4;sample++) {
+      const readings=index===1 ? sample%2 ? {A:-48,B:-73}:{A:-73,B:-48} : rssi;
+      await device.publishAsync('smartbasket/shelf/SHELF-01/telemetry',JSON.stringify({shelfId:'SHELF-01',source:'MOCK',capturedAt:new Date().toISOString(),rssi:readings,uptimeMs:100000+index*10000+sample*100,queueDepth:0,droppedEvents:0,lanes:[{laneId:'LANE-1',present:false}]}),{qos:1});
+      report.telemetryMessages++;await delay(100);
+    }
     const payload=signal(`web-model-${index}`,'PICK',rssi);
     const delivery=send(payload);
     await waitFor(async()=>{
@@ -108,11 +114,18 @@ try {
     current=await delivery;
     const item=current.cases.find(x=>x.eventId===payload.eventId);
     assert.equal(item.agent.provider,'LAYA'); assert.equal(item.agent.status,'COMPLETED');
-    assert.equal(item.toolCalls.length,3); assert.ok(item.agent.output.model);
+    if(agentic) {
+      assert.equal(item.agent.mode,'AGENTIC');
+      const selections=item.agent.steps.filter(step=>step.phase==='SELECT');
+      assert.ok(selections.length>=1 && selections.length<=8);
+      assert.ok(selections.every(step=>step.source==='MODEL' && step.model));
+      assert.ok(item.toolCalls.length>=1 && item.toolCalls.length<=8);
+      await admin.getByRole('heading',{name:'Agentic investigation',exact:true}).waitFor();
+    } else {assert.equal(item.toolCalls.length,3);assert.ok(item.agent.output.model);}
     assert.ok(current.baskets.every(x=>x.total===0),'No model result can charge an unconfirmed item');
     await admin.getByText('LAYA / COMPLETED',{exact:true}).waitFor();
     await admin.getByText('Agent confidence · LAYA',{exact:true}).waitFor();
-    const entry={caseId:item.caseId,candidate:item.candidate,confidence:item.confidence,nextAction:item.nextAction,model:item.agent.output.model};
+    const entry={caseId:item.caseId,candidate:item.candidate,confidence:item.confidence,nextAction:item.nextAction,model:item.agent.output?.model ?? item.agent.steps?.find(step=>step.model)?.model,...(agentic?{steps:item.agent.steps,tools:item.toolCalls.map(call=>({name:call.name,input:call.input,summary:call.summary}))}:{})};
     report.cases.push(entry);
     if(item.status==='WAITING_CUSTOMER') {
       const owner=item.candidate==='A'?a:b;
@@ -124,9 +137,9 @@ try {
     await total(a,25);
     await send(signal(`web-model-${index}-return`,'PUT_BACK',{A:-51,B:-72})); await total(a,0);
     const audit=await fetch(api.origin+'/api/audit?caseId='+item.caseId).then(r=>r.json());
-    for(const action of ['AGENT_STARTED','AGENT_TOOL_COMPLETED','AGENT_RECOMMENDATION','STAFF_APPROVED','CART_VALIDATED','CASE_CLOSED'])assert.ok(audit.items.some(x=>x.action===action),action+' audit');
+    for(const action of ['AGENT_STARTED','AGENT_TOOL_COMPLETED',...(agentic?['AGENT_ACTION_SELECTED']:['AGENT_RECOMMENDATION']),'STAFF_APPROVED','CART_VALIDATED','CASE_CLOSED'])assert.ok(audit.items.some(x=>x.action===action),action+' audit');
   }
-  passed('Three real Laya investigations visible in Admin; RUNNING guard, 3 evidence tools, policy/HITL, cart and audit');
+  passed(agentic?'Three real model-directed Laya investigations visible in Admin; action/observation trace, telemetry tools, RUNNING guard, HITL, cart and audit':'Three real Laya investigations visible in Admin; RUNNING guard, 3 evidence tools, policy/HITL, cart and audit');
   for(const [id,extra] of [['unknown',{}],['delayed',{delayed:true}]]) {
     current=await send(signal('web-'+id,'PICK',id==='unknown'?{A:null,B:null}:{A:-51,B:-72},'LANE-2',extra));
     const item=current.cases.find(x=>x.eventId==='web-'+id);

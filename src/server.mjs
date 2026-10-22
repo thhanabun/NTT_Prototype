@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { createRepository } from "./store-repository.mjs";
 import { createPrototypeApplication } from "./application.mjs";
 import { logEvent } from "./logger.mjs";
+import { requestLayaToolDecision } from "./agent/laya.mjs";
 
 const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));
 const dataDir = resolve(root, "../data");
@@ -36,6 +37,7 @@ application = createPrototypeApplication({
   repository,
   onStateChange: publish,
   agentProvider: process.env.AGENT_PROVIDER || "laya",
+  agentPlanner: process.env.AGENT_MODE === "workflow" ? undefined : requestLayaToolDecision,
 });
 await application.init();
 
@@ -82,6 +84,12 @@ async function handleApi(request, response, url) {
   }
 
   const body = await readJson(request);
+  if (request.method === "POST" && url.pathname === "/api/telemetry") {
+    return sendJson(response, 200, await application.ingestEvidence("telemetry", body));
+  }
+  if (request.method === "POST" && url.pathname === "/api/evidence/camera") {
+    return sendJson(response, 200, await application.ingestEvidence("camera", body));
+  }
   if (request.method === "POST" && url.pathname === "/api/sessions") {
     const session = await application.startSession(String(body.basketId || "").toUpperCase());
     return sendJson(response, 201, { session });

@@ -1,6 +1,6 @@
 import { createRepository } from "../../src/store-repository.mjs";
 import { investigateStoredCase } from "../../src/agent/investigate-stored-case.mjs";
-import { requestLayaBasketDecision } from "../../src/agent/laya.mjs";
+import { requestLayaBasketDecision, requestLayaToolDecision } from "../../src/agent/laya.mjs";
 
 let repository;
 
@@ -16,11 +16,12 @@ export function createCaseManagerHandler({
   getStore = () => getRepository(),
   agentProvider = process.env.AGENT_PROVIDER || "laya",
   decision = requestLayaBasketDecision,
+  planner = process.env.AGENT_MODE === "workflow" ? undefined : requestLayaToolDecision,
 } = {}) {
   return async function handler(event) {
     const caseId = event?.caseId || event?.Payload?.caseId;
     if (!caseId) throw new Error("caseId is required");
-    const { result: caseItem } = await investigateStoredCase(getStore(), caseId, { provider: agentProvider, decision });
+    const { result: caseItem } = await investigateStoredCase(getStore(), caseId, { provider: agentProvider, decision, planner });
     const result = {
       caseId: caseItem.caseId,
       status: caseItem.status,

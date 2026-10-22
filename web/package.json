@@ -13,7 +13,8 @@
     "test:auth": "node tests/auth.e2e.mjs",
     "test:admin": "node tests/admin.e2e.mjs",
     "test:realtime": "node tests/realtime.e2e.mjs",
-    "test:system": "node tests/system.e2e.mjs"
+    "test:system": "node tests/system.e2e.mjs",
+    "test:system:agentic": "node tests/system.e2e.mjs --agentic"
   },
   "engines": {
     "node": ">=20.18.1"

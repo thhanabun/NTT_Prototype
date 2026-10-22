@@ -23,7 +23,7 @@ await new Promise((done) => portProbe.close(done));
 let output = "";
 const app = spawn(process.execPath, ["src/server.mjs"], {
   cwd: resolve("."),
-  env: { ...process.env, PORT: String(port), HOST: "127.0.0.1", STORE_BACKEND: "local", STORE_PATH: statePath, AGENT_PROVIDER: "laya" },
+  env: { ...process.env, PORT: String(port), HOST: "127.0.0.1", STORE_BACKEND: "local", STORE_PATH: statePath, AGENT_PROVIDER: "laya", AGENT_MODE: "workflow" },
   stdio: ["ignore", "pipe", "pipe"],
   windowsHide: true,
 });

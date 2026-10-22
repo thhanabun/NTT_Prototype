@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import mqtt from "mqtt";
 
-import { forwardShelfEvent } from "../tools/mqtt-broker/forward-event.mjs";
+import { forwardShelfEvent, forwardTelemetry } from "../tools/mqtt-broker/forward-event.mjs";
 export { forwardShelfEvent } from "../tools/mqtt-broker/forward-event.mjs";
 
 function required(name) {
@@ -24,6 +24,7 @@ export function startIoTBridge({
   if (!/^[A-Z0-9-]+$/.test(shelfId)) throw new Error("SHELF_ID must contain only A-Z, 0-9, and hyphens");
 
   const eventTopic = `smartbasket/shelf/${shelfId}/events`;
+  const telemetryTopic = `smartbasket/shelf/${shelfId}/telemetry`;
   const ackTopic = `smartbasket/shelf/${shelfId}/acks`;
   const client = mqtt.connect(brokerUrl, {
     clientId: `smartbasket-bridge-${shelfId}`,
@@ -36,12 +37,16 @@ export function startIoTBridge({
   });
 
   client.on("connect", () => {
-    client.subscribe(eventTopic, { qos: 1 }, (error) => {
+    client.subscribe([eventTopic, telemetryTopic], { qos: 1 }, (error) => {
       if (error) logError("IoT subscribe failed:", error.message);
       else log(`Subscribed to ${eventTopic}`);
     });
   });
   client.on("message", (topic, payload) => {
+    if (topic === telemetryTopic) {
+      void forwardTelemetry(payload, { apiOrigin, shelfId, log: logError });
+      return;
+    }
     if (topic !== eventTopic) return;
     void forwardShelfEvent(payload, {
       apiOrigin,

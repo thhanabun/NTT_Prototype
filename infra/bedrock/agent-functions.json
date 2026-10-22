@@ -37,6 +37,77 @@
       "name": "get_cart_history",
       "description": "Read current basket carts, sessions, recent orders, and case resolutions.",
       "parameters": {}
+    },
+    {
+      "name": "get_signal_window",
+      "description": "Read bounded telemetry RSSI samples around the source event, including timing provenance.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_device_health",
+      "description": "Inspect heartbeat age, reboot, queue backlog and dropped-event evidence.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_lane_state",
+      "description": "Read independently reported switch presence near the source event.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_event_neighbors",
+      "description": "Inspect same-lane events around the source event for rapid transitions.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_camera_evidence",
+      "description": "Read reported camera observations. May return NO_DATA; does not capture RTSP or run vision.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "run_evidence_analysis",
+      "description": "Run an allowlisted read-only script: rssi_stability, switch_bounce or cart_consistency.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID.",
+          "type": "string",
+          "required": true
+        },
+        "scriptId": {
+          "description": "One of rssi_stability, switch_bounce, cart_consistency.",
+          "type": "string",
+          "required": true
+        }
+      }
     }
   ]
 }

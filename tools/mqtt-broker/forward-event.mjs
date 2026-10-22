@@ -21,3 +21,15 @@ export async function forwardShelfEvent(payload, { apiOrigin, publishAck, fetchI
     return false;
   }
 }
+
+export async function forwardTelemetry(payload, { apiOrigin, shelfId, fetchImpl = fetch, log = console.error }) {
+  try {
+    const sample = JSON.parse(payload.toString());
+    if (!sample || typeof sample !== "object" || sample.shelfId !== shelfId) throw new Error("Telemetry shelfId must match its MQTT topic");
+    const response = await fetchImpl(new URL("/api/telemetry", apiOrigin), {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sample), signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return true;
+  } catch (error) { log("Telemetry not ingested: " + error.message); return false; }
+}

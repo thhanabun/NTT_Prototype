@@ -1,6 +1,6 @@
 import { createServer } from 'node:net';
 import { Aedes } from 'aedes';
-import { forwardShelfEvent } from './forward-event.mjs';
+import { forwardShelfEvent, forwardTelemetry } from './forward-event.mjs';
 
 const PORT = Number(process.env.MQTT_PORT || 1883);
 const HOST = '0.0.0.0';
@@ -41,8 +41,9 @@ aedes.on('publish', (packet, client) => {
           aedes.publish({ cmd: 'publish', topic: `smartbasket/shelf/${shelfEvent[1]}/acks`, payload: Buffer.from(id), qos: 1, retain: false }, (error) => error ? reject(error) : resolve());
         }),
       });
-    } else if (topic.includes('/telemetry')) {
+    } else if (client && /^smartbasket\/shelf\/([A-Z0-9-]+)\/telemetry$/.test(topic)) {
       process.stdout.write(`\x1b[90m[MQTT Telemetry] ${topic}: ${payloadStr}\x1b[0m\n`);
+      if (FORWARD_TO_HTTP) void forwardTelemetry(packet.payload, { apiOrigin: HTTP_API_URL, shelfId: topic.split('/')[2] });
     } else {
       console.log(`[MQTT] [${topic}] ${payloadStr}`);
     }

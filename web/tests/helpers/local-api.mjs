@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 
-export async function startLocalApi({ corsOrigin, agentProvider = 'mock' } = {}) {
+export async function startLocalApi({ corsOrigin, agentProvider = 'mock', agentMode = 'workflow' } = {}) {
   const repository = fileURLToPath(new URL('../../../', import.meta.url));
   const directory = await mkdtemp(join(tmpdir(), 'basketly-admin-'));
   let server;
@@ -25,7 +25,7 @@ export async function startLocalApi({ corsOrigin, agentProvider = 'mock' } = {})
   try {
     let source = await readFile(resolve(repository, 'src/server.mjs'), 'utf8');
     const replacements = [
-      ...['store-repository.mjs', 'application.mjs', 'logger.mjs'].map(name => [
+      ...['store-repository.mjs', 'application.mjs', 'logger.mjs', 'agent/laya.mjs'].map(name => [
         `from "./${name}"`, `from ${JSON.stringify(pathToFileURL(resolve(repository, 'src', name)).href)}`,
       ]),
       ['const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));', `const root = ${JSON.stringify(resolve(repository, 'public'))};`],
@@ -51,7 +51,7 @@ export async function startLocalApi({ corsOrigin, agentProvider = 'mock' } = {})
     const file = join(directory, 'server.mjs');
     await writeFile(file, source);
     async function start() {
-      server = spawn(process.execPath, [file], { env: { ...process.env, PORT:String(port), HOST:'127.0.0.1', STORE_BACKEND:'local', STORE_PATH:join(directory, 'state.json'), AGENT_PROVIDER:agentProvider }, stdio:['ignore','pipe','pipe'] });
+      server = spawn(process.execPath, [file], { env: { ...process.env, PORT:String(port), HOST:'127.0.0.1', STORE_BACKEND:'local', STORE_PATH:join(directory, 'state.json'), AGENT_PROVIDER:agentProvider, AGENT_MODE:agentMode }, stdio:['ignore','pipe','pipe'] });
       return new Promise((resolveReady, reject) => {
         const timer = setTimeout(() => reject(new Error('Test API startup timed out')), 15000);
         server.on('error', error => { clearTimeout(timer); reject(error); });

@@ -11,7 +11,8 @@
     "verify:hardware": "node scripts/verify-full-flow.mjs --local-broker",
     "bridge:iot": "node scripts/iot-bridge.mjs",
     "test": "node --test",
-    "broker": "node tools/mqtt-broker/broker.mjs"
+    "broker": "node tools/mqtt-broker/broker.mjs",
+    "mock:evidence": "node scripts/mock-evidence.mjs"
   },
   "engines": {
     "node": ">=20"

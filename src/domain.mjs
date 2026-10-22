@@ -25,6 +25,8 @@ export function createStore() {
     cases: [],
     orders: [],
     auditLog: [],
+    telemetry: [],
+    cameraEvidence: [],
     seenEventIds: [],
     caseSequence: 0,
     shelf: {
@@ -156,6 +158,7 @@ export function processShelfEvent(store, input) {
     sku,
     eventType,
     timestamp: input.timestamp || isoNow(),
+    timeBasis: input.timestamp ? "SOURCE_TIMESTAMP" : "SERVER_RECEIPT",
     receivedAt: isoNow(),
     delayed: input.delayed === true,
     rssi,

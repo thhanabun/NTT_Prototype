@@ -15,6 +15,7 @@ export function basketDecisionState(context) {
       history.baskets?.find((basket) => basket.basketId === id)?.cart
         ?.find((line) => line.sku === event.sku)?.quantity || 0,
     ])),
+    ...(context.investigation ? { investigation: context.investigation.slice(-8) } : {}),
   };
 }
 

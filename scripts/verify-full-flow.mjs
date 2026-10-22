@@ -103,7 +103,7 @@ let appLogs = "";
 async function startApp() {
   app = spawn(process.execPath, ["src/server.mjs"], {
     cwd: resolve("."), windowsHide: true,
-    env: { ...process.env, HOST: "127.0.0.1", PORT: String(appPort), STORE_BACKEND: "local", STORE_PATH: statePath, AGENT_PROVIDER: "laya", LAYA_ENDPOINT: "http://127.0.0.1:" + proxyPort + "/v1/systemone" },
+    env: { ...process.env, HOST: "127.0.0.1", PORT: String(appPort), STORE_BACKEND: "local", STORE_PATH: statePath, AGENT_PROVIDER: "laya", AGENT_MODE: "workflow", LAYA_ENDPOINT: "http://127.0.0.1:" + proxyPort + "/v1/systemone" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   app.stdout.on("data", (chunk) => { appLogs += chunk; });
@@ -414,7 +414,7 @@ try {
   const { result: created } = await cloudRepository.mutate((store) => processShelfEvent(store, lambdaSignal));
   const validate = createValidatorHandler({ getStore: () => cloudRepository });
   assert.equal((await validate({ caseId: created.caseId })).valid, false);
-  const caseManager = createCaseManagerHandler({ getStore: () => cloudRepository, agentProvider: "laya", decision: ({ context }) => requestLayaBasketDecision({ context, endpoint: modelEndpoint }) });
+  const caseManager = createCaseManagerHandler({ getStore: () => cloudRepository, agentProvider: "laya", planner: null, decision: ({ context }) => requestLayaBasketDecision({ context, endpoint: modelEndpoint }) });
   const investigated = await caseManager({ caseId: created.caseId });
   assert.equal(investigated.agent.provider, "LAYA");
   assert.equal(investigated.agent.status, "COMPLETED");

@@ -1,5 +1,6 @@
 import { addAuditEntry } from "../domain.mjs";
 import { runAgentTool } from "./tools.mjs";
+import { randomUUID } from "node:crypto";
 
 const AGENT_TOOL_SEQUENCE = ["get_shelf_event", "get_basket_evidence", "get_cart_history"];
 const CUSTOMER_CONFIRM_THRESHOLD = 0.75;
@@ -31,17 +32,19 @@ function agentActor(provider) {
   return provider === "MOCK" ? "MOCK_AGENT" : `${provider}_AGENT`;
 }
 
-export function startCaseInvestigation(store, caseId, { provider = "MOCK" } = {}) {
+export function startCaseInvestigation(store, caseId, { provider = "MOCK", collectEvidence = true } = {}) {
   const caseItem = caseById(store, caseId);
   if (!caseItem.type.startsWith("AMBIGUOUS_")) throw new Error("Agent investigation is only for ambiguous cases");
   if (caseItem.status === "CLOSED" || caseItem.agent?.status === "COMPLETED") return { ready: false, completed: true, caseId };
+  if (caseItem.agent?.status === "RUNNING") return { ready: false, inProgress: true, caseId };
 
-  caseItem.agent = { provider, status: "RUNNING", startedAt: new Date().toISOString() };
+  caseItem.agent = { provider, status: "RUNNING", startedAt: new Date().toISOString(), investigationId: randomUUID(), mode: collectEvidence ? "WORKFLOW" : "AGENTIC", steps: [] };
   addCaseTimeline(caseItem, "AGENT_STARTED", { provider });
   addAuditEntry(store, "AGENT_STARTED", agentActor(provider), { caseId, eventId: caseItem.eventId });
 
   const toolResults = {};
   caseItem.toolCalls = [];
+  if (!collectEvidence) return { ready: true, caseId, investigationId: caseItem.agent.investigationId };
   try {
     for (const name of AGENT_TOOL_SEQUENCE) {
       const input = name === "get_cart_history" ? {} : { eventId: caseItem.eventId };
@@ -92,11 +95,22 @@ export function startCaseInvestigation(store, caseId, { provider = "MOCK" } = {}
   };
 }
 
+export function recordAgentAction(store, caseId, investigationId, step) {
+  const item = caseById(store, caseId);
+  if (item.status === "CLOSED" || item.agent?.status !== "RUNNING" || item.agent.investigationId !== investigationId) throw new Error("Investigation is no longer active");
+  item.agent.steps.push(step);
+  if (step.toolCall) item.toolCalls.push(step.toolCall);
+  const action = step.toolCall ? "AGENT_TOOL_COMPLETED" : "AGENT_ACTION_SELECTED";
+  addCaseTimeline(item, action, { actionId: step.action, reason: step.summary });
+  addAuditEntry(store, action, agentActor(item.agent.provider), { caseId, eventId: item.eventId, step: step.number, actionId: step.action, tool: step.toolCall?.name, status: step.toolCall?.status, summary: step.summary, model: step.model, confidence: step.confidence });
+  return item;
+}
+
 export function completeCaseInvestigation(store, caseId, assessment, { provider = "MOCK" } = {}) {
   const caseItem = caseById(store, caseId);
   if (caseItem.status === "CLOSED" || caseItem.agent?.status === "COMPLETED") return caseItem;
 
-  const failToStaff = (reason, error = null) => {
+  const failToStaff = (reason, error = null, status = "FAILED") => {
     caseItem.candidate = null;
     caseItem.confidence = 0;
     caseItem.nextAction = "STAFF_HITL";
@@ -105,16 +119,19 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
     caseItem.agent = {
       ...caseItem.agent,
       provider,
-      status: "FAILED",
+      status,
       completedAt: new Date().toISOString(),
+      toolCallCount: caseItem.toolCalls.length,
       ...(error ? { error } : {}),
     };
-    addCaseTimeline(caseItem, "AGENT_FAILED", { nextAction: "STAFF_HITL", reason });
-    addAuditEntry(store, "AGENT_FAILED", agentActor(provider), { caseId, reason });
+    const action = status === "FAILED" ? "AGENT_FAILED" : "AGENT_ESCALATED";
+    addCaseTimeline(caseItem, action, { nextAction: "STAFF_HITL", reason });
+    addAuditEntry(store, action, agentActor(provider), { caseId, reason });
     store.shelf.fsmState = "WAITING_STAFF";
     return caseItem;
   };
 
+  if (assessment?.escalateReason) return failToStaff(assessment.escalateReason, null, "COMPLETED");
   if (assessment?.error) return failToStaff(assessment.error, assessment.error);
   if (!assessment || !["A", "B", null].includes(assessment.candidate) ||
     !Number.isFinite(assessment.confidence) || assessment.confidence < 0 || assessment.confidence > 1) {
@@ -136,7 +153,8 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
   const putBackConflict = event.eventType === "PUT_BACK" && skuQuantity === 0;
   const delayed = event.delayed === true || evidence.zone === "DELAYED";
   const agreesWithRssi = candidate !== null && candidate === evidence.candidate;
-  const nextAction = agreesWithRssi && activeSession && confidence >= CUSTOMER_CONFIRM_THRESHOLD && !putBackConflict && !delayed
+  const evidenceConflict = assessment.evidenceIssues?.length > 0;
+  const nextAction = agreesWithRssi && activeSession && confidence >= CUSTOMER_CONFIRM_THRESHOLD && !putBackConflict && !delayed && !evidenceConflict
     ? "CUSTOMER_CONFIRM"
     : "STAFF_HITL";
 
@@ -152,7 +170,7 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
     activeSessions: evidence.activeSessions,
     cartQuantity: skuQuantity,
   };
-  caseItem.reason = delayed
+  caseItem.reason = evidenceConflict ? `Additional evidence requires staff review: ${assessment.evidenceIssues.join("; ")}` : delayed
     ? "The shelf event was delayed; current BLE evidence may be stale, so staff review is required."
     : putBackConflict
       ? "The candidate basket has no confirmed quantity for this PUT_BACK; staff must resolve the cart conflict."
@@ -166,6 +184,7 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
               ? "The agent found a likely basket and active session; customer confirmation is required before changing the cart."
               : "The recommendation does not meet the customer-confirmation confidence policy; staff review is required.";
   caseItem.agent = {
+    ...caseItem.agent,
     provider,
     status: "COMPLETED",
     startedAt: caseItem.agent?.startedAt,
@@ -182,6 +201,7 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
       ...(assessment.requestDurationMs !== undefined ? { requestDurationMs: assessment.requestDurationMs } : {}),
       ...(assessment.routing ? { routing: assessment.routing } : {}),
       ...(assessment.usage ? { usage: assessment.usage } : {}),
+      ...(assessment.evidenceIssues ? { evidenceIssues: assessment.evidenceIssues } : {}),
     },
   };
   addCaseTimeline(caseItem, "AGENT_RECOMMENDATION", {
@@ -206,7 +226,7 @@ export function completeCaseInvestigation(store, caseId, assessment, { provider 
 
 export function investigateCase(store, caseId, { mode = "MOCK" } = {}) {
   const investigation = startCaseInvestigation(store, caseId, { provider: mode });
-  if (investigation.completed) return caseById(store, caseId);
+  if (investigation.completed || investigation.inProgress) return caseById(store, caseId);
   if (!investigation.ready) return completeCaseInvestigation(store, caseId, investigation, { provider: mode });
 
   const { evidence, event } = investigation.context;

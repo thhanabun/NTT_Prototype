@@ -113,6 +113,17 @@ export interface BasketCase {
     provider: string;
     status: "RUNNING" | "COMPLETED" | "FAILED";
     error?: string;
+    mode?: "WORKFLOW" | "AGENTIC";
+    steps?: {
+      number: number;
+      phase: "SELECT" | "OBSERVE";
+      action: string;
+      source?: "MODEL";
+      summary: string;
+      model?: string;
+      confidence?: number;
+      availableActions?: string[];
+    }[];
     output?: {
       model?: string;
       confidenceSource?: string;

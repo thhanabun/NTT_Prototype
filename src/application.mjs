@@ -2,6 +2,7 @@ import { investigateStoredCase } from "./agent/investigate-stored-case.mjs";
 import { requestJevBasketDecision } from "./agent/jev.mjs";
 import { requestLayaBasketDecision } from "./agent/laya.mjs";
 import { logEvent } from "./logger.mjs";
+import { ingestTelemetry, ingestCameraEvidence } from "./evidence.mjs";
 import {
   checkout,
   createStore,
@@ -19,6 +20,7 @@ export function createPrototypeApplication({
   agentProvider = process.env.AGENT_PROVIDER || "mock",
   jevDecision = requestJevBasketDecision,
   layaDecision = requestLayaBasketDecision,
+  agentPlanner,
 }) {
   if (!repository) throw new Error("repository is required");
   const selectedAgentProvider = String(agentProvider).toLowerCase();
@@ -62,6 +64,15 @@ export function createPrototypeApplication({
       return result;
     },
 
+    async ingestEvidence(kind, input) {
+      const ingest = kind === "telemetry" ? ingestTelemetry : kind === "camera" ? ingestCameraEvidence : null;
+      if (!ingest) throw new Error("Unknown evidence kind");
+      const { result, store: next } = await repository.mutate(draft => ingest(draft, input));
+      store = next;
+      logger("INFO", "EVIDENCE_RECEIVED", { kind, shelfId: result.shelfId, source: result.source });
+      return { ok: true };
+    },
+
     async processShelfEvent(input) {
       const { result, store: next } = await repository.mutate((draft) => processShelfEvent(draft, input));
       store = next;
@@ -71,6 +82,7 @@ export function createPrototypeApplication({
           const { result: caseItem, store: completedStore } = await investigateStoredCase(repository, result.caseId, {
             provider: selectedAgentProvider,
             decision: selectedAgentProvider === "laya" ? layaDecision : jevDecision,
+            planner: selectedAgentProvider === "laya" ? agentPlanner : undefined,
             onStarted: (startedStore) => {
               store = startedStore;
               notifyStateChange();
