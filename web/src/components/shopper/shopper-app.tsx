@@ -7,6 +7,7 @@ import { BasketScanner } from "./basket-scanner";
 import { ConnectionStatus } from "@/components/connection-status";
 import { useShopper } from "./use-shopper";
 import { ProductArt } from "./product-art";
+import { StoreMap } from "./store-map";
 import styles from "./shopper.module.css";
 
 export const money = (amount: number) => `฿${amount.toLocaleString("th-TH")}`;
@@ -39,6 +40,7 @@ export function ShopperApp() {
             <button className={`${styles.outlineButton} ${styles.refreshButton}`} disabled={loading || pending} onClick={() => void shop.refresh()}><RefreshCw size={15} aria-hidden="true" /> อัปเดตตะกร้า</button>
             <button className={`${styles.outlineButton} ${styles.refreshButton}`} disabled={loading || pending || stale} onClick={() => setScannerOpen(true)}><QrCode size={17} aria-hidden="true" /> สแกน QR</button>
           </section>
+          <StoreMap presence={shop.presence} basketId={shop.basketId} />
           <section className={styles.card} aria-labelledby="products-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>ON THE SHELF</p><h2 id="products-heading">เลือกสิ่งที่คุณชอบ</h2></div><span className={styles.smallLabel}>{shop.state?.products.length ?? 0} PRODUCTS</span></div>
             {shop.state?.products.map((product) => <div className={styles.productRow} key={product.sku}><ProductArt sku={product.sku} /><div className={styles.productCopy}><span className={styles.productCategory}>{product.sku === "COKE" ? "REFRESH YOUR DAY" : "STAY HYDRATED"}</span><h3>{product.name}</h3><p>{product.sku === "COKE" ? "Original taste · 325 ml" : "Natural water · 600 ml"}</p><strong>{money(product.price)} <small>/ ชิ้น</small></strong></div><span className={styles.lane}>Lane {product.sku === "COKE" ? "01" : "02"}</span></div>)}
             <p className={styles.shelfHint}><Sparkles size={15} aria-hidden="true" /> รายการสินค้าเพิ่มจาก shelf event ไม่ใช่การกดเลือกบนหน้านี้</p>

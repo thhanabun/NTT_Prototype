@@ -3,6 +3,7 @@ import type {
   BasketCase,
   BasketId,
   Order,
+  PresenceSnapshot,
   ProcessShelfEventResult,
   Session,
   ShelfEventInput,
@@ -56,6 +57,10 @@ function post<T>(path: string, body: unknown): Promise<T> {
 
 export function getState(signal?: AbortSignal): Promise<ApiState> {
   return request<ApiState>("/api/state", {signal});
+}
+
+export function getPresence(signal?: AbortSignal): Promise<PresenceSnapshot> {
+  return request<PresenceSnapshot>("/api/presence", {signal});
 }
 
 export function startSession(basketId: BasketId): Promise<{ session: Session }> {

@@ -78,6 +78,14 @@ Tested toolchain: ESP32 core 3.3.12, NimBLE-Arduino 2.5.1, PubSubClient 2.8.0. N
 
 `source` is `"PICK"` while a confirmed pick holds the basket, `"RSSI"` otherwise, and `null` when the basket is near no shelf.
 
+## Shopper map UI
+
+`web/src/components/shopper/store-map.tsx` draws the floor plan on the shopper page (`/shopper`).
+- It reads `presence` from the same `/api/stream` connection as cart state (`web/src/lib/api/live-state.ts`), with `GET /api/presence` as the initial load. No second EventSource is opened.
+- The selected basket is a blue pin in front of its zone shelf, and the other basket is a small grey marker. A basket with `zone: null` is not drawn, because the map never guesses a position.
+- Offline shelves are drawn dashed. The list under the map shows each shelf's RSSI for the selected basket.
+- To change shelf names and positions to match the real store, edit the `SHELVES` and `CASHIER` constants at the top of `store-map.tsx` (SVG units, viewBox 360 × 250). A shelf ID reported by hardware but not in `SHELVES` still shows in the list.
+
 ## Zone rules and calibration
 
 | Env var | Default | Meaning |

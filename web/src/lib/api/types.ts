@@ -172,6 +172,29 @@ export interface ApiState {
   };
 }
 
+// Store-map presence from /api/presence and SSE `event: presence`.
+// A zone is the shelf a basket is near (BLE proximity evidence), not an exact position.
+export interface PresenceBasket {
+  basketId: BasketId;
+  zone: string | null;
+  since: string | null;
+  source: "RSSI" | "PICK" | null;
+  rssi: Record<string, number | null>;
+}
+
+export interface PresenceShelf {
+  shelfId: string;
+  lastReportAt: string;
+  online: boolean;
+}
+
+export interface PresenceSnapshot {
+  updatedAt: string;
+  thresholds: { enterDbm: number; exitDbm: number; staleMs: number };
+  baskets: PresenceBasket[];
+  shelves: PresenceShelf[];
+}
+
 export interface ShelfEventInput {
   eventId: string;
   laneId: string;
