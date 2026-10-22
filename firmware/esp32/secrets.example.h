@@ -44,3 +44,11 @@ PASTE_DEVICE_PRIVATE_KEY_HERE
 #define SHELF_PROJECT_UUID "A1B2C3D4-E5F6-4A1B-8C2D-1234567890AB"
 // Explicit opt-in for local MQTT simulation commands. Keep disabled for real shelf use.
 #define SHELF_ENABLE_TEST_COMMANDS 0
+
+// 5. Store map (local_shelf sketch)
+// Shelf identity used in MQTT topics and presence reports. Change per board.
+#define SHELF_DEVICE_ID "SHELF-01"
+// 1 = roller switches wired (sends PICK/PUT_BACK). 0 = BLE presence only, e.g. SHELF-02.
+#define SHELF_ENABLE_SWITCHES 1
+// Presence report interval to smartbasket/shelf/<id>/presence.
+#define SHELF_PRESENCE_INTERVAL_MS 500

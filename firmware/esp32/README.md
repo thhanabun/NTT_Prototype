@@ -91,3 +91,11 @@ arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --inp
 - Simulation commands are disabled unless SHELF_ENABLE_TEST_COMMANDS is explicitly enabled. Exact water_pick/water_put commands use lane 2 and do not overwrite the physical switch baseline.
 - Telemetry is published/logged for diagnostics; the web backend's high-value telemetry/history/offline dashboard is not implemented by this firmware PR.
 - RAM events are lost on power loss; buffer overflow is counted. No persistent outbox or claim of physical delivery/accuracy is made.
+
+## Store map presence (local_shelf)
+
+- `local_shelf.ino` publishes basket RSSI to `smartbasket/shelf/<SHELF_ID>/presence` every 500 ms (QoS0, not queued). The broker forwards it to `/api/presence`, and the server pushes shelf zones to phones over SSE. See [`docs/store-map-presence.md`](../../docs/store-map-presence.md).
+- The shelf ID comes from `SHELF_DEVICE_ID` in `secrets.h` (default `SHELF-01`). Every topic is built from it.
+- For a presence-only board, set `SHELF_DEVICE_ID "SHELF-02"` and `SHELF_ENABLE_SWITCHES 0`.
+- `aws_shelf.ino` still uses fixed `SHELF-01` topics and has no presence topic.
+- ESP32-S3 boards use GPIO 4/5 for switches, because GPIO 26–32 are flash/PSRAM pins on S3. Build with `esp32:esp32:esp32s3:PartitionScheme=huge_app`.

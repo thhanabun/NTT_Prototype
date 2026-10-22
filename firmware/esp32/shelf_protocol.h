@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
@@ -94,6 +95,33 @@ inline int8_t shelfFreshMedian(const int8_t* values, const uint32_t* times, uint
     if (samples[j] < samples[i]) { auto value = samples[i]; samples[i] = samples[j]; samples[j] = value; }
   }
   return samples[used / 2];
+}
+
+// Builds "smartbasket/shelf/<shelfId>/<suffix>". Returns false if it does not fit.
+inline bool shelfTopic(char* out, size_t size, const char* shelfId, const char* suffix) {
+  const int written = snprintf(out, size, "smartbasket/shelf/%s/%s", shelfId, suffix);
+  return written > 0 && static_cast<size_t>(written) < size;
+}
+
+struct ShelfBeaconReading {
+  bool fresh;
+  int8_t rssi;     // median RSSI, valid only when fresh
+  uint32_t ageMs;  // time since the last packet, valid only when fresh
+};
+
+// Small presence report for the store map. Stale baskets are sent as null.
+inline bool shelfPresencePayload(char* out, size_t size, const char* shelfId, uint32_t seq,
+                                 uint32_t uptimeMs, const ShelfBeaconReading& a,
+                                 const ShelfBeaconReading& b) {
+  char rssiA[8] = "null", rssiB[8] = "null", ageA[12] = "null", ageB[12] = "null";
+  if (a.fresh) { snprintf(rssiA, sizeof(rssiA), "%d", a.rssi); snprintf(ageA, sizeof(ageA), "%lu", static_cast<unsigned long>(a.ageMs)); }
+  if (b.fresh) { snprintf(rssiB, sizeof(rssiB), "%d", b.rssi); snprintf(ageB, sizeof(ageB), "%lu", static_cast<unsigned long>(b.ageMs)); }
+  const int written = snprintf(out, size,
+    "{\"shelfId\":\"%s\",\"seq\":%lu,\"uptimeMs\":%lu,"
+    "\"rssi\":{\"A\":%s,\"B\":%s},\"ageMs\":{\"A\":%s,\"B\":%s}}",
+    shelfId, static_cast<unsigned long>(seq), static_cast<unsigned long>(uptimeMs),
+    rssiA, rssiB, ageA, ageB);
+  return written > 0 && static_cast<size_t>(written) < size;
 }
 
 inline bool shelfTestCommand(const char* command, uint8_t& lane, const char*& eventType) {

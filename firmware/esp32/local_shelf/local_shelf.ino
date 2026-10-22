@@ -51,6 +51,18 @@ struct Lane {
 #ifndef SHELF_ENABLE_TEST_COMMANDS
   #define SHELF_ENABLE_TEST_COMMANDS 0
 #endif
+// Set in secrets.h to flash the same sketch onto another shelf, e.g. "SHELF-02".
+#ifndef SHELF_DEVICE_ID
+  #define SHELF_DEVICE_ID "SHELF-01"
+#endif
+// 0 = BLE presence only (no roller switches wired, never sends PICK/PUT_BACK).
+#ifndef SHELF_ENABLE_SWITCHES
+  #define SHELF_ENABLE_SWITCHES 1
+#endif
+// How often the store-map presence report is published.
+#ifndef SHELF_PRESENCE_INTERVAL_MS
+  #define SHELF_PRESENCE_INTERVAL_MS 500
+#endif
 
 
 // Target MAC String references for auto-normalizing comparison
@@ -64,16 +76,36 @@ bool ENABLE_LOCAL_HTTP = false;
 const char* LOCAL_HTTP_HOST = LOCAL_SERVER_HOST;
 const uint16_t LOCAL_HTTP_PORT = LOCAL_SERVER_PORT;
 
-// MQTT Topics matching AWS IoT schema
-constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
-constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
-constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/SHELF-01/cmd";
+// MQTT Topics matching AWS IoT schema: smartbasket/shelf/<SHELF_ID>/<suffix>
+// Built in setup() from SHELF_DEVICE_ID.
+char TOPIC_EVENTS[64];
+char TOPIC_TELEMETRY[64];
+char TOPIC_COMMAND[64];
+char TOPIC_PRESENCE[64];
 
 // ----------------------------------------------------------------------------
 // 2. Hardware Microswitch Pins (Roller switches: COM -> GND, NO -> GPIO pin)
 // ----------------------------------------------------------------------------
-constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
-constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
+// Classic ESP32 uses GPIO 26/27. On ESP32-S3, GPIO 26-32 drive the SPI flash/PSRAM
+// and 22-25 do not exist, so S3 boards use GPIO 4/5. Override in secrets.h if wired differently.
+#if CONFIG_IDF_TARGET_ESP32
+  #define SHELF_DEFAULT_COKE_PIN 26
+  #define SHELF_DEFAULT_WATER_PIN 27
+#else
+  #define SHELF_DEFAULT_COKE_PIN 4
+  #define SHELF_DEFAULT_WATER_PIN 5
+#endif
+#ifndef SHELF_COKE_PIN
+  #define SHELF_COKE_PIN SHELF_DEFAULT_COKE_PIN
+#endif
+#ifndef SHELF_WATER_PIN
+  #define SHELF_WATER_PIN SHELF_DEFAULT_WATER_PIN
+#endif
+#if !CONFIG_IDF_TARGET_ESP32 && ((SHELF_COKE_PIN >= 26 && SHELF_COKE_PIN <= 32) || (SHELF_WATER_PIN >= 26 && SHELF_WATER_PIN <= 32))
+  #warning "ESP32-S3: switch pin in GPIO 26-32 (flash/PSRAM bus). Only safe if this board exposes it and has no PSRAM on it."
+#endif
+constexpr uint8_t COKE_SWITCH_PIN     = SHELF_COKE_PIN;  // Lane 1: Coca-Cola
+constexpr uint8_t WATER_SWITCH_PIN    = SHELF_WATER_PIN; // Lane 2: Mineral Water
 constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // Stable transition; calibrate against physical switch bounce
 
 // Hardware interrupt counters (captures ANY electrical change, even for 1 microsecond)
@@ -89,7 +121,12 @@ void IRAM_ATTR isrWater() {
 }
 
 // Candidate GPIO probe list to detect accidental wrong pin insertion
+#if CONFIG_IDF_TARGET_ESP32
 constexpr uint8_t PROBE_PINS[] = {25, 26, 27, 14, 13, 32, 33, 4, 18, 19, 21, 22, 23};
+#else
+// ESP32-S3 general-purpose pins only (no flash/PSRAM, USB or strapping pins).
+constexpr uint8_t PROBE_PINS[] = {4, 5, 6, 7, 15, 16, 17, 18};
+#endif
 
 // ----------------------------------------------------------------------------
 // 3. BLE Beacons Configuration (3 Tags: Basket A, Basket B, Expensive Product)
@@ -102,7 +139,7 @@ constexpr uint16_t BASKET_B_MINOR       = 2;
 constexpr uint16_t EXPENSIVE_ITEM_MAJOR = 1;
 constexpr uint16_t EXPENSIVE_ITEM_MINOR = 3;
 
-constexpr char SHELF_ID[]          = "SHELF-01";
+constexpr char SHELF_ID[]          = SHELF_DEVICE_ID;
 constexpr char EXPENSIVE_ITEM_ID[] = "HV-001";
 constexpr uint32_t TAG_FRESH_MS    = 5000; // 5000 ms freshness window
 constexpr size_t RSSI_WINDOW       = 5;    // 5-sample rolling median
@@ -148,12 +185,14 @@ uint32_t eventSeq = 0;
 uint32_t bootId = 0;
 uint32_t lastDashboardMs = 0;
 uint32_t lastTelemetryMs = 0;
+uint32_t lastPresenceMs = 0;
+uint32_t presenceSeq = 0;
 uint32_t lastMqttRetryMs = 0;
 uint32_t lastWifiRetryMs = 0;
 bool wasWifiConnected = false;
 ShelfOutbox eventOutbox;
 bool ackSubscribed = false;
-constexpr char TOPIC_ACKS[] = "smartbasket/shelf/SHELF-01/acks";
+char TOPIC_ACKS[64];
 
 // ----------------------------------------------------------------------------
 // 5. Signal Filtering & Proximity Helpers
@@ -311,8 +350,8 @@ void maintainMqtt() {
   if (now - lastMqttRetryMs < 5000) return; // Retry every 5s without blocking
   lastMqttRetryMs = now;
 
-  char clientId[32];
-  snprintf(clientId, sizeof(clientId), "SHELF-01-%04x", bootId);
+  char clientId[48];
+  snprintf(clientId, sizeof(clientId), "%s-%04x", SHELF_ID, bootId);
 
   Serial.printf("[MQTT] Connecting to %s:%u (client: %s)...\n",
                 LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, clientId);
@@ -385,6 +424,28 @@ void publishTelemetry() {
     freshExp ? String(rssiExp).c_str() : "null");
 
   mqttClient.publish(TOPIC_TELEMETRY, telem);
+}
+
+// Store-map presence: basket RSSI only, small and frequent. QoS0 and not queued;
+// a lost report is fine because the server expires stale readings.
+ShelfBeaconReading readBasket(BeaconRole role) {
+  ShelfBeaconReading reading{false, 0, 0};
+  reading.rssi = getMedianRssi(role, reading.fresh);
+  uint32_t lastSeen;
+  portENTER_CRITICAL(&bleMux);
+  lastSeen = trackedBeacons[role].lastSeenMs;
+  portEXIT_CRITICAL(&bleMux);
+  if (reading.fresh) reading.ageMs = millis() - lastSeen;
+  return reading;
+}
+
+void publishPresence() {
+  if (!ENABLE_LOCAL_MQTT || !mqttClient.connected()) return;
+  const ShelfBeaconReading a = readBasket(ROLE_BASKET_A);
+  const ShelfBeaconReading b = readBasket(ROLE_BASKET_B);
+  char payload[192];
+  if (!shelfPresencePayload(payload, sizeof(payload), SHELF_ID, ++presenceSeq, millis(), a, b)) return;
+  mqttClient.publish(TOPIC_PRESENCE, payload);
 }
 
 // ----------------------------------------------------------------------------
@@ -592,7 +653,12 @@ void printDashboard() {
 // 11. Setup
 // ----------------------------------------------------------------------------
 void probeAllPins() {
-  static int lastState[sizeof(PROBE_PINS)] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  static int lastState[sizeof(PROBE_PINS)];
+  static bool lastStateReady = false;
+  if (!lastStateReady) {
+    for (int& state : lastState) state = -1;
+    lastStateReady = true;
+  }
   for (size_t i = 0; i < sizeof(PROBE_PINS); ++i) {
     const uint8_t p = PROBE_PINS[i];
     const int val = digitalRead(p);
@@ -620,15 +686,26 @@ void setup() {
   }
 
 
+  if (!shelfTopic(TOPIC_EVENTS, sizeof(TOPIC_EVENTS), SHELF_ID, "events") ||
+      !shelfTopic(TOPIC_TELEMETRY, sizeof(TOPIC_TELEMETRY), SHELF_ID, "telemetry") ||
+      !shelfTopic(TOPIC_COMMAND, sizeof(TOPIC_COMMAND), SHELF_ID, "cmd") ||
+      !shelfTopic(TOPIC_ACKS, sizeof(TOPIC_ACKS), SHELF_ID, "acks") ||
+      !shelfTopic(TOPIC_PRESENCE, sizeof(TOPIC_PRESENCE), SHELF_ID, "presence")) {
+    Serial.println("SHELF_DEVICE_ID is too long for MQTT topics");
+    while (true) delay(1000);
+  }
+
   // Initialize NimBLE stack FIRST before querying MAC or scan
   NimBLEDevice::init(SHELF_ID);
 
   bootId = esp_random();
 
   Serial.println("\n==================================================================");
-  Serial.println("     Basketly — Local MQTT & Shelf Firmware (SHELF-01)           ");
+  Serial.printf("     Basketly — Local MQTT & Shelf Firmware (%s)\n", SHELF_ID);
   Serial.println("==================================================================");
   Serial.printf("Shelf ID      : %s\n", SHELF_ID);
+  Serial.printf("Presence      : %s every %u ms\n", TOPIC_PRESENCE, static_cast<unsigned>(SHELF_PRESENCE_INTERVAL_MS));
+  Serial.printf("Switch mode   : %s\n", SHELF_ENABLE_SWITCHES ? "ENABLED" : "DISABLED (presence only)");
   Serial.printf("ESP32 BLE MAC : %s\n", NimBLEDevice::getAddress().toString().c_str());
   Serial.printf("Local MQTT    : %s:%u\n", LOCAL_MQTT_HOST, LOCAL_MQTT_PORT);
   Serial.printf("Switches      : Coke = GPIO %d, Water = GPIO %d\n", COKE_SWITCH_PIN, WATER_SWITCH_PIN);
@@ -646,17 +723,19 @@ void setup() {
     pinMode(p, INPUT_PULLUP);
   }
 
-  // Attach hardware interrupts on switch pins to capture any edge
-  attachInterrupt(digitalPinToInterrupt(COKE_SWITCH_PIN), isrCoke, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(WATER_SWITCH_PIN), isrWater, CHANGE);
+  if (SHELF_ENABLE_SWITCHES) {
+    // Attach hardware interrupts on switch pins to capture any edge
+    attachInterrupt(digitalPinToInterrupt(COKE_SWITCH_PIN), isrCoke, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(WATER_SWITCH_PIN), isrWater, CHANGE);
 
-  // Initialize switches without firing events
-  for (Lane& lane : lanes) {
-    pinMode(lane.pin, INPUT_PULLUP);
-    lane.stablePresent = (digitalRead(lane.pin) == LOW);
-    lane.candidatePresent = lane.stablePresent;
-    lane.candidateSince = millis();
-    Serial.printf("[INIT] %s (%s): %s\n", lane.laneId, lane.sku, lane.stablePresent ? "PRESENT" : "EMPTY");
+    // Initialize switches without firing events
+    for (Lane& lane : lanes) {
+      pinMode(lane.pin, INPUT_PULLUP);
+      lane.stablePresent = (digitalRead(lane.pin) == LOW);
+      lane.candidatePresent = lane.stablePresent;
+      lane.candidateSince = millis();
+      Serial.printf("[INIT] %s (%s): %s\n", lane.laneId, lane.sku, lane.stablePresent ? "PRESENT" : "EMPTY");
+    }
   }
 
   // Register Wi-Fi Access Points (Primary Router 2.4 GHz + Fallback Hotspot)
@@ -669,7 +748,8 @@ void setup() {
 
   Serial.println("[Wi-Fi] Connecting using local secrets.h configuration");
 
-  if (xTaskCreate(sampleShelfInputs, "shelf-inputs", 4096, nullptr, 2, nullptr) != pdPASS) {
+  if (SHELF_ENABLE_SWITCHES &&
+      xTaskCreate(sampleShelfInputs, "shelf-inputs", 4096, nullptr, 2, nullptr) != pdPASS) {
     Serial.println("Cannot start independent sensor task");
     while (true) delay(1000);
   }
@@ -699,6 +779,12 @@ void loop() {
   probeAllPins();
 
   // Sample switches
+
+  // Store-map presence (default 2 Hz)
+  if (now - lastPresenceMs >= SHELF_PRESENCE_INTERVAL_MS) {
+    lastPresenceMs = now;
+    publishPresence();
+  }
 
   // Periodic Telemetry (1 Hz)
   if (now - lastTelemetryMs >= 1000) {

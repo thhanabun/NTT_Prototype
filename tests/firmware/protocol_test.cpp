@@ -58,5 +58,21 @@ int main() {
   assert(outbox.depth() == 8);
   outbox.pump(5000, [](const char*, const char*) { return false; });
   assert(outbox.depth() == 8);
-  puts("protocol checks passed: exact water commands, UUID, per-sample freshness, ACK-only FIFO, retry/delayed, overflow");
+  char topic[64];
+  assert(shelfTopic(topic, sizeof(topic), "SHELF-02", "presence"));
+  assert(std::string(topic) == "smartbasket/shelf/SHELF-02/presence");
+  char tinyTopic[12];
+  assert(!shelfTopic(tinyTopic, sizeof(tinyTopic), "SHELF-02", "presence"));
+
+  char presence[192];
+  ShelfBeaconReading seenA{true, -55, 120};
+  ShelfBeaconReading staleB{false, 0, 0};
+  assert(shelfPresencePayload(presence, sizeof(presence), "SHELF-01", 42, 123456, seenA, staleB));
+  assert(std::string(presence) ==
+    "{\"shelfId\":\"SHELF-01\",\"seq\":42,\"uptimeMs\":123456,"
+    "\"rssi\":{\"A\":-55,\"B\":null},\"ageMs\":{\"A\":120,\"B\":null}}");
+  char tinyPresence[16];
+  assert(!shelfPresencePayload(tinyPresence, sizeof(tinyPresence), "SHELF-01", 1, 1, seenA, staleB));
+
+  puts("protocol checks passed: exact water commands, UUID, per-sample freshness, ACK-only FIFO, retry/delayed, overflow, topics, presence payload");
 }

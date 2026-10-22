@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { createRepository } from "./store-repository.mjs";
 import { createPrototypeApplication } from "./application.mjs";
 import { logEvent } from "./logger.mjs";
+import { createPresenceTracker, presenceConfigFromEnv } from "./presence.mjs";
 
 const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));
 const dataDir = resolve(root, "../data");
@@ -31,6 +32,15 @@ function publish() {
   const message = "event: state\ndata: " + JSON.stringify(application.getSnapshot()) + "\n\n";
   for (const response of subscribers) response.write(message);
 }
+
+// Store-map presence is separate from cart state and only pushed when a zone changes.
+const presence = createPresenceTracker(presenceConfigFromEnv());
+const presenceMessage = () => "event: presence\ndata: " + JSON.stringify(presence.snapshot()) + "\n\n";
+function publishPresence() {
+  const message = presenceMessage();
+  for (const response of subscribers) response.write(message);
+}
+setInterval(() => { if (presence.tick()) publishPresence(); }, 1000).unref();
 
 application = createPrototypeApplication({
   repository,
@@ -65,6 +75,7 @@ async function handleApi(request, response, url) {
     });
     response.write("retry: 1500\n\n");
     response.write("event: state\ndata: " + JSON.stringify(state) + "\n\n");
+    response.write(presenceMessage());
     subscribers.add(response);
     const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
     response.on("close", () => {
@@ -72,6 +83,10 @@ async function handleApi(request, response, url) {
       subscribers.delete(response);
     });
     return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/presence") {
+    return sendJson(response, 200, presence.snapshot());
   }
 
   if (request.method === "GET" && url.pathname === "/api/audit") {
@@ -88,7 +103,15 @@ async function handleApi(request, response, url) {
   }
   if (request.method === "POST" && url.pathname === "/api/events") {
     const result = await application.processShelfEvent(body);
+    if (result.disposition === "CONFIRMED" && presence.confirmPick(result.basketId, result.event?.shelfId)) {
+      publishPresence();
+    }
     return sendJson(response, 200, result);
+  }
+  if (request.method === "POST" && url.pathname === "/api/presence") {
+    const { changed } = presence.ingest(body);
+    if (changed) publishPresence();
+    return sendJson(response, 200, { ok: true, changed });
   }
   if (request.method === "POST" && url.pathname === "/api/reset") {
     await application.reset();
