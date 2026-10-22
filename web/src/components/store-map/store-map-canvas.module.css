@@ -31,3 +31,16 @@
 .otherLetter { fill: #5a6f8c; font-size: 10px; font-weight: 700; }
 @keyframes pulse { from { transform: scale(.6); opacity: .35; } to { transform: scale(1.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .marker, .zone rect { transition: none; } .pulse { animation: none; } }
+
+/* ESP32 anchors and the positioning error circle */
+.anchor { pointer-events: none; }
+.anchorEditable { pointer-events: auto; cursor: move; }
+.anchorHit { fill: transparent; }
+.anchorDot { fill: #7c3aed; stroke: #fff; stroke-width: 1.5; }
+.anchorWaves { fill: none; stroke: #7c3aed; stroke-width: 1.3; opacity: .55; }
+.anchorOffline .anchorDot { fill: #b6c0cd; }
+.anchorOffline .anchorWaves { stroke: #b6c0cd; }
+.anchorLabel { fill: #5b21b6; font-size: 8px; font-weight: 700; pointer-events: none; }
+.accuracy { fill: #0866f6; fill-opacity: .1; stroke: #0866f6; stroke-opacity: .35; stroke-width: 1; stroke-dasharray: 3 3;
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1), r .6s; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .accuracy { transition: none; } }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
@@ -9,7 +9,8 @@ import { expireMockSession, signOutMock, useMockSession } from "@/lib/auth/mock-
 import { AuthUnavailable } from "./auth-unavailable";
 import styles from "./auth.module.css";
 
-export function AdminAccess() {
+// Guards an admin page behind the mock session; renders the dashboard unless given other content.
+export function AdminAccess({ children }: { children?: ReactNode }) {
   const auth = useMockSession();
   const router = useRouter();
   useEffect(() => {
@@ -27,6 +28,6 @@ export function AdminAccess() {
         <button className={styles.secondary} onClick={signOutMock}><LogOut size={15} aria-hidden="true" /> Logout</button>
       </div>
     </div>
-    <AdminDashboard />
+    {children ?? <AdminDashboard />}
   </>;
 }

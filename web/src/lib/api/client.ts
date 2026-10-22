@@ -1,8 +1,10 @@
 import type {
   ApiState,
+  AutoPlaceProposal,
   BasketCase,
   BasketId,
   Order,
+  PositioningTuning,
   PresenceSnapshot,
   ProcessShelfEventResult,
   Session,
@@ -70,6 +72,18 @@ export function getStoreLayout(signal?: AbortSignal): Promise<StoreLayout> {
 
 export function saveStoreLayout(layout: StoreLayout): Promise<StoreLayout> {
   return request<StoreLayout>("/api/store-layout", { method: "PUT", body: JSON.stringify(layout) });
+}
+
+export function saveTuning(tuning: PositioningTuning): Promise<PositioningTuning> {
+  return request<PositioningTuning>("/api/positioning/tuning", { method: "PUT", body: JSON.stringify(tuning) });
+}
+
+export function resetTuning(): Promise<PositioningTuning> {
+  return request<PositioningTuning>("/api/positioning/tuning", { method: "DELETE" });
+}
+
+export function getAutoPlace(): Promise<AutoPlaceProposal> {
+  return request<AutoPlaceProposal>("/api/positioning/auto-place");
 }
 
 export function resetStoreLayout(): Promise<StoreLayout> {

@@ -6,6 +6,7 @@ import { dirname } from "node:path";
 
 export const LAYOUT_LIMITS = Object.freeze({
   maxZones: 24, minSize: 12, minCanvas: 200, maxCanvas: 1200, labelMax: 40, detailMax: 40,
+  minWidthM: 1, maxWidthM: 200,
 });
 const ZONE_KINDS = new Set(["shelf", "cashier", "entrance"]);
 const ZONE_ID = /^[a-z0-9-]{1,32}$/;
@@ -14,6 +15,10 @@ const SHELF_ID = /^[A-Z0-9-]{1,32}$/;
 export const DEFAULT_LAYOUT = Object.freeze({
   width: 360,
   height: 250,
+  // Real floor width in metres; the map scale for indoor positioning (height follows the aspect).
+  widthM: 12,
+  // A shelf may carry `anchor: { x, y }` (map units) for where its ESP32 is mounted;
+  // without it the ESP32 is assumed at the shelf centre.
   zones: [
     { id: "shelf-01", kind: "shelf", shelfId: "SHELF-01", label: "เครื่องดื่ม", detail: "Coke · Water", x: 28, y: 30, w: 132, h: 32 },
     { id: "shelf-02", kind: "shelf", shelfId: "SHELF-02", label: "ขนม", detail: "Snacks", x: 200, y: 30, w: 132, h: 32 },
@@ -48,6 +53,10 @@ export function validateLayout(input) {
       throw new Error(`${name} must be between ${LAYOUT_LIMITS.minCanvas} and ${LAYOUT_LIMITS.maxCanvas}`);
     }
   }
+  const widthM = input.widthM === undefined ? DEFAULT_LAYOUT.widthM : number(input.widthM, "widthM");
+  if (widthM < LAYOUT_LIMITS.minWidthM || widthM > LAYOUT_LIMITS.maxWidthM) {
+    throw new Error(`Store width must be between ${LAYOUT_LIMITS.minWidthM} and ${LAYOUT_LIMITS.maxWidthM} metres`);
+  }
   if (!Array.isArray(input.zones) || input.zones.length === 0) throw new Error("Layout needs at least one zone");
   if (input.zones.length > LAYOUT_LIMITS.maxZones) throw new Error(`Layout can have at most ${LAYOUT_LIMITS.maxZones} zones`);
 
@@ -79,6 +88,13 @@ export function validateLayout(input) {
       if (shelfIds.has(shelfId)) throw new Error(`${shelfId} is used by more than one shelf`);
       shelfIds.add(shelfId);
       clean.shelfId = shelfId;
+      if (zone.anchor !== undefined && zone.anchor !== null) {
+        const anchor = { x: number(zone.anchor?.x, `${where} ESP32 x`), y: number(zone.anchor?.y, `${where} ESP32 y`) };
+        if (anchor.x < 0 || anchor.y < 0 || anchor.x > width || anchor.y > height) {
+          throw new Error(`${where} ESP32 position is outside the floor`);
+        }
+        clean.anchor = anchor;
+      }
     }
     if (clean.w < LAYOUT_LIMITS.minSize || clean.h < LAYOUT_LIMITS.minSize) {
       throw new Error(`${where} must be at least ${LAYOUT_LIMITS.minSize} units wide and tall`);
@@ -88,7 +104,7 @@ export function validateLayout(input) {
     }
     return clean;
   });
-  return { width, height, zones };
+  return { width, height, widthM, zones };
 }
 
 export function createLayoutStore({ path, log = console.error }) {

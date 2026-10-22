@@ -11,6 +11,7 @@
 .summary svg { color: #0866f6; flex-shrink: 0; }
 .summary strong { color: #0750c4; }
 .since { margin-left: auto; font-size: 11px; color: #7b8da6; }
+.positionNote { margin-top: 4px; font-size: 11px; color: #5b6f8c; }
 
 .shelfList { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; }
 .shelfList li { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 10px; background: #f6f9fd; font-size: 12px; }

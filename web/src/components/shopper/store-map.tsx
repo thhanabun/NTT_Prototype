@@ -14,6 +14,7 @@ export function StoreMap({ presence, layout, basketId }: { presence: PresenceSna
   const mine = presence?.baskets.find((basket) => basket.basketId === basketId) ?? null;
   const online = new Map(presence?.shelves.map((shelf) => [shelf.shelfId, shelf.online]) ?? []);
   const mineLabel = mine?.zone ? (shelfZone(plan, mine.zone)?.label ?? mine.zone) : null;
+  const position = presence?.positioning?.positions[basketId] ?? null;
   // Shelves on the plan first, then any shelf the hardware reports that the plan does not draw yet.
   const planShelfIds = plan.zones.filter((zone) => zone.kind === "shelf" && zone.shelfId).map((zone) => zone.shelfId as string);
   const shelfIds = [...planShelfIds, ...(presence?.shelves.map((shelf) => shelf.shelfId).filter((id) => !planShelfIds.includes(id)) ?? [])];
@@ -36,9 +37,12 @@ export function StoreMap({ presence, layout, basketId }: { presence: PresenceSna
 
       <p className={styles.summary} role="status" aria-live="polite">
         <MapPin size={15} aria-hidden="true" />
-        <span>{mineLabel ? <>คุณอยู่ใกล้ <strong>{mineLabel}</strong></> : summary}</span>
+        <span>{mineLabel ? <>คุณอยู่ใกล้ <strong>{mineLabel}</strong></> : position ? "ตำแหน่งโดยประมาณของคุณ" : summary}</span>
         {mine?.since && mine.zone && <span className={styles.since}>ตั้งแต่ {time(mine.since)}</span>}
       </p>
+      {position && <p className={styles.positionNote}>
+        จุดบนผังคำนวณจาก ESP32 {position.anchors} ตัว · คลาดเคลื่อนได้ประมาณ ±{position.errorM.toFixed(1)} ม. (วงกลมประ)
+      </p>}
 
       {presence && shelfIds.length > 0 && (
         <ul className={styles.shelfList} aria-label="สัญญาณจากชั้นวาง">

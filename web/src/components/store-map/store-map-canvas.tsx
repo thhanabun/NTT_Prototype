@@ -2,10 +2,10 @@
 
 import type { KeyboardEvent, PointerEvent, Ref } from "react";
 import type { BasketId, PresenceSnapshot, StoreLayout, StoreZone } from "@/lib/api/types";
-import { shelfZone, shortLabel, standPoint } from "@/lib/store-layout";
+import { anchorPoint, shelfZone, shortLabel, standPoint } from "@/lib/store-layout";
 import styles from "./store-map-canvas.module.css";
 
-export type ZoneGrab = "move" | "resize";
+export type ZoneGrab = "move" | "resize" | "anchor";
 
 interface Props {
   layout: StoreLayout;
@@ -24,15 +24,27 @@ interface Props {
 export function StoreMapCanvas({ layout, presence, basketId, label, editable = false, selectedZoneId = null, svgRef, onZonePointerDown, onCanvasPointerDown, onKeyDown }: Props) {
   const online = new Map(presence?.shelves.map((shelf) => [shelf.shelfId, shelf.online]) ?? []);
   const baskets = presence?.baskets ?? [];
-  const placed = baskets
+  const positions = presence?.positioning?.positions ?? {};
+  // A basket is drawn at its (x, y) estimate when positioning has one, else in front of its zone shelf.
+  const zoned = baskets
+    .filter((basket) => !positions[basket.basketId])
     .map((basket) => ({ basket, zone: shelfZone(layout, basket.zone) }))
     .filter((item): item is { basket: (typeof baskets)[number]; zone: StoreZone } => Boolean(item.zone));
   const offsetFor = (zone: StoreZone, basketIdAt: BasketId) => {
-    const here = placed.filter((item) => item.zone.id === zone.id).map((item) => item.basket.basketId);
+    const here = zoned.filter((item) => item.zone.id === zone.id).map((item) => item.basket.basketId);
     return here.length < 2 ? 0 : (here.indexOf(basketIdAt) - (here.length - 1) / 2) * 26;
   };
+  const markers = [
+    ...zoned.map(({ basket, zone }) => ({ basketId: basket.basketId, point: standPoint(layout, zone, offsetFor(zone, basket.basketId)), radius: 0 })),
+    ...baskets.filter((basket) => positions[basket.basketId]).map((basket) => {
+      const position = positions[basket.basketId]!;
+      return { basketId: basket.basketId, point: { x: position.x, y: position.y + 8 }, radius: position.radius };
+    }),
+  ];
   // Draw the shopper's own pin last so it sits on top.
-  const ordered = [...placed].sort((a, b) => Number(a.basket.basketId === basketId) - Number(b.basket.basketId === basketId));
+  const ordered = [...markers].sort((a, b) => Number(a.basketId === basketId) - Number(b.basketId === basketId));
+  // ESP32s are infrastructure: only staff editing the map need to see them.
+  const anchors = editable ? layout.zones.filter((zone) => zone.kind === "shelf" && zone.shelfId) : [];
 
   return (
     <svg
@@ -80,19 +92,37 @@ export function StoreMapCanvas({ layout, presence, basketId, label, editable = f
         );
       })}
 
-      {ordered.map(({ basket, zone }) => {
-        const point = standPoint(layout, zone, offsetFor(zone, basket.basketId));
-        const mine = basketId === null || basket.basketId === basketId;
+      {/* ESP32 anchors: where each shelf's board is mounted. Draggable in the editor. */}
+      {anchors.map((zone) => {
+        const point = anchorPoint(zone);
+        const isOnline = online.get(zone.shelfId ?? "") ?? false;
         return (
-          <g key={basket.basketId} className={styles.marker} style={{ transform: `translate(${point.x}px, ${point.y}px)` }} aria-hidden="true">
-            {mine ? <>
-              {basketId !== null && <circle className={styles.pulse} r="16" />}
-              <path className={styles.myPin} d="M0 8 C-9 -2 -11 -6 -11 -11 A11 11 0 1 1 11 -11 C11 -6 9 -2 0 8 Z" />
-              <text className={styles.myLetter} y="-7" textAnchor="middle">{basket.basketId}</text>
-            </> : <>
-              <circle className={styles.otherPin} r="9" />
-              <text className={styles.otherLetter} y="4" textAnchor="middle">{basket.basketId}</text>
-            </>}
+          <g key={`anchor-${zone.id}`} className={`${styles.anchor} ${editable ? styles.anchorEditable : ""} ${isOnline ? "" : styles.anchorOffline}`}
+            transform={`translate(${point.x} ${point.y})`}
+            onPointerDown={editable ? (event) => { event.stopPropagation(); onZonePointerDown?.(event, zone, "anchor"); } : undefined}>
+            {editable && <circle className={styles.anchorHit} r="11" />}
+            <circle className={styles.anchorDot} r={editable ? 5 : 3.5} />
+            <path className={styles.anchorWaves} d="M-7 -5 A8 8 0 0 1 -7 5 M7 -5 A8 8 0 0 0 7 5" />
+            {editable && <text className={styles.anchorLabel} y="-10" textAnchor="middle">{zone.shelfId?.replace("SHELF-", "ESP ")}</text>}
+          </g>
+        );
+      })}
+
+      {ordered.map(({ basketId: id, point, radius }) => {
+        const mine = basketId === null || id === basketId;
+        return (
+          <g key={id} aria-hidden="true">
+            {radius > 0 && mine && <circle className={styles.accuracy} style={{ transform: `translate(${point.x}px, ${point.y - 8}px)` }} r={radius} />}
+            <g className={styles.marker} style={{ transform: `translate(${point.x}px, ${point.y}px)` }}>
+              {mine ? <>
+                {basketId !== null && <circle className={styles.pulse} r="16" />}
+                <path className={styles.myPin} d="M0 8 C-9 -2 -11 -6 -11 -11 A11 11 0 1 1 11 -11 C11 -6 9 -2 0 8 Z" />
+                <text className={styles.myLetter} y="-7" textAnchor="middle">{id}</text>
+              </> : <>
+                <circle className={styles.otherPin} r="9" />
+                <text className={styles.otherLetter} y="4" textAnchor="middle">{id}</text>
+              </>}
+            </g>
           </g>
         );
       })}

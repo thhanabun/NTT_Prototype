@@ -98,4 +98,5 @@ arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --inp
 - The shelf ID comes from `SHELF_DEVICE_ID` in `secrets.h` (default `SHELF-01`). Every topic is built from it.
 - For a presence-only board, set `SHELF_DEVICE_ID "SHELF-02"` and `SHELF_ENABLE_SWITCHES 0`.
 - `aws_shelf.ino` still uses fixed `SHELF-01` topics and has no presence topic.
+- Indoor positioning: each board also advertises an anchor iBeacon and reports the other boards it hears (`anchors` in the presence payload). Build the classic ESP32 with `PartitionScheme=huge_app`. See the positioning section of the store-map doc.
 - ESP32-S3 boards use GPIO 4/5 for switches, because GPIO 26–32 are flash/PSRAM pins on S3. Build with `esp32:esp32:esp32s3:PartitionScheme=huge_app`.

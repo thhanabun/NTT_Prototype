@@ -63,6 +63,14 @@ struct Lane {
 #ifndef SHELF_PRESENCE_INTERVAL_MS
   #define SHELF_PRESENCE_INTERVAL_MS 500
 #endif
+// Each shelf advertises an anchor iBeacon so the others can measure it (indoor positioning).
+#ifndef SHELF_ENABLE_ANCHOR_BEACON
+  #define SHELF_ENABLE_ANCHOR_BEACON 1
+#endif
+// RSSI at 1 m written into the anchor beacon (calibrated on the server, so a rough value is fine).
+#ifndef SHELF_ANCHOR_MEASURED_POWER
+  #define SHELF_ANCHOR_MEASURED_POWER -59
+#endif
 
 
 // Target MAC String references for auto-normalizing comparison
@@ -170,6 +178,18 @@ TrackedBeacon trackedBeacons[ROLE_COUNT] = {
   {"Expensive Item", targetExpensiveItemMac, EXPENSIVE_ITEM_MAJOR, EXPENSIVE_ITEM_MINOR, "", 0, {}, 0, 0, 0, -59, 0}
 };
 
+// Other shelf ESP32s heard through their anchor beacons (shared with the BLE callback).
+constexpr uint8_t MAX_ANCHORS = 8;
+struct AnchorTrack {
+  uint8_t number;  // 0 = empty slot
+  int8_t rssiHistory[RSSI_WINDOW];
+  uint32_t rssiAt[RSSI_WINDOW];
+  uint8_t rssiCount;
+  uint8_t rssiHead;
+};
+AnchorTrack anchorTracks[MAX_ANCHORS] = {};
+int ownShelfNumber = -1;
+
 Lane lanes[] = {
   {COKE_SWITCH_PIN,  "LANE-1", "COKE",  false, false, 0},
   {WATER_SWITCH_PIN, "LANE-2", "WATER", false, false, 0}
@@ -246,6 +266,60 @@ String getSignalBar(int8_t rssi) {
   return bar;
 }
 
+void recordAnchor(uint16_t number, int8_t rssi) {
+  if (number == 0 || number > 255 || static_cast<int>(number) == ownShelfNumber) return;
+  portENTER_CRITICAL(&bleMux);
+  AnchorTrack* slot = nullptr;
+  for (AnchorTrack& track : anchorTracks) {
+    if (track.number == number) { slot = &track; break; }
+    if (!slot && track.number == 0) slot = &track;
+  }
+  if (slot) {
+    if (slot->number != number) { *slot = AnchorTrack{}; slot->number = static_cast<uint8_t>(number); }
+    slot->rssiHistory[slot->rssiHead] = rssi;
+    slot->rssiAt[slot->rssiHead] = millis();
+    slot->rssiHead = (slot->rssiHead + 1) % RSSI_WINDOW;
+    if (slot->rssiCount < RSSI_WINDOW) ++slot->rssiCount;
+  }
+  portEXIT_CRITICAL(&bleMux);
+}
+
+// Fresh median RSSI per other shelf; returns how many were written.
+uint8_t readAnchors(ShelfAnchorReading* out, uint8_t max) {
+  AnchorTrack copy[MAX_ANCHORS];
+  portENTER_CRITICAL(&bleMux);
+  memcpy(copy, anchorTracks, sizeof(copy));
+  portEXIT_CRITICAL(&bleMux);
+  uint8_t count = 0;
+  for (const AnchorTrack& track : copy) {
+    if (!track.number || count >= max) continue;
+    bool fresh = false;
+    const int8_t rssi = shelfFreshMedian(track.rssiHistory, track.rssiAt, track.rssiCount, millis(), fresh);
+    if (fresh) out[count++] = {track.number, rssi};
+  }
+  return count;
+}
+
+void startAnchorBeacon() {
+  ownShelfNumber = shelfIdNumber(SHELF_ID);
+  if (!SHELF_ENABLE_ANCHOR_BEACON || ownShelfNumber < 1) {
+    Serial.println("[BLE] Anchor beacon disabled");
+    return;
+  }
+  uint8_t beacon[25];
+  shelfAnchorBeacon(beacon, static_cast<uint16_t>(ownShelfNumber), SHELF_ANCHOR_MEASURED_POWER);
+  NimBLEAdvertisementData data;
+  data.setFlags(BLE_HS_ADV_F_BREDR_UNSUP);
+  data.setManufacturerData(beacon, sizeof(beacon));
+  NimBLEAdvertising* advertising = NimBLEDevice::getAdvertising();
+  advertising->setAdvertisementData(data);
+  advertising->setConnectableMode(BLE_GAP_CONN_MODE_NON);
+  advertising->setMinInterval(160);  // 100 ms (0.625 ms units)
+  advertising->setMaxInterval(240);  // 150 ms
+  const bool started = advertising->start();
+  Serial.printf("[BLE] Anchor beacon %s (minor %d)\n", started ? "advertising" : "FAILED to start", ownShelfNumber);
+}
+
 // ----------------------------------------------------------------------------
 // 6. NimBLE Scan Callback
 // ----------------------------------------------------------------------------
@@ -262,6 +336,11 @@ class LocalScanCallbacks final : public NimBLEScanCallbacks {
 
     if (device->haveManufacturerData()) {
       std::string mfg = device->getManufacturerData();
+      uint16_t anchorNumber = 0;
+      if (shelfParseAnchorBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(), anchorNumber)) {
+        recordAnchor(anchorNumber, rssi);
+        return;
+      }
       isIBeacon = shelfBeaconUuidMatches(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(), SHELF_PROJECT_UUID) &&
         decodeIBeacon(reinterpret_cast<const uint8_t*>(mfg.data()), mfg.length(),
                                 major, minor, txPower);
@@ -443,8 +522,10 @@ void publishPresence() {
   if (!ENABLE_LOCAL_MQTT || !mqttClient.connected()) return;
   const ShelfBeaconReading a = readBasket(ROLE_BASKET_A);
   const ShelfBeaconReading b = readBasket(ROLE_BASKET_B);
-  char payload[192];
-  if (!shelfPresencePayload(payload, sizeof(payload), SHELF_ID, ++presenceSeq, millis(), a, b)) return;
+  ShelfAnchorReading anchors[MAX_ANCHORS];
+  const uint8_t anchorCount = readAnchors(anchors, MAX_ANCHORS);
+  char payload[384];
+  if (!shelfPresencePayload(payload, sizeof(payload), SHELF_ID, ++presenceSeq, millis(), a, b, anchors, anchorCount)) return;
   mqttClient.publish(TOPIC_PRESENCE, payload);
 }
 
@@ -639,6 +720,14 @@ void printDashboard() {
                   margin, margin >= CLEAR_MARGIN_DB ? "CLEAR LEAD (>=10 dB)" : "AMBIGUOUS (<10 dB)");
   }
 
+  // Other shelf ESP32s (anchor beacons)
+  ShelfAnchorReading heard[MAX_ANCHORS];
+  const uint8_t heardCount = readAnchors(heard, MAX_ANCHORS);
+  Serial.printf(" OTHER SHELVES (anchor beacons): %s\n", heardCount ? "" : "none heard");
+  for (uint8_t i = 0; i < heardCount; ++i) {
+    Serial.printf("   - SHELF-%02u : %s %d dBm\n", heard[i].number, getSignalBar(heard[i].rssi).c_str(), heard[i].rssi);
+  }
+
   // Expensive Product
   Serial.printf("   3. Expensive Item - %s (%s):\n",
                 EXPENSIVE_ITEM_ID, macExp.length() > 0 ? macExp.c_str() : trackedBeacons[ROLE_EXPENSIVE_ITEM].targetMac.c_str());
@@ -762,6 +851,7 @@ void setup() {
   pBLEScan->setDuplicateFilter(false);
   pBLEScan->start(0, false);
   Serial.println("[BLE] Continuous scan started.");
+  startAnchorBeacon();
 }
 
 // ----------------------------------------------------------------------------

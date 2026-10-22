@@ -70,9 +70,28 @@ int main() {
   assert(shelfPresencePayload(presence, sizeof(presence), "SHELF-01", 42, 123456, seenA, staleB));
   assert(std::string(presence) ==
     "{\"shelfId\":\"SHELF-01\",\"seq\":42,\"uptimeMs\":123456,"
-    "\"rssi\":{\"A\":-55,\"B\":null},\"ageMs\":{\"A\":120,\"B\":null}}");
+    "\"rssi\":{\"A\":-55,\"B\":null},\"ageMs\":{\"A\":120,\"B\":null},\"anchors\":{}}");
   char tinyPresence[16];
   assert(!shelfPresencePayload(tinyPresence, sizeof(tinyPresence), "SHELF-01", 1, 1, seenA, staleB));
 
-  puts("protocol checks passed: exact water commands, UUID, per-sample freshness, ACK-only FIFO, retry/delayed, overflow, topics, presence payload");
+  ShelfAnchorReading heard[] = {{2, -61}, {3, -74}};
+  assert(shelfPresencePayload(presence, sizeof(presence), "SHELF-01", 7, 9, seenA, staleB, heard, 2));
+  assert(std::string(presence).find("\"anchors\":{\"SHELF-02\":-61,\"SHELF-03\":-74}}") != std::string::npos);
+  char shortPresence[120];
+  assert(!shelfPresencePayload(shortPresence, sizeof(shortPresence), "SHELF-01", 7, 9, seenA, staleB, heard, 2));
+
+  assert(shelfIdNumber("SHELF-03") == 3 && shelfIdNumber("SHELF-12") == 12);
+  assert(shelfIdNumber("SHELF") == -1 && shelfIdNumber("SHELF-00") == -1 && shelfIdNumber("SHELF-1000") == -1);
+
+  uint8_t anchor[25];
+  shelfAnchorBeacon(anchor, 3, -59);
+  uint16_t minor = 0;
+  assert(shelfParseAnchorBeacon(anchor, sizeof(anchor), minor) && minor == 3);
+  assert(static_cast<int8_t>(anchor[24]) == -59);
+  anchor[21] ^= 1;
+  assert(!shelfParseAnchorBeacon(anchor, sizeof(anchor), minor)); // wrong major
+  anchor[21] ^= 1; anchor[10] ^= 1;
+  assert(!shelfParseAnchorBeacon(anchor, sizeof(anchor), minor)); // wrong UUID
+
+  puts("protocol checks passed: exact water commands, UUID, per-sample freshness, ACK-only FIFO, retry/delayed, overflow, topics, presence payload, anchor beacons");
 }

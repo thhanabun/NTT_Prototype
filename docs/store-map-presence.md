@@ -107,3 +107,46 @@ Calibrate these on site:
 - `tests/presence.test.mjs` covers enter and exit hysteresis, shelf takeover margin, staleness, the pick pin and input validation.
 - `tests/broker-forward.test.mjs` covers forwarding to `/api/presence`, latest-wins per shelf and error handling.
 - `tests/firmware/protocol_test.cpp` covers topic building and the presence payload. Build it with `g++ -std=c++17 -I tests/firmware tests/firmware/protocol_test.cpp`.
+
+## Indoor positioning (basket x, y)
+
+The shelf ESP32s double as fixed **anchors**. The server turns each basket's RSSI at every anchor into a distance and finds the point that best fits all of them. The shopper map then draws the basket at that point, with a dashed circle for the expected error.
+
+```
+basket beacon ──RSSI──▶ ESP32 anchors ──presence (rssi + anchors)──▶ server
+ESP32 anchor beacon ──RSSI──▶ other ESP32s                          ├─ fit path-loss model from anchor links
+                                                                    ├─ weighted least squares → (x, y) ± error
+                                                                    └─ SSE presence.positioning
+```
+
+**Accuracy:** expect about **1–3 m** indoors. RSSI swings by several dB from shelves, people and phone orientation. The error circle shows this honestly. A switch-confirmed pick still snaps the shelf zone.
+
+### Anchors measure each other
+
+- With `SHELF_ENABLE_ANCHOR_BEACON 1` (the default), each ESP32 advertises an iBeacon every 100–150 ms:
+  - UUID `BA5C7E70-0000-4000-8000-00000000A0C0`
+  - major `0xA5C0`
+  - minor = shelf number
+- Every ESP32 reports the other anchors it hears in the presence payload as `"anchors":{"SHELF-02":-61}`.
+- The server averages both directions of each pair over time (`presence.positioning.links`).
+- Links are used two ways:
+  - **Calibration:** using the anchor distances on the saved map, the server fits `RSSI@1m` and the path-loss exponent `n`. Basket distances then use the fitted `n`. With 3 anchors at similar spacing, only `RSSI@1m` can be learned, so `n` stays at 2.2.
+  - **Auto-placement:** Admin → แก้ไขแผนผังร้าน → **ให้ ESP32 วางตำแหน่งเอง** builds the anchor triangle from measured distances. It is rotated or mirrored to match the current map, and loads into the draft for review. It needs 3 ESP32s that all hear each other. It is a starting point (±1–2 m). Positions measured with a tape measure and typed in metres are more accurate.
+
+### Setting up
+
+1. Flash all shelf ESP32s with the anchor firmware. The classic ESP32 needs the `huge_app` partition, because the default one is full:
+   ```bash
+   arduino-cli compile --fqbn esp32:esp32:esp32:PartitionScheme=huge_app --build-path tmp/anchor-esp32-build firmware/esp32/local_shelf
+   ```
+2. In Admin, set **ความกว้างร้านจริง** (real floor width in metres).
+3. Drag each purple ESP32 point to where the board is mounted, or type X/Y in metres. Optionally press **ให้ ESP32 วางตำแหน่งเอง** first. Save.
+4. Check the link table. Rows where the RSSI distance and the map distance disagree a lot are highlighted. Recheck those positions.
+
+| Env var | Default | Meaning |
+|---|---|---|
+| `POSITION_BASKET_TX_POWER` | — | Fix the basket beacon's RSSI at 1 m instead of using the anchor calibration |
+| `POSITION_BASKET_OFFSET_DB` | 0 | Added to the calibrated RSSI@1m for basket beacons (their radio differs from the ESP32's) |
+| `POSITION_ANCHOR_TX_POWER` | -59 | RSSI@1m assumed by auto-placement |
+
+API: `GET /api/presence` → `positioning: { model, links, positions: { A: { x, y, radius, xM, yM, errorM, anchors } } }`. `GET /api/positioning/auto-place` → proposed anchor positions (map units). Positions update on the existing `event: presence` stream, at most every 400 ms, and only after a move of about 25 cm or more.

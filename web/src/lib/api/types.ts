@@ -188,11 +188,52 @@ export interface PresenceShelf {
   online: boolean;
 }
 
+// Indoor positioning estimate in map units (x, y, radius) and metres. An estimate, not a fix.
+export interface BasketPosition {
+  x: number;
+  y: number;
+  radius: number;
+  xM: number;
+  yM: number;
+  errorM: number;
+  anchors: number;
+}
+
+export interface AnchorLink {
+  a: string;
+  b: string;
+  rssi: number;
+  rssiMeters: number;
+  mapMeters: number;
+}
+
+export interface PositioningTuning {
+  basketTxPower: number | null;
+  n: number | null;
+  alpha: number | null;
+}
+
+export interface PositioningSnapshot {
+  model: { txPower: number; n: number; calibrated: boolean; samples: number };
+  // Model used for basket beacons: tuned on /admin/tuning, from env, or derived from anchors.
+  basketModel?: { txPower: number; n: number; source: "tuned" | "env" | "anchors" | "default" };
+  tuning?: PositioningTuning;
+  links: AnchorLink[];
+  positions: Partial<Record<BasketId, BasketPosition>>;
+}
+
 export interface PresenceSnapshot {
   updatedAt: string;
   thresholds: { enterDbm: number; exitDbm: number; staleMs: number };
   baskets: PresenceBasket[];
   shelves: PresenceShelf[];
+  positioning?: PositioningSnapshot;
+}
+
+export interface AutoPlaceProposal {
+  anchors: Record<string, { x: number; y: number }> | null;
+  reason?: string;
+  distances?: { a: string; b: string; meters: number }[];
 }
 
 // Store floor plan from /api/store-layout and SSE `event: layout`, edited in Admin.
@@ -204,6 +245,8 @@ export interface StoreZone {
   label: string;
   detail?: string;
   shelfId?: string;
+  // Where the shelf's ESP32 is mounted (map units); defaults to the shelf centre.
+  anchor?: { x: number; y: number };
   x: number;
   y: number;
   w: number;
@@ -213,6 +256,8 @@ export interface StoreZone {
 export interface StoreLayout {
   width: number;
   height: number;
+  // Real floor width in metres (map scale for positioning).
+  widthM?: number;
   zones: StoreZone[];
   updatedAt?: string | null;
 }

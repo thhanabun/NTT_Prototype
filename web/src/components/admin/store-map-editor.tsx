@@ -2,11 +2,11 @@
 
 import { useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
-import { CircleAlert, LoaderCircle, Map as MapIcon, Plus, RotateCcw, Save, Trash2, Undo2 } from "lucide-react";
-import { resetStoreLayout, saveStoreLayout } from "@/lib/api/client";
+import { CircleAlert, Crosshair, LoaderCircle, Map as MapIcon, Plus, Radar, RotateCcw, Save, Trash2, Undo2 } from "lucide-react";
+import { getAutoPlace, resetStoreLayout, saveStoreLayout } from "@/lib/api/client";
 import { acceptStoreLayout, useLiveState } from "@/lib/api/live-state";
 import type { StoreLayout, StoreZone, StoreZoneKind } from "@/lib/api/types";
-import { DEFAULT_STORE_LAYOUT, LAYOUT_MAX_ZONES, LAYOUT_MIN_SIZE } from "@/lib/store-layout";
+import { DEFAULT_STORE_LAYOUT, LAYOUT_MAX_ZONES, LAYOUT_MIN_SIZE, anchorPoint, metersPerUnit } from "@/lib/store-layout";
 import { StoreMapCanvas, type ZoneGrab } from "@/components/store-map/store-map-canvas";
 import admin from "./admin.module.css";
 import styles from "./store-map-editor.module.css";
@@ -14,7 +14,11 @@ import styles from "./store-map-editor.module.css";
 const SNAP = 2;
 const kindLabel: Record<StoreZoneKind, string> = { shelf: "ชั้นวาง", cashier: "แคชเชียร์", entrance: "ทางเข้า" };
 
-const plain = (layout: StoreLayout): StoreLayout => ({ width: layout.width, height: layout.height, zones: layout.zones });
+const plain = (layout: StoreLayout): StoreLayout => ({ width: layout.width, height: layout.height, widthM: layout.widthM ?? 12, zones: layout.zones });
+const clampPoint = (point: { x: number; y: number }, layout: StoreLayout) => ({
+  x: Math.round(Math.min(layout.width, Math.max(0, point.x)) * 10) / 10,
+  y: Math.round(Math.min(layout.height, Math.max(0, point.y)) * 10) / 10,
+});
 const same = (a: StoreLayout, b: StoreLayout) => JSON.stringify(plain(a)) === JSON.stringify(plain(b));
 const snap = (value: number) => Math.round(value / SNAP) * SNAP;
 
@@ -29,7 +33,7 @@ function fit(zone: StoreZone, layout: StoreLayout): StoreZone {
   };
 }
 
-interface Drag { id: string; grab: ZoneGrab; start: { x: number; y: number }; origin: StoreZone }
+interface Drag { id: string; grab: ZoneGrab; start: { x: number; y: number }; origin: StoreZone; originAnchor: { x: number; y: number } }
 
 export function StoreMapEditor() {
   const live = useLiveState();
@@ -58,6 +62,45 @@ export function StoreMapEditor() {
   }
   function updateZone(id: string, patch: Partial<StoreZone>) {
     edit((layout) => ({ ...layout, zones: layout.zones.map((zone) => zone.id === id ? fit({ ...zone, ...patch }, layout) : zone) }));
+  }
+  // null puts the ESP32 back at the shelf centre.
+  function updateAnchor(id: string, point: { x: number; y: number } | null) {
+    edit((layout) => ({ ...layout, zones: layout.zones.map((zone) => {
+      if (zone.id !== id) return zone;
+      if (point) return { ...zone, anchor: clampPoint(point, layout) };
+      const rest = { ...zone };
+      delete rest.anchor;
+      return rest;
+    }) }));
+  }
+
+  const scale = metersPerUnit(plan);
+  const toM = (units: number) => Math.round(units * scale * 100) / 100;
+  const links = live.presence?.positioning?.links ?? [];
+  const model = live.presence?.positioning?.model;
+  const mapMeters = (a: string, b: string) => {
+    const za = plan.zones.find((zone) => zone.shelfId === a), zb = plan.zones.find((zone) => zone.shelfId === b);
+    if (!za || !zb) return null;
+    const pa = anchorPoint(za), pb = anchorPoint(zb);
+    return Math.hypot(pa.x - pb.x, pa.y - pb.y) * scale;
+  };
+
+  async function autoPlace() {
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const proposal = await getAutoPlace();
+      if (!proposal.anchors) { setError(proposal.reason ?? "ยังวางตำแหน่งอัตโนมัติไม่ได้"); return; }
+      const placed = proposal.anchors;
+      edit((layout) => ({ ...layout, zones: layout.zones.map((zone) =>
+        zone.kind === "shelf" && zone.shelfId && placed[zone.shelfId] ? { ...zone, anchor: clampPoint(placed[zone.shelfId], layout) } : zone) }));
+      setNotice(`วาง ESP32 ${Object.keys(placed).length} ตัวจากระยะที่วัดกันเองแล้ว ตรวจดูบนผัง ปรับได้ แล้วกดบันทึก`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "ขอตำแหน่งอัตโนมัติไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function addZone(kind: StoreZoneKind, shelfId?: string) {
@@ -96,13 +139,17 @@ export function StoreMapEditor() {
     event.preventDefault();
     setSelectedId(zone.id);
     svgRef.current?.focus({ preventScroll: true });
-    drag.current = { id: zone.id, grab, start: toCanvas(event), origin: zone };
+    drag.current = { id: zone.id, grab, start: toCanvas(event), origin: zone, originAnchor: anchorPoint(zone) };
     const move = (moveEvent: globalThis.PointerEvent) => {
       const active = drag.current;
       if (!active) return;
       const point = toCanvas(moveEvent);
       const dx = snap(point.x - active.start.x);
       const dy = snap(point.y - active.start.y);
+      if (active.grab === "anchor") {
+        updateAnchor(active.id, { x: active.originAnchor.x + dx, y: active.originAnchor.y + dy });
+        return;
+      }
       updateZone(active.id, active.grab === "move"
         ? { x: active.origin.x + dx, y: active.origin.y + dy }
         : { w: active.origin.w + dx, h: active.origin.h + dy });
@@ -179,7 +226,38 @@ export function StoreMapEditor() {
             <button type="button" className={admin.outlineButton} disabled={saving || plan.zones.length >= LAYOUT_MAX_ZONES} onClick={() => addZone("shelf")}><Plus size={15} aria-hidden="true" /> ชั้นวาง</button>
             <button type="button" className={admin.outlineButton} disabled={saving || plan.zones.length >= LAYOUT_MAX_ZONES} onClick={() => addZone("cashier")}><Plus size={15} aria-hidden="true" /> แคชเชียร์</button>
             <button type="button" className={admin.outlineButton} disabled={saving || plan.zones.length >= LAYOUT_MAX_ZONES} onClick={() => addZone("entrance")}><Plus size={15} aria-hidden="true" /> ทางเข้า</button>
+            <label className={styles.inlineField}><span>ความกว้างร้านจริง</span>
+              <input type="number" inputMode="decimal" min={1} max={200} step={0.1} value={plan.widthM ?? 12}
+                onChange={(event) => { const value = Number(event.target.value); if (Number.isFinite(value) && value > 0) edit((layout) => ({ ...layout, widthM: Math.min(200, value) })); }} />
+              <span>ม. (สูง ≈ {toM(plan.height).toFixed(1)} ม.)</span>
+            </label>
           </div>
+
+          <section className={styles.positioning} aria-labelledby="positioning-heading">
+            <div className={styles.positioningHead}>
+              <h3 id="positioning-heading"><Radar size={16} aria-hidden="true" /> ตำแหน่ง ESP32 (indoor positioning)</h3>
+              <button type="button" className={admin.outlineButton} disabled={saving || links.length < 3} onClick={() => void autoPlace()}>
+                <Crosshair size={15} aria-hidden="true" /> ให้ ESP32 วางตำแหน่งเอง
+              </button>
+            </div>
+            <p className={admin.footnote}>จุดสีม่วงคือ ESP32 ลากให้ตรงกับที่ติดจริง หรือพิมพ์เป็นเมตรด้านขวา ปุ่มวางเองใช้ RSSI ที่ ESP32 วัดกันเอง (แม่นประมาณ ±1–2 ม.) วัดด้วยตลับเมตรจะแม่นกว่า</p>
+            {links.length ? (
+              <table className={styles.linkTable}>
+                <thead><tr><th>คู่ ESP32</th><th>RSSI</th><th>ระยะจากสัญญาณ</th><th>ระยะบนผัง</th></tr></thead>
+                <tbody>{links.map((link) => {
+                  const onMap = mapMeters(link.a, link.b);
+                  const off = onMap !== null && Math.abs(link.rssiMeters - onMap) > Math.max(1.5, onMap * 0.4);
+                  return <tr key={`${link.a}-${link.b}`} className={off ? styles.linkOff : ""}>
+                    <td>{link.a.replace("SHELF-", "S")} ↔ {link.b.replace("SHELF-", "S")}</td><td>{link.rssi} dBm</td>
+                    <td>{link.rssiMeters.toFixed(1)} ม.</td><td>{onMap === null ? "—" : `${onMap.toFixed(1)} ม.`}</td>
+                  </tr>;
+                })}</tbody>
+              </table>
+            ) : <p className={admin.muted}>ยังไม่มีข้อมูล ESP32 ได้ยินกัน ต้องแฟลชเฟิร์มแวร์ที่มี anchor beacon และเปิด ESP32 อย่างน้อย 2 ตัว</p>}
+            {model && <p className={admin.footnote}>
+              โมเดลระยะ: RSSI ที่ 1 ม. = {model.txPower} dBm, n = {model.n} {model.calibrated ? `(ปรับจากผัง ${model.samples} คู่)` : "(ค่าเริ่มต้น ยังไม่ได้ปรับ)"} · ระยะบนผังใช้ตำแหน่งที่บันทึกแล้ว
+            </p>}
+          </section>
           {unplaced.length > 0 && <p className={styles.unplaced}>
             ชั้นวางที่ออนไลน์แต่ยังไม่อยู่บนผัง:{" "}
             {unplaced.map((id) => <button key={id} type="button" disabled={saving} onClick={() => addZone("shelf", id)}>+ {id}</button>)}
@@ -206,6 +284,19 @@ export function StoreMapEditor() {
                     onChange={(event) => updateZone(selected.id, { shelfId: event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "") })} /></label>
                 <label className={styles.field}><span>รายละเอียด</span>
                   <input value={selected.detail ?? ""} maxLength={40} onChange={(event) => updateZone(selected.id, { detail: event.target.value })} /></label>
+                <fieldset className={styles.anchorFields}>
+                  <legend>ตำแหน่ง ESP32 (เมตร จากมุมซ้ายบน)</legend>
+                  {(["x", "y"] as const).map((axis) => (
+                    <label key={axis} className={styles.field}><span>{axis.toUpperCase()}</span>
+                      <input type="number" inputMode="decimal" step={0.05} value={toM(anchorPoint(selected)[axis])}
+                        onChange={(event) => {
+                          const value = Number(event.target.value);
+                          if (Number.isFinite(value)) updateAnchor(selected.id, { ...anchorPoint(selected), [axis]: value / scale });
+                        }} />
+                    </label>
+                  ))}
+                  <button type="button" className={styles.linkButton} disabled={!selected.anchor} onClick={() => updateAnchor(selected.id, null)}>วางที่กึ่งกลางชั้น</button>
+                </fieldset>
               </>}
               <div className={styles.grid4}>{numberField("x", "X")}{numberField("y", "Y")}{numberField("w", "กว้าง")}{numberField("h", "สูง")}</div>
               <button type="button" className={styles.deleteButton} disabled={saving || plan.zones.length <= 1} onClick={removeSelected}><Trash2 size={15} aria-hidden="true" /> ลบโซนนี้</button>

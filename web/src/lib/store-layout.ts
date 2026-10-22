@@ -5,6 +5,7 @@ import type { StoreLayout, StoreZone } from "@/lib/api/types";
 export const DEFAULT_STORE_LAYOUT: StoreLayout = {
   width: 360,
   height: 250,
+  widthM: 12,
   zones: [
     { id: "shelf-01", kind: "shelf", shelfId: "SHELF-01", label: "เครื่องดื่ม", detail: "Coke · Water", x: 28, y: 30, w: 132, h: 32 },
     { id: "shelf-02", kind: "shelf", shelfId: "SHELF-02", label: "ขนม", detail: "Snacks", x: 200, y: 30, w: 132, h: 32 },
@@ -26,6 +27,15 @@ export function shelfZone(layout: StoreLayout, shelfId: string | null | undefine
 export function standPoint(layout: StoreLayout, zone: StoreZone, offset = 0) {
   const below = zone.y + zone.h + 24;
   return { x: zone.x + zone.w / 2 + offset, y: below + 10 <= layout.height ? below : Math.max(24, zone.y - 10) };
+}
+
+// Where a shelf's ESP32 sits (map units).
+export function anchorPoint(zone: StoreZone) {
+  return zone.anchor ?? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 };
+}
+
+export function metersPerUnit(layout: StoreLayout) {
+  return (layout.widthM && layout.widthM > 0 ? layout.widthM : 12) / layout.width;
 }
 
 export function shortLabel(label: string, width: number, reserved: number) {

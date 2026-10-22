@@ -86,3 +86,28 @@ test("a corrupt layout file falls back to the default instead of crashing the se
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("layouts carry the floor width in metres and optional ESP32 anchor points", () => {
+  const legacy = copy();
+  delete legacy.widthM;
+  assert.equal(validateLayout(legacy).widthM, DEFAULT_LAYOUT.widthM); // saved before positioning existed
+
+  const layout = copy();
+  layout.widthM = 15.25;
+  layout.zones[0].anchor = { x: 40.04, y: 35 };
+  layout.zones[3].anchor = { x: 1, y: 1 }; // cashier: ignored, only shelves host ESP32s
+  const clean = validateLayout(layout);
+  assert.equal(clean.widthM, 15.3);
+  assert.deepEqual(clean.zones[0].anchor, { x: 40, y: 35 });
+  assert.equal("anchor" in clean.zones[3], false);
+
+  for (const [change, message] of [
+    [(l) => { l.widthM = 0.5; }, /Store width/],
+    [(l) => { l.zones[0].anchor = { x: 400, y: 10 }; }, /ESP32 position is outside/],
+    [(l) => { l.zones[0].anchor = { x: "1", y: 10 }; }, /ESP32 x must be a number/],
+  ]) {
+    const bad = copy();
+    change(bad);
+    assert.throws(() => validateLayout(bad), message);
+  }
+});

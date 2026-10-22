@@ -44,6 +44,10 @@ export function createPresenceTracker(options = {}) {
   const baskets = Object.fromEntries(BASKET_IDS.map((id) => [id, {
     zone: null, since: null, source: null, holdUntil: 0,
   }]));
+  // Anchor-to-anchor RSSI, "SHELF-01>SHELF-02" -> { rssi (smoothed), at }. ESP32s do not move,
+  // so these are kept longer and averaged; they calibrate distance and auto-place anchors.
+  const anchorLinks = new Map();
+  const linkStaleMs = Math.max(config.staleMs * 4, 15_000);
 
   const freshReading = (shelf, basketId, t) => {
     const reading = shelf.readings[basketId];
@@ -117,7 +121,41 @@ export function createPresenceTracker(options = {}) {
         shelf.readings[basketId] = value === null ? null : { rssi: value, at: t - normalizeAge(ages[basketId]) };
       }
       shelves.set(shelfId, shelf);
+      const heard = report.anchors && typeof report.anchors === "object" && !Array.isArray(report.anchors) ? report.anchors : {};
+      for (const [rawOther, rawRssi] of Object.entries(heard).slice(0, config.maxShelves)) {
+        const other = String(rawOther).toUpperCase();
+        const value = normalizeRssi(rawRssi);
+        if (!SHELF_ID_PATTERN.test(other) || other === shelfId || value === null) continue;
+        const key = `${shelfId}>${other}`;
+        const previous = anchorLinks.get(key);
+        const fresh = previous && t - previous.at <= linkStaleMs;
+        anchorLinks.set(key, { rssi: fresh ? previous.rssi + (value - previous.rssi) * 0.2 : value, at: t });
+      }
       return { changed: evaluate(t) };
+    },
+
+    // Undirected anchor links with both directions averaged: [{ a, b, rssi }].
+    links() {
+      const t = now();
+      const pairs = new Map();
+      for (const [key, link] of anchorLinks) {
+        if (t - link.at > linkStaleMs) continue;
+        const [from, to] = key.split(">");
+        const [a, b] = from < to ? [from, to] : [to, from];
+        const pair = pairs.get(`${a}|${b}`) ?? { a, b, sum: 0, count: 0 };
+        pair.sum += link.rssi; pair.count += 1;
+        pairs.set(`${a}|${b}`, pair);
+      }
+      return [...pairs.values()].map(({ a, b, sum, count }) => ({ a, b, rssi: Math.round((sum / count) * 10) / 10, directions: count }));
+    },
+
+    // Fresh basket RSSI per shelf for positioning: { A: { "SHELF-01": -60 }, B: {} }.
+    basketReadings() {
+      const t = now();
+      return Object.fromEntries(BASKET_IDS.map((basketId) => [basketId, Object.fromEntries(
+        [...shelves].map(([shelfId, shelf]) => [shelfId, freshReading(shelf, basketId, t)?.rssi])
+          .filter(([, rssi]) => rssi !== undefined),
+      )]));
     },
 
     // A switch-confirmed pick (clear RSSI lead) is the strongest location evidence we have.

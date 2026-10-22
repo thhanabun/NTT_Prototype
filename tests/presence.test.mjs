@@ -91,3 +91,29 @@ test("the number of shelves is bounded", () => {
   tracker.ingest({ shelfId: "SHELF-02" });
   assert.throws(() => tracker.ingest({ shelfId: "SHELF-03" }), /Too many shelves/);
 });
+
+test("anchor links are averaged across both directions and smoothed over time", () => {
+  const { tracker, advance } = setup();
+  tracker.ingest({ shelfId: "SHELF-01", rssi: {}, anchors: { "SHELF-02": -60, "shelf-03": -70, "SHELF-01": -20, "../x": -50, "SHELF-04": 10 } });
+  tracker.ingest({ shelfId: "SHELF-02", rssi: {}, anchors: { "SHELF-01": -64 } });
+  let links = tracker.links();
+  assert.deepEqual(links.find((l) => l.b === "SHELF-02"), { a: "SHELF-01", b: "SHELF-02", rssi: -62, directions: 2 });
+  assert.deepEqual(links.find((l) => l.b === "SHELF-03"), { a: "SHELF-01", b: "SHELF-03", rssi: -70, directions: 1 });
+  assert.equal(links.length, 2); // self, bad IDs and impossible RSSI are ignored
+
+  advance(1000);
+  tracker.ingest({ shelfId: "SHELF-01", rssi: {}, anchors: { "SHELF-02": -50 } });
+  links = tracker.links();
+  assert.equal(links.find((l) => l.b === "SHELF-02").rssi, -61); // (-58 + -64) / 2 after 20% step
+  advance(20_000);
+  assert.equal(tracker.links().length, 0);
+});
+
+test("basket readings for positioning include only fresh RSSI", () => {
+  const { tracker, report, advance } = setup();
+  report("SHELF-01", -60, -80);
+  report("SHELF-02", null, -70);
+  assert.deepEqual(tracker.basketReadings(), { A: { "SHELF-01": -60 }, B: { "SHELF-01": -80, "SHELF-02": -70 } });
+  advance(5000);
+  assert.deepEqual(tracker.basketReadings(), { A: {}, B: {} });
+});
