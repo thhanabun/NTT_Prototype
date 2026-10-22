@@ -1,0 +1,15 @@
+{
+  "model": {
+    "file": "yolo11n.pt",
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.pt",
+    "sha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1"
+  },
+  "frames": {
+    "demo-people": {
+      "file": "demo-people.jpg",
+      "url": "https://raw.githubusercontent.com/ultralytics/assets/main/im/zidane.jpg",
+      "sha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+      "source": "MOCK"
+    }
+  }
+}

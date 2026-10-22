@@ -2,7 +2,7 @@ import mqtt from "mqtt";
 import { setTimeout as delay } from "node:timers/promises";
 
 const scenario = process.argv[2] || "stable";
-if (!["stable", "unstable", "bounce", "missing", "camera"].includes(scenario)) throw new Error("Scenario: stable | unstable | bounce | missing | camera");
+if (!["stable", "unstable", "bounce", "missing", "camera", "vision"].includes(scenario)) throw new Error("Scenario: stable | unstable | bounce | missing | camera | vision");
 const api = process.env.LOCAL_API_ORIGIN || "http://127.0.0.1:3000";
 const shelfId = "SHELF-01";
 const eventId = "mock-evidence-" + crypto.randomUUID();
@@ -30,6 +30,7 @@ try {
   // Attach the handler immediately while optional camera metadata is being ingested.
   acknowledgement.catch(() => {});
   const event = { eventId, shelfId, laneId: "LANE-1", sku: "COKE", eventType: "PICK", timestamp: new Date().toISOString(), rssi: scenario === "missing" ? { A: null, B: null } : { A: -55, B: -57 } };
+  if (scenario === "vision") event.mockVisionFrameId = "demo-people";
   await publish("events", event);
   picked = true;
   if (scenario === "bounce") { await delay(40); await publish("events", { ...event, eventId: eventId + "-nearby", timestamp: new Date().toISOString() }); }

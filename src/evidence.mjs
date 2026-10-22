@@ -57,6 +57,7 @@ export function ingestCameraEvidence(store, input, receivedAt = new Date().toISO
     cameraId: identifier(input.cameraId, "cameraId"), source: input.source,
     ...capturedTime(input.capturedAt, receivedAt), receivedAt,
     observations: [...new Set(input.observations)],
+    ...(input.frameId === undefined ? {} : { frameId: identifier(input.frameId, "frameId") }),
   };
   store.cameraEvidence ||= [];
   store.cameraEvidence.unshift(sample);

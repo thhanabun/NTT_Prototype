@@ -94,6 +94,17 @@
       }
     },
     {
+      "name": "inspect_vision_evidence",
+      "description": "Run real YOLO11n object detection on registered frames linked to this event. Returns classes, confidence and boxes, with MOCK provenance. Cannot identify retail SKU, basket ownership or PICK/PUT_BACK; never changes a cart.",
+      "parameters": {
+        "eventId": {
+          "description": "Source shelf event ID. Images are selected by the backend; no paths or URLs accepted.",
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
       "name": "run_evidence_analysis",
       "description": "Run an allowlisted read-only script: rssi_stability, switch_bounce or cart_consistency.",
       "parameters": {

@@ -1,4 +1,5 @@
 import { ANALYSIS_SCRIPTS, SCRIPT_DESCRIPTIONS } from "./analysis-scripts.mjs";
+import { inspectVisionEvidence } from "./vision.mjs";
 
 function getActiveSession(store, basketId) {
   const sessionId = store.activeSessions[basketId];
@@ -148,6 +149,7 @@ export const TOOL_DESCRIPTIONS = Object.freeze({
   get_lane_state: "Read independently reported switch presence near the event; may be unavailable.",
   get_event_neighbors: "Read nearby same-lane events to investigate bounce or rapid returns.",
   get_camera_evidence: "Read camera observation records if available; no RTSP capture or image analysis.",
+  inspect_vision_evidence: "Run real YOLO11n on registered image frames linked to this event. Returns generic objects and boxes; MOCK stays labelled. Cannot prove SKU, basket ownership or PICK/PUT_BACK.",
   run_evidence_analysis: "Run one allowlisted read-only analysis: " + Object.keys(SCRIPT_DESCRIPTIONS).join(", "),
 });
 
@@ -160,11 +162,12 @@ export const AGENT_TOOLS = Object.freeze({
   get_lane_state: getLaneState,
   get_event_neighbors: getEventNeighbors,
   get_camera_evidence: getCameraEvidence,
+  inspect_vision_evidence: inspectVisionEvidence,
   run_evidence_analysis: runEvidenceAnalysis,
 });
 
-export function runAgentTool(store, name, parameters = {}) {
+export function runAgentTool(store, name, parameters = {}, options = {}) {
   const tool = Object.hasOwn(AGENT_TOOLS, name) ? AGENT_TOOLS[name] : null;
   if (!tool) throw new Error(`Unknown agent tool: ${name}`);
-  return tool(store, parameters);
+  return tool(store, parameters, options);
 }

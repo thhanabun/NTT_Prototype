@@ -33,6 +33,8 @@ The integrated frontend is in `web/` on port 3001; the API remains on port 3000.
 
 The HTTP server now uses a model-directed evidence loop for ambiguous cases: Laya chooses tools/allowlisted analysis scripts, observes their results and chooses again. Admin displays the selection trace and tool results. See [Agentic investigation and mock evidence scenarios](docs/agentic-investigation.md). Set `AGENT_MODE=workflow` to compare the previous fixed-tool path.
 
+Optional real CPU **YOLO11n** is available as `inspect_vision_evidence`. Start `npm run model:vision` in another terminal, then `npm run mock:evidence -- vision` with API, broker, Laya and Basket A/B sessions running. See [vision setup, mock-frame provenance and limits](docs/vision-evidence.md).
+
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
 - RSSI inside that margin is ambiguous. Laya runs a real typed decision after the evidence tools; a person must confirm before the item reaches the cart. Model errors route to staff without a mock fallback. Set AGENT_PROVIDER=mock explicitly only for a software simulation.
 - Missing RSSI, tied evidence, a missing session, or a cart conflict routes to staff review.

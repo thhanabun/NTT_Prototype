@@ -74,7 +74,14 @@ export function createPrototypeApplication({
     },
 
     async processShelfEvent(input) {
-      const { result, store: next } = await repository.mutate((draft) => processShelfEvent(draft, input));
+      const { result, store: next } = await repository.mutate((draft) => {
+        const result = processShelfEvent(draft, input);
+        // Bind mock imagery before investigation starts, without a camera-ingestion race.
+        if (!result.duplicate && input.mockVisionFrameId !== undefined) ingestCameraEvidence(draft, {
+          eventId: input.eventId, cameraId: "MOCK-YOLO", source: "MOCK", frameId: input.mockVisionFrameId, observations: ["INCONCLUSIVE"],
+        });
+        return result;
+      });
       store = next;
       if (!result.duplicate && result.caseId) {
         const pendingCase = store.cases.find((item) => item.caseId === result.caseId);

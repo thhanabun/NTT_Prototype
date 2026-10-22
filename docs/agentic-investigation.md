@@ -24,6 +24,7 @@ All tools are read-only. Local tool arguments are bound to the current case's ev
 | `get_lane_state` | Independently reported switch presence near the event; missing data remains UNKNOWN |
 | `get_event_neighbors` | Up to 12 nearby same-lane events, with receipt-time provenance |
 | `get_camera_evidence` | Camera observation records linked to the event, including source and alignment |
+| `inspect_vision_evidence` | Real CPU YOLO11n detections on registered event-linked frames; class/confidence/boxes and MOCK provenance |
 | `run_evidence_analysis` | Run one allowlisted read-only analysis script |
 
 Scripts selectable after reading their supporting evidence:
@@ -39,7 +40,7 @@ Explicit conflicts from collected analysis, degraded-device evidence or aligned 
 - `POST /api/telemetry`: accepts local firmware (`uptimeMs`, `rssi`, `lanes`) and AWS firmware (`uptime`, `baskets`) formats. Broker and IoT bridge forward exact telemetry topics. The bridge IAM template now includes telemetry subscribe/receive permissions. Telemetry is not acknowledged as a shelf event.
 - Retains 120 telemetry samples. Without a source timestamp, provenance is `SERVER_RECEIPT`; delayed signals do not acquire invented capture-time evidence.
 - `POST /api/evidence/camera`: requires an existing `eventId`, `cameraId`, `source` (`CAMERA` or `MOCK`), optional `capturedAt`, and observations from `PICK_VISIBLE`, `PUT_BACK_VISIBLE`, `OCCLUDED`, `INCONCLUSIVE`. Retains 20 records.
-- **Camera support is an observation adapter. No RTSP capture, ring buffer or image inference is implemented.** No records means `NO_DATA`. A source label on the unauthenticated local API is not proof of an authenticated camera producer.
+- Camera observation records remain separate from YOLO inference. An optional `frameId` points to a registered image, never a caller-supplied path or URL. See [YOLO evidence setup and limits](vision-evidence.md). RTSP capture and ring buffers are not implemented. No records means `NO_DATA`. A source label on the unauthenticated local API is not proof of an authenticated camera producer.
 - Evidence and traces use the existing repository. The DynamoDB aggregate still has a 400 KB item limit; richer results make normalization/pruning necessary before scale. Shelf monitor status remains backend-reported; the health tool is not a continuously updating offline dashboard.
 
 ## Inspect and try
@@ -61,6 +62,7 @@ npm run mock:evidence -- stable
 npm run mock:evidence -- unstable
 npm run mock:evidence -- bounce
 npm run mock:evidence -- camera
+npm run mock:evidence -- vision
 npm run mock:evidence -- missing
 ```
 

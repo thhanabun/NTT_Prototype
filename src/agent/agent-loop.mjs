@@ -24,6 +24,7 @@ function observationSummary(name, result) {
   if (name === "get_event_neighbors") return JSON.stringify({ eventCount: result.events.length, events: result.events.slice(0, 4).map(item => ({ type: item.eventType, receivedAt: item.receivedAt })), windowMs: result.windowMs });
   if (name === "get_camera_evidence") return JSON.stringify({ status: result.status, observations: result.observations.map(item => ({ source: item.source, aligned: item.aligned, observations: item.observations })) });
   if (name === "get_basket_evidence") return JSON.stringify({ zone: result.zone, rssi: result.rssi, candidate: result.candidate, active: result.activeSessions });
+  if (name === "inspect_vision_evidence") return JSON.stringify({ status: result.status, ownership: "UNKNOWN", action: "UNKNOWN", frames: result.frames.map(frame => ({ source: frame.source, model: frame.model, objects: frame.detections.slice(0, 5).map(item => item.label) })) });
   return JSON.stringify(result).slice(0, 360);
 }
 
@@ -72,7 +73,7 @@ export async function runAgentInvestigation(repository, caseId, {
       const item = activeCase(store);
       const actions = availableActions(completed);
       const selection = await withinDeadline(signal, () => planner({ signal, actions, context: {
-        task: { type: item.type, eventType: item.eventType, sku: item.sku },
+        task: { type: item.type, eventType: item.eventType, sku: item.sku, visionFrames: (store.cameraEvidence || []).filter(frame => frame.eventId === item.eventId && frame.frameId).map(frame => ({ frameId: frame.frameId, source: frame.source })).slice(0, 2) },
         remainingSteps: maxSteps - number + 1,
         missingCoreEvidence: REQUIRED.filter(name => !completed.has(name)),
         observations: observations.map(entry => ({ action: entry.action, summary: entry.summary.slice(0, 240) })),
@@ -100,7 +101,7 @@ export async function runAgentInvestigation(repository, caseId, {
       }
       const input = action.tool === "get_cart_history" ? {} : { eventId: item.eventId, ...(action.scriptId ? { scriptId: action.scriptId } : {}) };
       let result;
-      try { result = runAgentTool(structuredClone(await repository.read()), action.tool, input); }
+      try { result = await withinDeadline(signal, async () => runAgentTool(structuredClone(await repository.read()), action.tool, input, { signal })); }
       catch (error) {
         await persistStep({ number, phase: "OBSERVE", action: action.id, summary: error.message, toolCall: { name: action.tool, status: "ERROR", calledAt: new Date().toISOString(), input, result: { error: error.message }, summary: error.message } });
         throw error;

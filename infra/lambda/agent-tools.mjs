@@ -48,7 +48,7 @@ export function createAgentToolsHandler({
     const parameters = readParameters(event.parameters);
     const result = functionName === "get_basket_decision"
       ? await getBasketDecision(Item.data, parameters, decision)
-      : runAgentTool(Item.data, functionName, parameters);
+      : await runAgentTool(Item.data, functionName, parameters);
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       level: "INFO",
