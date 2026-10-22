@@ -54,12 +54,30 @@ export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
     return ab + ac < bc * 0.98 || ab + bc < ac * 0.98 || ac + bc < ab * 0.98;
   })();
 
-  // Fit measured and map points into the drawing.
-  const shown = [...(aligned?.values() ?? []), ...ids.map((id) => mapPoints.get(id)).filter((p): p is Point => Boolean(p))];
-  const minX = Math.min(...shown.map((p) => p.x), 0), maxX = Math.max(...shown.map((p) => p.x), 1);
-  const minY = Math.min(...shown.map((p) => p.y), 0), maxY = Math.max(...shown.map((p) => p.y), 1);
+  // Fit the measured points; include map points only while the measured shape stays readable.
+  const measuredPts = [...(aligned?.values() ?? [])];
+  const mapPts = ids.map((id) => mapPoints.get(id)).filter((p): p is Point => Boolean(p));
+  const bounds = (points: Point[]) => {
+    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+  };
+  const own = measuredPts.length ? bounds(measuredPts) : { minX: 0, maxX: 1, minY: 0, maxY: 1 };
+  const all = measuredPts.length ? bounds([...measuredPts, ...mapPts]) : own;
+  const span = (b: typeof own) => Math.max(0.5, b.maxX - b.minX, b.maxY - b.minY);
+  const fit = span(own) / span(all) >= 0.45 ? all : own;
+  const minX = fit.minX, maxX = Math.max(fit.maxX, fit.minX + 0.5);
+  const minY = fit.minY, maxY = Math.max(fit.maxY, fit.minY + 0.5);
   const k = Math.min((VIEW.w - VIEW.pad * 2) / Math.max(0.5, maxX - minX), (VIEW.h - VIEW.pad * 2) / Math.max(0.5, maxY - minY));
   const px = (p: Point) => ({ x: VIEW.pad + (p.x - minX) * k, y: VIEW.pad + (p.y - minY) * k });
+  // Labels are pushed away from the centre of the shape so they do not cover each other.
+  const placedPx = aligned ? ids.map((id) => aligned.get(id)).filter((p): p is Point => Boolean(p)).map(px) : [];
+  const centre = placedPx.length
+    ? { x: placedPx.reduce((s, p) => s + p.x, 0) / placedPx.length, y: placedPx.reduce((s, p) => s + p.y, 0) / placedPx.length }
+    : { x: VIEW.w / 2, y: VIEW.h / 2 };
+  const outward = (p: { x: number; y: number }, distance: number) => {
+    const dx = p.x - centre.x, dy = p.y - centre.y, length = Math.hypot(dx, dy);
+    return length < 1 ? { x: p.x, y: p.y - distance } : { x: p.x + (dx / length) * distance, y: p.y + (dy / length) * distance };
+  };
   const gridStep = maxX - minX > 12 ? 2 : 1;
   const grid: number[] = [];
   for (let m = Math.ceil(minX); m <= maxX; m += gridStep) grid.push(m);
@@ -117,21 +135,28 @@ export function AnchorTriangle({ links, meanRssi, layout, tunedN }: Props) {
               {ids.flatMap((a, i) => ids.slice(i + 1).map((b) => {
                 const pa = aligned.get(a), pb = aligned.get(b), d = measured(a, b);
                 if (!pa || !pb || !Number.isFinite(d)) return null;
-                const p = px(pa), q = px(pb), mid = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+                const p = px(pa), q = px(pb), length = Math.hypot(q.x - p.x, q.y - p.y);
+                // Label beside the line (perpendicular), on the side away from the shape's centre.
+                const base = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+                let nx = length ? -(q.y - p.y) / length : 0, ny = length ? (q.x - p.x) / length : -1;
+                if ((base.x - centre.x) * nx + (base.y - centre.y) * ny < 0) { nx = -nx; ny = -ny; }
+                const mid = { x: base.x + nx * 16, y: base.y + ny * 16 };
                 return <g key={`edge-${a}-${b}`}>
                   <line className={styles.edge} x1={p.x} y1={p.y} x2={q.x} y2={q.y} />
-                  <rect className={styles.edgeTag} x={mid.x - 25} y={mid.y - 10} width="50" height="20" rx="6" />
-                  <text className={styles.edgeLabel} x={mid.x} y={mid.y + 4} textAnchor="middle">{d.toFixed(2)} ม.</text>
+                  {length >= 56 && <>
+                    <rect className={styles.edgeTag} x={mid.x - 25} y={mid.y - 10} width="50" height="20" rx="6" />
+                    <text className={styles.edgeLabel} x={mid.x} y={mid.y + 4} textAnchor="middle">{d.toFixed(2)} ม.</text>
+                  </>}
                 </g>;
               }))}
 
               {ids.map((id) => {
                 const m = aligned.get(id);
                 if (!m) return null;
-                const p = px(m);
+                const p = px(m), label = outward(p, 22);
                 return <g key={`pt-${id}`}>
                   <circle className={styles.measuredPoint} cx={p.x} cy={p.y} r="9" />
-                  <text className={styles.pointLabel} x={p.x} y={p.y - 15} textAnchor="middle">{short(id)}</text>
+                  <text className={styles.pointLabel} x={label.x} y={label.y + 4} textAnchor="middle">{short(id)}</text>
                 </g>;
               })}
             </svg>
