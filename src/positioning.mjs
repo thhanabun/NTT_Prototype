@@ -216,12 +216,15 @@ export function createPositioner({ basketTxPower = null, basketOffsetDb = 0, alp
       const anchors = anchorPositions(layout);
       const scale = metersPerUnit(layout);
       const floor = { width: layout.width * scale, height: layout.height * scale };
-      links = linkList.filter((link) => anchors.has(link.a) && anchors.has(link.b)).map((link) => {
+      // Every measured link is reported (the tuning page shows ESP32s not yet on the map);
+      // only links between mapped anchors calibrate the model.
+      links = linkList.map((link) => {
         const p = anchors.get(link.a), q = anchors.get(link.b);
-        return { ...link, mapMeters: Math.hypot(p.x - q.x, p.y - q.y) };
+        return { ...link, mapMeters: p && q ? Math.hypot(p.x - q.x, p.y - q.y) : null };
       });
       const tuning = getTuning() ?? {};
-      model = fitPathLoss(links.map((link) => ({ rssi: link.rssi, meters: link.mapMeters })), PATH_LOSS_DEFAULTS, { fixedN: tuning.n ?? null });
+      model = fitPathLoss(links.filter((link) => link.mapMeters !== null).map((link) => ({ rssi: link.rssi, meters: link.mapMeters })),
+        PATH_LOSS_DEFAULTS, { fixedN: tuning.n ?? null });
       basketModel = tuning.basketTxPower != null ? { n: model.n, txPower: tuning.basketTxPower, source: "tuned" }
         : basketTxPower != null ? { n: model.n, txPower: basketTxPower, source: "env" }
           : { n: model.n, txPower: round1(model.txPower + basketOffsetDb), source: model.calibrated ? "anchors" : "default" };
@@ -270,7 +273,7 @@ export function createPositioner({ basketTxPower = null, basketOffsetDb = 0, alp
         links: links.map((link) => ({
           a: link.a, b: link.b, rssi: link.rssi,
           rssiMeters: Math.round(rssiToMeters(link.rssi, model) * 100) / 100,
-          mapMeters: Math.round(link.mapMeters * 100) / 100,
+          mapMeters: link.mapMeters === null ? null : Math.round(link.mapMeters * 100) / 100,
         })),
         positions: Object.fromEntries([...positions].map(([basketId, p]) => [basketId, {
           x: Math.round((p.xM / scale) * 10) / 10,

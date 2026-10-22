@@ -217,3 +217,15 @@ test("tuning store saves, reloads and resets", async () => {
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("links between ESP32s not on the map are reported but do not calibrate", () => {
+  const layout = { width: 300, height: 240, widthM: 10, zones: [
+    { id: "s1", kind: "shelf", shelfId: "SHELF-01", label: "a", x: 0, y: 0, w: 20, h: 20, anchor: { x: 30, y: 30 } },
+  ] };
+  const positioner = createPositioner();
+  positioner.update(layout, [{ a: "SHELF-01", b: "SHELF-09", rssi: -70 }, { a: "SHELF-08", b: "SHELF-09", rssi: -65 }], {}, 0);
+  const snap = positioner.snapshot(layout);
+  assert.equal(snap.links.length, 2);
+  assert.equal(snap.links[0].mapMeters, null);
+  assert.equal(snap.model.calibrated, false);
+});

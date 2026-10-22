@@ -204,7 +204,8 @@ export interface AnchorLink {
   b: string;
   rssi: number;
   rssiMeters: number;
-  mapMeters: number;
+  // Null when either ESP32 is not on the store map yet.
+  mapMeters: number | null;
 }
 
 export interface PositioningTuning {

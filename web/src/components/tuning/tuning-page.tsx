@@ -6,6 +6,7 @@ import { getPresence, resetTuning, saveTuning } from "@/lib/api/client";
 import { useLiveState } from "@/lib/api/live-state";
 import type { BasketId, PositioningTuning, PresenceSnapshot } from "@/lib/api/types";
 import { DEFAULT_STORE_LAYOUT, anchorPoint, metersPerUnit } from "@/lib/store-layout";
+import { AnchorTriangle } from "./anchor-triangle";
 import styles from "./tuning.module.css";
 
 const POLL_MS = 1000;
@@ -118,6 +119,9 @@ export function TuningPage() {
         <article><span>โมเดลตะกร้า (BLE)</span><strong>{basketModel.txPower}<small> dBm @1ม.</small></strong><p>n = {basketModel.n} · {({ tuned: "ตั้งจากหน้านี้", env: "จาก env", anchors: "ประมาณจาก ESP32", default: "ค่าเริ่มต้น" })[basketModel.source]}</p></article>
         <article><span>ขนาดร้านบนผัง</span><strong>{(layout.width * scale).toFixed(1)}<small> × {(layout.height * scale).toFixed(1)} ม.</small></strong><p>แก้ได้ที่ Admin → แก้ไขแผนผังร้าน</p></article>
       </section>
+
+      <AnchorTriangle links={positioning?.links ?? []} layout={layout} tunedN={positioning?.tuning?.n ?? null}
+        meanRssi={(a, b) => stats(history.get(linkKey(a, b)), now)?.mean ?? null} />
 
       <section className={styles.card} aria-labelledby="anchor-heading">
         <div className={styles.cardHead}><div><p className={styles.eyebrow}>ESP32 ↔ ESP32</p><h2 id="anchor-heading">ระยะระหว่าง ESP32</h2></div><Radio size={22} aria-hidden="true" /></div>
