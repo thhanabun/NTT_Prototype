@@ -6,6 +6,7 @@ import { createRepository } from "./store-repository.mjs";
 import { createPrototypeApplication } from "./application.mjs";
 import { logEvent } from "./logger.mjs";
 import { createPresenceTracker, presenceConfigFromEnv } from "./presence.mjs";
+import { createLayoutStore } from "./store-layout.mjs";
 
 const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));
 const dataDir = resolve(root, "../data");
@@ -42,6 +43,15 @@ function publishPresence() {
 }
 setInterval(() => { if (presence.tick()) publishPresence(); }, 1000).unref();
 
+// Store floor plan edited in Admin; pushed to every open page when it is saved.
+const layoutStore = createLayoutStore({ path: resolve(process.env.STORE_LAYOUT_PATH || resolve(dataDir, "store-layout.json")) });
+await layoutStore.load();
+const layoutMessage = () => "event: layout\ndata: " + JSON.stringify(layoutStore.get()) + "\n\n";
+function publishLayout() {
+  const message = layoutMessage();
+  for (const response of subscribers) response.write(message);
+}
+
 application = createPrototypeApplication({
   repository,
   onStateChange: publish,
@@ -76,6 +86,7 @@ async function handleApi(request, response, url) {
     response.write("retry: 1500\n\n");
     response.write("event: state\ndata: " + JSON.stringify(state) + "\n\n");
     response.write(presenceMessage());
+    response.write(layoutMessage());
     subscribers.add(response);
     const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
     response.on("close", () => {
@@ -87,6 +98,9 @@ async function handleApi(request, response, url) {
 
   if (request.method === "GET" && url.pathname === "/api/presence") {
     return sendJson(response, 200, presence.snapshot());
+  }
+  if (request.method === "GET" && url.pathname === "/api/store-layout") {
+    return sendJson(response, 200, layoutStore.get());
   }
 
   if (request.method === "GET" && url.pathname === "/api/audit") {
@@ -107,6 +121,16 @@ async function handleApi(request, response, url) {
       publishPresence();
     }
     return sendJson(response, 200, result);
+  }
+  if (request.method === "PUT" && url.pathname === "/api/store-layout") {
+    const layout = await layoutStore.save(body);
+    publishLayout();
+    return sendJson(response, 200, layout);
+  }
+  if (request.method === "DELETE" && url.pathname === "/api/store-layout") {
+    const layout = await layoutStore.reset();
+    publishLayout();
+    return sendJson(response, 200, layout);
   }
   if (request.method === "POST" && url.pathname === "/api/presence") {
     const { changed } = presence.ingest(body);

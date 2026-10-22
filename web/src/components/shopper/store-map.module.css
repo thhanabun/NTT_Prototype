@@ -7,31 +7,6 @@
 .rssiBadge { background: #edf4ff; color: #35629e; }
 .pickBadge { background: #e3f9ec; color: #08794e; }
 
-.map { display: block; width: 100%; height: auto; border-radius: 14px; background: #f6f9fd; }
-.floor { fill: #fbfdff; stroke: #d5e1f0; stroke-width: 1.5; }
-.entrance { stroke: #fbfdff; stroke-width: 5; }
-.floorLabel { fill: #8a9bb3; font-size: 10px; }
-.cashier { fill: #fff6e9; stroke: #f0cf9c; stroke-width: 1.2; }
-
-.shelf rect { fill: #eef3fa; stroke: #c9d7ea; stroke-width: 1.2; transition: fill .3s, stroke .3s; }
-.shelfLabel { fill: #2a4468; font-size: 12px; font-weight: 600; }
-.shelfId { fill: #7b8da6; font-size: 9px; }
-.shelfHere rect { fill: #dceaff; stroke: #0866f6; stroke-width: 2; }
-.shelfHere .shelfLabel { fill: #0750c4; }
-.shelfOffline rect { fill: #f4f6f9; stroke: #cfd6df; stroke-dasharray: 4 3; }
-.shelfOffline .shelfLabel { fill: #93a1b4; }
-.dotOnline { fill: #16a86a; }
-.dotOffline { fill: #b6c0cd; }
-
-.marker { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
-.myPin { fill: #0866f6; stroke: #fff; stroke-width: 2; filter: drop-shadow(0 3px 4px #0866f655); }
-.myLetter { fill: #fff; font-size: 11px; font-weight: 700; }
-.pulse { fill: #0866f6; opacity: .18; transform-origin: center; transform-box: fill-box; animation: pulse 2s ease-out infinite; }
-.otherPin { fill: #fff; stroke: #8fa3bd; stroke-width: 1.5; }
-.otherLetter { fill: #5a6f8c; font-size: 10px; font-weight: 700; }
-@keyframes pulse { from { transform: scale(.6); opacity: .35; } to { transform: scale(1.6); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .marker { transition: none; } .pulse { animation: none; } }
-
 .summary { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 14px; font-size: 13px; color: #34507a; }
 .summary svg { color: #0866f6; flex-shrink: 0; }
 .summary strong { color: #0750c4; }

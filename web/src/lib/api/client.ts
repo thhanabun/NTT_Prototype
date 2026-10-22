@@ -7,6 +7,7 @@ import type {
   ProcessShelfEventResult,
   Session,
   ShelfEventInput,
+  StoreLayout,
 } from "@/lib/api/types";
 
 export class ApiError extends Error {
@@ -61,6 +62,18 @@ export function getState(signal?: AbortSignal): Promise<ApiState> {
 
 export function getPresence(signal?: AbortSignal): Promise<PresenceSnapshot> {
   return request<PresenceSnapshot>("/api/presence", {signal});
+}
+
+export function getStoreLayout(signal?: AbortSignal): Promise<StoreLayout> {
+  return request<StoreLayout>("/api/store-layout", {signal});
+}
+
+export function saveStoreLayout(layout: StoreLayout): Promise<StoreLayout> {
+  return request<StoreLayout>("/api/store-layout", { method: "PUT", body: JSON.stringify(layout) });
+}
+
+export function resetStoreLayout(): Promise<StoreLayout> {
+  return request<StoreLayout>("/api/store-layout", { method: "DELETE" });
 }
 
 export function startSession(basketId: BasketId): Promise<{ session: Session }> {

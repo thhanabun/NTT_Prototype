@@ -7,6 +7,7 @@ import { useAdmin } from "./use-admin";
 import { CaseDetails, caseStatusLabel, formatTime } from "./case-details";
 import { StaffActions } from "./staff-actions";
 import { LocalSimulator } from "./local-simulator";
+import { StoreMapEditor } from "./store-map-editor";
 import { ConnectionStatus } from "@/components/connection-status";
 import styles from "./admin.module.css";
 
@@ -40,6 +41,7 @@ export function AdminDashboard() {
       </div>
       <section className={styles.card} aria-labelledby="activity-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>RECENT ACTIVITY</p><h2 id="activity-heading">เหตุการณ์ล่าสุด</h2></div><span className={styles.smallLabel}>20 MOST RECENT</span></div>{state?.recentEvents.length ? <ol className={styles.events}>{state.recentEvents.map(event=><li key={event.eventId}><span className={styles.eventIcon}>{event.eventType==="PICK"?"↗":"↙"}</span><div><strong>{event.eventType} · {state.products.find(product=>product.sku===event.sku)?.name??event.sku}</strong><p>{event.eventId} · {event.shelfId} / {event.laneId}</p></div><time dateTime={event.receivedAt}>{formatTime(event.receivedAt)}</time></li>)}</ol>:<p className={styles.muted}>ยังไม่มี shelf event</p>}</section>
       <section className={styles.card} aria-labelledby="audit-heading"><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>AUDIT LOG</p><h2 id="audit-heading">บันทึกการทำงาน</h2></div><span className={styles.smallLabel}>100 MOST RECENT</span></div><p className={styles.footnote}>แสดงจาก backend snapshot · เก็บสูงสุด 500 รายการใน prototype</p>{state?.auditLog?.length ? <ol className={styles.events}>{state.auditLog.map(entry => <li key={entry.auditId}><div><strong>{entry.action}</strong><p>{entry.actor} · {String(entry.details.caseId ?? entry.details.eventId ?? entry.auditId)}</p></div><time dateTime={entry.at}>{formatTime(entry.at)}</time></li>)}</ol> : <p className={styles.muted}>ยังไม่มี audit log</p>}</section>
+      <StoreMapEditor />
       <LocalSimulator disabled={admin.loading || admin.pending || admin.stale} shelfId={state?.shelf.shelfId ?? "SHELF-01"} run={admin.execute} />
     </div>
   );

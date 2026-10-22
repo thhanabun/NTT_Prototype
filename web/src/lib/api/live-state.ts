@@ -1,8 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { getPresence, getState } from "./client";
-import type { ApiState, PresenceSnapshot } from "./types";
+import { getPresence, getState, getStoreLayout } from "./client";
+import type { ApiState, PresenceSnapshot, StoreLayout } from "./types";
 
 export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "manual";
 interface LiveSnapshot {
@@ -15,8 +15,10 @@ interface LiveSnapshot {
   retryAttempt: number;
   // Store-map presence. Optional: the map waits while it is null.
   presence: PresenceSnapshot | null;
+  // Store floor plan edited in Admin. Null until loaded; the map then uses its default.
+  layout: StoreLayout | null;
 }
-const initial: LiveSnapshot = { state:null, loading:true, stale:true, error:"", updatedAt:null, connection:"connecting", retryAttempt:0, presence:null };
+const initial: LiveSnapshot = { state:null, loading:true, stale:true, error:"", updatedAt:null, connection:"connecting", retryAttempt:0, presence:null, layout:null };
 let snapshot = initial;
 const listeners = new Set<() => void>();
 const delays = [1500, 3000, 6000, 12000, 30000];
@@ -27,10 +29,19 @@ let controller: AbortController | null = null;
 let requestNumber = 0;
 let streamRevision = 0;
 let presenceRevision = 0;
+let layoutRevision = 0;
 let active = false;
 
 function validPresence(value: PresenceSnapshot): PresenceSnapshot | null {
   return value && Array.isArray(value.baskets) && Array.isArray(value.shelves) ? value : null;
+}
+function validLayout(value: StoreLayout): StoreLayout | null {
+  return value && Array.isArray(value.zones) && Number.isFinite(value.width) && Number.isFinite(value.height) ? value : null;
+}
+// Lets the Admin editor show its own save immediately, before the SSE echo arrives.
+export function acceptStoreLayout(value: StoreLayout) {
+  const next = validLayout(value);
+  if (next) { layoutRevision += 1; update({layout:next}); }
 }
 
 function validate(value: ApiState): ApiState {
@@ -92,6 +103,11 @@ function connect() {
         if (next) { presenceRevision += 1; update({presence:next}); }
       } catch { /* A bad presence message never breaks cart state. */ }
     });
+    stream.addEventListener("layout", event => {
+      if (!active || source !== stream) return;
+      try { acceptStoreLayout(JSON.parse((event as MessageEvent<string>).data)); }
+      catch { /* Keep the last good layout. */ }
+    });
     stream.onerror = () => {
       if (source === stream) retryConnection("การเชื่อมต่อ realtime ขาดหาย กำลังลองเชื่อมต่อใหม่");
     };
@@ -113,6 +129,13 @@ async function readState(showLoading: boolean): Promise<boolean> {
     const next = validPresence(value);
     if (next && active && presenceAtStart === presenceRevision) update({presence:next});
   }).catch(() => {});
+  // The stream sends the layout on connect; fetch it only while nothing has arrived yet.
+  if (!snapshot.layout) {
+    const layoutAtStart = layoutRevision;
+    void getStoreLayout(request.signal).then(value => {
+      if (active && layoutAtStart === layoutRevision) acceptStoreLayout(value);
+    }).catch(() => {});
+  }
   try {
     const next = validate(await getState(AbortSignal.any([request.signal, AbortSignal.timeout(12_000)])));
     if (!active || number !== requestNumber) return false;

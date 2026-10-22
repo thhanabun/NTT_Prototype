@@ -1,0 +1,33 @@
+.map { display: block; width: 100%; height: auto; border-radius: 14px; background: #f6f9fd; user-select: none; touch-action: none; }
+.map:not(.editable) { touch-action: auto; }
+.map:focus-visible { outline: 3px solid #0866f6; outline-offset: 3px; }
+.floor { fill: #fbfdff; stroke: #d5e1f0; stroke-width: 1.5; }
+
+.zone rect { transition: fill .3s, stroke .3s; }
+.zoneLabel { fill: #2a4468; font-size: 12px; font-weight: 600; pointer-events: none; }
+.zoneTag { fill: #7b8da6; font-size: 9px; pointer-events: none; }
+
+.shelf rect { fill: #eef3fa; stroke: #c9d7ea; stroke-width: 1.2; }
+.shelfHere rect { fill: #dceaff; stroke: #0866f6; stroke-width: 2; }
+.shelfHere .zoneLabel { fill: #0750c4; }
+.shelfOffline rect { fill: #f4f6f9; stroke: #cfd6df; stroke-dasharray: 4 3; }
+.shelfOffline .zoneLabel { fill: #93a1b4; }
+.cashier rect { fill: #fff6e9; stroke: #f0cf9c; stroke-width: 1.2; }
+.entrance rect { fill: #f0faf4; stroke: #a9dcbd; stroke-width: 1.2; stroke-dasharray: 5 3; }
+.entranceLabel { fill: #3c8a5c; font-size: 10px; font-weight: 600; pointer-events: none; }
+.dotOnline { fill: #16a86a; pointer-events: none; }
+.dotOffline { fill: #b6c0cd; pointer-events: none; }
+
+.editable .zone { cursor: grab; }
+.editable .zone:active { cursor: grabbing; }
+.selected rect:first-child { stroke: #f08a00; stroke-width: 2.5; stroke-dasharray: none; }
+.handle { fill: #fff; stroke: #f08a00; stroke-width: 2; cursor: nwse-resize; }
+
+.marker { transition: transform .6s cubic-bezier(.2, .8, .2, 1); pointer-events: none; }
+.myPin { fill: #0866f6; stroke: #fff; stroke-width: 2; filter: drop-shadow(0 3px 4px #0866f655); }
+.myLetter { fill: #fff; font-size: 11px; font-weight: 700; }
+.pulse { fill: #0866f6; opacity: .18; transform-origin: center; transform-box: fill-box; animation: pulse 2s ease-out infinite; }
+.otherPin { fill: #fff; stroke: #8fa3bd; stroke-width: 1.5; }
+.otherLetter { fill: #5a6f8c; font-size: 10px; font-weight: 700; }
+@keyframes pulse { from { transform: scale(.6); opacity: .35; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .marker, .zone rect { transition: none; } .pulse { animation: none; } }

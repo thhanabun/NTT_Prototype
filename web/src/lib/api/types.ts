@@ -195,6 +195,28 @@ export interface PresenceSnapshot {
   shelves: PresenceShelf[];
 }
 
+// Store floor plan from /api/store-layout and SSE `event: layout`, edited in Admin.
+export type StoreZoneKind = "shelf" | "cashier" | "entrance";
+
+export interface StoreZone {
+  id: string;
+  kind: StoreZoneKind;
+  label: string;
+  detail?: string;
+  shelfId?: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface StoreLayout {
+  width: number;
+  height: number;
+  zones: StoreZone[];
+  updatedAt?: string | null;
+}
+
 export interface ShelfEventInput {
   eventId: string;
   laneId: string;

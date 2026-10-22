@@ -100,5 +100,5 @@ export function useShopper() {
   }
 
   return { state, basket, basketId, loading, stale, error, notice, pending, refresh, selectBasket, beginSession,
-    connection:live.connection, retryAttempt:live.retryAttempt, presence:live.presence, currentCase, waitingCases, staffCases, receipt, confirmItem, finishCheckout, dismissReceipt: () => setShowReceipt(false) };
+    connection:live.connection, retryAttempt:live.retryAttempt, presence:live.presence, layout:live.layout, currentCase, waitingCases, staffCases, receipt, confirmItem, finishCheckout, dismissReceipt: () => setShowReceipt(false) };
 }
