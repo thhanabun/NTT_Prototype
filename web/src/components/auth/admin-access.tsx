@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AdminWorkspace } from "@/components/admin/admin-workspace";
 import { adminAuthEnabled, cloudAuthEnabled } from "@/lib/auth/config";
 import { expireMockSession } from "@/lib/auth/mock-session";
 import { signOutAdmin, useAdminSession } from "@/lib/auth/session";
@@ -28,6 +28,6 @@ export function AdminAccess() {
         <button className={styles.secondary} onClick={() => void signOutAdmin()}><LogOut size={15} aria-hidden="true" /> ออกจากระบบ</button>
       </div>
     </div>
-    <AdminDashboard />
+    <AdminWorkspace />
   </>;
 }

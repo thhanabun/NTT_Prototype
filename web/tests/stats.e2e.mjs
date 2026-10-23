@@ -43,9 +43,12 @@ try {
   });
   await page.goto(`${process.env.SHOPPER_TEST_ORIGIN || 'http://localhost:3001'}/admin`);
   await loginAdmin(page);
+  // Chat lives in a floating dock; every answer opens its own result tab beside the pinned Dashboard tab.
+  await page.getByRole('button', { name: /เมนูลัด FAST/ }).click();
+  await page.getByRole('button', { name: 'เปิดแชทถามข้อมูลร้าน', exact: true }).click();
   const panel = page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true });
   await panel.getByRole('heading', { name: 'ถามข้อมูลร้าน', exact: true }).waitFor();
-  const latest = () => panel.locator('[class*="answer"]').last();
+  const latest = () => page.locator('[role="tabpanel"]:not([hidden]) article').last();
   async function query(message, doubleClick = false) {
     console.log('QUERY ' + message);
     await panel.getByLabel('คำถามสถิติ', { exact: true }).fill(message);

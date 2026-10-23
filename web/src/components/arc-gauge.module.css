@@ -1,0 +1,4 @@
+.arc { display: block; width: 100%; max-width: 380px; margin: 0 auto; }
+.off { fill: var(--c-track); }
+.on { fill: var(--c-hi); }
+.pending { fill: var(--c-warn-line); }

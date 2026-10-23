@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CircleAlert, Clock3, LoaderCircle, Radio, RefreshCw, RotateCcw, ShoppingBasket, Store } from "lucide-react";
+import { CircleAlert, Clock3, LoaderCircle, Radio, RefreshCw, RotateCcw, ShoppingBasket, Store, TriangleAlert } from "lucide-react";
 import { useAdmin } from "./use-admin";
 import { CaseDetails, caseStatusLabel, formatTime } from "./case-details";
 import { StaffActions } from "./staff-actions";
 import { LocalSimulator } from "./local-simulator";
-import { StatQuery } from "./stat-query";
 import { ShelfMonitor } from "./shelf-monitor";
 import { CustomerDetection } from "./customer-detection";
 import { releaseBasketSession } from "@/lib/api/client";
@@ -25,6 +24,7 @@ export function AdminDashboard() {
   const state = admin.state;
   const shelves = getShelves(state);
   const openCases = state?.cases.filter((item) => item.status !== "CLOSED") ?? [];
+  const staffCases = state?.cases.filter((item) => item.status === "OPEN_STAFF") ?? [];
   const cases = state?.cases.filter((item) => filter === "ALL" || (filter === "OPEN" ? item.status !== "CLOSED" : item.status === filter)) ?? [];
   return (
     <div className={styles.dashboard} lang="th">
@@ -41,6 +41,7 @@ export function AdminDashboard() {
       {admin.error && <div className={styles.error} role="alert"><CircleAlert size={20} aria-hidden="true" /><div>{admin.error}<button disabled={admin.loading || admin.pending} onClick={() => void admin.refresh()}>ลองโหลดใหม่</button></div></div>}
       {admin.notice && <p className={styles.notice} role="status">{admin.notice}</p>}
       {admin.loading && <p className={styles.loading} role="status"><LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> กำลังโหลดข้อมูลร้าน…</p>}
+      {staffCases.length > 0 && <section className={styles.attention} aria-label="ต้องดำเนินการ"><span className={styles.attentionIcon}><TriangleAlert size={22} aria-hidden="true" /></span><div><strong>มี {staffCases.length} เคสรอพนักงานตัดสิน</strong><span>รายการเหล่านี้ยังไม่รวมในยอดของลูกค้า</span></div><button className={styles.attentionButton} disabled={admin.loading || admin.pending} onClick={() => { setFilter("OPEN"); admin.selectCase(staffCases[0].caseId); }}>ตรวจเคสแรก →</button></section>}
       <section className={styles.metrics} aria-label="Store metrics">
         {[{label:"ชั้นวางที่เชื่อมต่อ",value:state ? `${shelves.filter(shelf=>shelf.enabled && shelf.device?.status === "ONLINE").length} / ${shelves.filter(shelf=>shelf.enabled).length}` : "—",icon:Store,note:`เปิดใช้งาน ${shelves.filter(shelf=>shelf.enabled).length} จาก ${shelves.length} Shelf`},{label:"ตะกร้าที่ใช้งาน",value:state?.baskets.filter((basket)=>basket.session).length ?? "—",icon:ShoppingBasket,note:"ทั้งหมด 2 ใบ"},{label:"เคสเปิดล่าสุด",value:state ? openCases.length : "—",icon:CircleAlert,note:"สูงสุด 30 เคสล่าสุด"},{label:"สถานะการประมวลผล",value:state?.shelf.fsmState ?? "—",icon:Radio,note:"FSM"}].map(({label,value,icon:Icon,note})=><article className={styles.metric} key={label}><div><span>{label}</span><Icon size={18} aria-hidden="true" /></div><strong>{value}</strong><p>{note}</p></article>)}
       </section>
@@ -51,10 +52,9 @@ export function AdminDashboard() {
       </div>
       <CustomerDetection />
       <div className={styles.caseGrid}>
-        <section className={styles.card} aria-labelledby="cases-heading"><div className={styles.sectionHeading}><div><h2 id="cases-heading">รายการที่ต้องตรวจสอบ</h2></div><span className={styles.badge}>{cases.length}</span></div><div className={styles.filters} role="group" aria-label="Filter cases">{filters.map(item=><button key={item.id} aria-pressed={filter===item.id} onClick={()=>setFilter(item.id)}>{item.label}</button>)}</div><p className={styles.footnote}>30 เคสล่าสุด</p><div className={styles.caseList}>{cases.length ? cases.map(item=><button className={`${styles.caseButton} ${admin.selectedCase?.caseId===item.caseId ? styles.selectedCase:""}`} key={item.caseId} disabled={admin.loading || admin.pending} aria-pressed={admin.selectedCase?.caseId===item.caseId} onClick={()=>admin.selectCase(item.caseId)}><div><strong>{item.caseId}</strong><span className={`${styles.badge} ${item.status==="OPEN_STAFF"?styles.amber:item.status==="CLOSED"?styles.green:styles.blue}`}>{caseStatusLabel[item.status]}</span></div><h3>{state?.products.find(product=>product.sku===item.sku)?.name??item.sku} · {item.eventType}</h3><p>{item.type.replaceAll("_"," ")}</p><small>{item.candidate?`Basket ${item.candidate}`:"ยังไม่ทราบตะกร้า"} · {formatTime(item.createdAt)}</small></button>):<div className={styles.empty}><CheckIcon /><h3>ไม่มีเคสในหมวดนี้</h3></div>}</div></section>
+        <section className={styles.card} aria-labelledby="cases-heading"><div className={styles.sectionHeading}><div><h2 id="cases-heading">รายการที่ต้องตรวจสอบ</h2></div><span className={styles.badge}>{cases.length}</span></div><div className={styles.filters} role="group" aria-label="Filter cases">{filters.map(item=><button key={item.id} aria-pressed={filter===item.id} onClick={()=>setFilter(item.id)}>{item.label}</button>)}</div><p className={styles.footnote}>30 เคสล่าสุด</p><div className={styles.caseList}>{cases.length ? cases.map(item=><button className={`${styles.caseButton} ${item.status==="OPEN_STAFF"?styles.caseStaff:item.status==="CLOSED"?styles.caseClosed:styles.caseCustomer} ${admin.selectedCase?.caseId===item.caseId ? styles.selectedCase:""}`} key={item.caseId} disabled={admin.loading || admin.pending} aria-pressed={admin.selectedCase?.caseId===item.caseId} onClick={()=>admin.selectCase(item.caseId)}><div><strong>{item.caseId}</strong><span className={`${styles.badge} ${item.status==="OPEN_STAFF"?styles.amber:item.status==="CLOSED"?styles.green:styles.blue}`}>{caseStatusLabel[item.status]}</span></div><h3>{state?.products.find(product=>product.sku===item.sku)?.name??item.sku} · {item.eventType}</h3><p>{item.type.replaceAll("_"," ")}</p><small>{item.candidate?`Basket ${item.candidate}`:"ยังไม่ทราบตะกร้า"} · {formatTime(item.createdAt)}</small></button>):<div className={styles.empty}><CheckIcon /><h3>ไม่มีเคสในหมวดนี้</h3></div>}</div></section>
         {admin.selectedCase ? <CaseDetails item={admin.selectedCase} product={state?.products.find(item=>item.sku===admin.selectedCase?.sku)} actions={<StaffActions item={admin.selectedCase} baskets={state?.baskets ?? []} disabled={admin.loading || admin.pending || admin.stale} pending={admin.pending} onDecide={(decision,target)=>void admin.decide(decision,target)} />} />:<section className={styles.card}><div className={styles.empty}><Clock3 size={30} aria-hidden="true" /><h3>{admin.selectedId?"ไม่พบเคสในข้อมูลล่าสุด":"เลือกเคสเพื่อดูรายละเอียด"}</h3></div></section>}
       </div>
-      <StatQuery />
       <div className={styles.logsGrid}>
       <section className={styles.card} aria-labelledby="activity-heading"><div className={styles.sectionHeading}><div><h2 id="activity-heading">เหตุการณ์ล่าสุด</h2></div><span className={styles.smallLabel}>20 รายการล่าสุด</span></div>{state?.recentEvents.length ? <ol className={styles.events} tabIndex={0} aria-label="เหตุการณ์ล่าสุด">{state.recentEvents.map(event=><li key={event.eventId}><span className={styles.eventIcon}>{event.eventType==="PICK"?"↗":"↙"}</span><div><strong>{event.eventType} · {state.products.find(product=>product.sku===event.sku)?.name??event.sku}</strong><p>{event.eventId} · {event.shelfId} / {event.laneId}</p></div><time dateTime={event.receivedAt}>{formatTime(event.receivedAt)}</time></li>)}</ol>:<p className={styles.muted}>ยังไม่มีเหตุการณ์</p>}</section>
       <section className={styles.card} aria-labelledby="audit-heading"><div className={styles.sectionHeading}><div><h2 id="audit-heading">บันทึกการทำงาน</h2></div><span className={styles.smallLabel}>100 รายการล่าสุด</span></div>{state?.auditLog?.length ? <ol className={styles.events} tabIndex={0} aria-label="บันทึกการทำงาน">{state.auditLog.map(entry => <li key={entry.auditId}><div><strong>{entry.action}</strong><p>{entry.actor} · {String(entry.details.caseId ?? entry.details.eventId ?? entry.auditId)}</p></div><time dateTime={entry.at}>{formatTime(entry.at)}</time></li>)}</ol> : <p className={styles.muted}>ยังไม่มี audit log</p>}</section>
