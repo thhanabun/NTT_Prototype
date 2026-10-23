@@ -1,0 +1,28 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-23T19:40:00Z" },
+  "title": "FAST — Warm × Night Design",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "ระบบดีไซน์ · Warm × Night" },
+    "Shopper.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 844, "title": "แอปโทรศัพท์ · ต้นแบบกดได้ (เริ่มที่หน้า login)", "is_interactive": true },
+    "ShopperDay.dc.html": { "x": 0, "y": 1380, "w": 3552, "h": 1900, "title": "แอปโทรศัพท์ · โหมดปกติ 15 หน้าจอ" },
+    "ShopperNight.dc.html": { "x": 0, "y": 3660, "w": 3552, "h": 1900, "title": "แอปโทรศัพท์ · Night mode 15 หน้าจอ" },
+    "Admin.dc.html": { "x": 0, "y": 5940, "w": 1440, "h": 2800, "title": "Admin · Dashboard + แชท (โหมดปกติ)", "expand": "fill", "is_interactive": true },
+    "AdminNight.dc.html": { "x": 1520, "y": 5940, "w": 1440, "h": 2800, "title": "Admin · Dashboard + แชท (Night)", "expand": "fill", "is_interactive": true },
+    "AdminQuery.dc.html": { "x": 0, "y": 9120, "w": 1440, "h": 1600, "title": "แท็บผลลัพธ์ · ยอดขายรายวัน (โหมดปกติ)", "expand": "fill", "is_interactive": true },
+    "AdminQueryNight.dc.html": { "x": 1520, "y": 9120, "w": 1440, "h": 1600, "title": "แท็บผลลัพธ์ · สินค้าขายดี (Night)", "expand": "fill", "is_interactive": true },
+    "AdminLogin.dc.html": { "x": 0, "y": 11100, "w": 1584, "h": 900, "title": "Admin · เข้าสู่ระบบ (ปกติ / Night)" }
+  },
+  "order": ["Main.dc.html", "Shopper.dc.html", "ShopperDay.dc.html", "ShopperNight.dc.html", "Admin.dc.html", "AdminNight.dc.html", "AdminQuery.dc.html", "AdminQueryNight.dc.html", "AdminLogin.dc.html"],
+  "notes": {
+    "title": { "x": 0, "y": -300, "text": "FAST — Warm × Night", "kind": "title1", "maxW": 3552 },
+    "shopperDay": { "x": 0, "y": 1120, "text": "แอปโทรศัพท์ · โหมดปกติ", "kind": "title1", "maxW": 3552 },
+    "shopperNight": { "x": 0, "y": 3400, "text": "แอปโทรศัพท์ · Night mode", "kind": "title1", "maxW": 3552 },
+    "admin": { "x": 0, "y": 5680, "text": "Admin · Dashboard + แชทลอย", "kind": "title1", "maxW": 2960 },
+    "query": { "x": 0, "y": 8860, "text": "Admin · แท็บผลลัพธ์จากแชท", "kind": "title1", "maxW": 2960 },
+    "login": { "x": 0, "y": 10840, "text": "Admin · เข้าสู่ระบบ", "kind": "title1", "maxW": 1584 }
+  },
+  "designSystems": []
+}

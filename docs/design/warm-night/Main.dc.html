@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>FAST ระบบดีไซน์ Warm × Night</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&amp;family=Chakra+Petch:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#c4521a}a:hover{color:#8f3a10}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 72px; display: flex; gap: 56px; background: #e9e2d8; font-family: 'Anuphan', sans-serif; color: #2b2420">
+
+  <div style="width: 400px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 44px; height: 44px; border-radius: 14px; background: #2b2420; color: #f47b3c; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+      </span>
+      <span style="font-weight: 700; font-size: 26px; letter-spacing: -0.02em">FAST<span style="color: #c4521a">.</span></span>
+    </div>
+    <h1 style="margin: 0; font-size: 60px; line-height: 1.12; font-weight: 700; letter-spacing: -0.03em">Warm<br>× Night</h1>
+    <p style="margin: 0; font-size: 17px; line-height: 1.7; color: #5b4f46">รวมความอบอุ่นของ Warm Scan กับความสดของ Night Shift ไว้ในระบบเดียว ใช้โครงเดียวกันทั้งหมด สลับได้สองโหมด: โหมดปกติสำหรับในร้าน และ Night mode สำหรับร้านกลางคืนหรือคนที่ชอบจอมืด</p>
+    <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px">
+      <sc-for list="{{principles}}" as="p" hint-placeholder-count="3">
+        <div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 18px; background: #f7f2ec">
+          <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; color: #c4521a; padding-top: 3px">{{p.n}}</span>
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <strong style="font-size: 16px">{{p.title}}</strong>
+            <span style="font-size: 14px; line-height: 1.6; color: #5b4f46">{{p.body}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+
+    <section style="border-radius: 32px; background: #f1ebe3; padding: 32px; display: flex; flex-direction: column; gap: 22px; box-shadow: 0 30px 60px -40px rgba(80,50,20,.5)">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-weight: 700; font-size: 20px">โหมดปกติ</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6f6258">WARM · DAY</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{daySw}}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="height: 52px; border-radius: 14px; background: {{s.hex}}; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08)"></span>
+            <span style="font-size: 11px; color: #6f6258">{{s.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6f6258">{{s.hex}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em">คุณหยิบ Coca-Cola ใช่ไหม?</span>
+        <span style="font-size: 13px; color: #6f6258">Anuphan 400–700 · หัวข้อและเนื้อความ</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 44px; letter-spacing: -0.03em">฿55.00</span>
+        <span style="font-size: 13px; color: #6f6258">JetBrains Mono · ตัวเลข เวลา รหัส</span>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #e1f1e6; color: #2c7a4b; font-size: 13px; font-weight: 600">ยืนยันแล้ว</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #fdebd3; color: #a14a06; font-size: 13px; font-weight: 600">รอยืนยัน</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #e6eefc; color: #2f5ea8; font-size: 13px; font-weight: 600">พนักงานตรวจ</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #fbf8f4; color: #1f7f68; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #1f7f68"></span>LIVE</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <button style="height: 52px; border: 0; border-radius: 16px; background: #2b2420; color: #fff; font: 600 15px 'Anuphan', sans-serif">ใช่ ฉันหยิบ</button>
+        <button style="height: 52px; border: 0; border-radius: 16px; background: #ece3d8; color: #2b2420; font: 600 15px 'Anuphan', sans-serif">ไม่ใช่</button>
+      </div>
+      <button style="height: 58px; border: 0; border-radius: 20px; background: #c4521a; color: #fff; font: 600 16px 'Anuphan', sans-serif; display: flex; align-items: center; justify-content: space-between; padding: 0 22px">ชำระเงิน <span style="font-family: 'JetBrains Mono', monospace; font-size: 19px">฿55</span></button>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #fbf8f4">
+        <span style="display: flex; align-items: flex-end; gap: 3px; height: 24px" aria-hidden="true"><span style="width: 5px; height: 8px; border-radius: 2px; background: #1f7f68"></span><span style="width: 5px; height: 12px; border-radius: 2px; background: #1f7f68"></span><span style="width: 5px; height: 16px; border-radius: 2px; background: #1f7f68"></span><span style="width: 5px; height: 20px; border-radius: 2px; background: #1f7f68"></span><span style="width: 5px; height: 24px; border-radius: 2px; background: #e2d8cb"></span></span>
+        <span style="font-size: 14px; font-weight: 600">Basket A</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6f6258">LANE 01 · −52 dBm</span>
+      </div>
+    </section>
+
+    <section style="border-radius: 32px; background: #141210; padding: 32px; display: flex; flex-direction: column; gap: 22px; color: #EFE8E0; box-shadow: 0 30px 60px -30px rgba(0,0,0,.7)">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 20px">Night mode</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A89D92">NIGHT · LIVE</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{nightSw}}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="height: 52px; border-radius: 14px; background: {{s.hex}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1)"></span>
+            <span style="font-size: 11px; color: #A89D92">{{s.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #A89D92">{{s.hex}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: 'Chakra Petch', sans-serif; font-size: 34px; font-weight: 600">คุณหยิบ Coca-Cola ใช่ไหม?</span>
+        <span style="font-size: 13px; color: #A89D92">Chakra Petch · หัวข้อใน Night mode</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 44px; letter-spacing: -0.03em"><span style="color: #EE8747">฿</span>55.00</span>
+        <span style="font-size: 13px; color: #A89D92">JetBrains Mono · ตัวเลขเหมือนโหมดปกติ</span>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #182A20; color: #6FC7B4; font-size: 13px; font-weight: 600">ยืนยันแล้ว</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #2D2616; color: #E9C46A; font-size: 13px; font-weight: 600">รอยืนยัน</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #1A2232; color: #93B7F0; font-size: 13px; font-weight: 600">พนักงานตรวจ</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #1D1A17; color: #EE8747; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #EE8747; box-shadow: none"></span>LIVE</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <button style="height: 52px; border: 0; border-radius: 16px; background: #EE8747; color: #1a0f08; font: 600 15px 'Anuphan', sans-serif">ใช่ ฉันหยิบ</button>
+        <button style="height: 52px; border: 1px solid #4A423B; border-radius: 16px; background: transparent; color: #EFE8E0; font: 600 15px 'Anuphan', sans-serif">ไม่ใช่</button>
+      </div>
+      <button style="height: 58px; border: 0; border-radius: 20px; background: #EE8747; color: #1a0f08; font: 600 16px 'Anuphan', sans-serif; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; box-shadow: none">ชำระเงิน <span style="font-family: 'JetBrains Mono', monospace; font-size: 19px">฿55</span></button>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #1D1A17; border: 1px solid #342F2A">
+        <span style="display: flex; align-items: flex-end; gap: 3px; height: 24px" aria-hidden="true"><span style="width: 5px; height: 8px; border-radius: 2px; background: #6FC7B4"></span><span style="width: 5px; height: 12px; border-radius: 2px; background: #6FC7B4"></span><span style="width: 5px; height: 16px; border-radius: 2px; background: #6FC7B4"></span><span style="width: 5px; height: 20px; border-radius: 2px; background: #6FC7B4"></span><span style="width: 5px; height: 24px; border-radius: 2px; background: #342F2A"></span></span>
+        <span style="font-size: 14px; font-weight: 600">Basket A</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A89D92">LANE 01 · −52 dBm</span>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      principles: [
+        { n: '01', title: 'นับเฉพาะที่ยืนยันแล้ว', body: 'เกจและยอดชำระแสดงแยกส่วนที่ยืนยันกับส่วนที่รอ ลูกค้าเห็นตลอดว่าจะจ่ายเท่าไร' },
+        { n: '02', title: 'ถามเมื่อไม่แน่ใจ', body: 'การ์ดยืนยันแสดงสัญญาณตะกร้า A/B ให้ลูกค้าตอบใช่หรือไม่ใช่ หรือส่งให้พนักงาน' },
+        { n: '03', title: 'เห็นความเคลื่อนไหวสด', body: 'สัญญาณตะกร้า สถานะการเชื่อมต่อ และไทม์ไลน์เหตุการณ์ ยกมาจาก Night Shift ใช้ทั้งสองโหมด' }
+      ],
+      daySw: [
+        { name: 'พื้น', hex: '#F1EBE3' }, { name: 'การ์ด', hex: '#FBF8F4' }, { name: 'ตัวอักษร', hex: '#2B2420' },
+        { name: 'หลัก', hex: '#C4521A' }, { name: 'รอ', hex: '#A14A06' }, { name: 'สัญญาณ', hex: '#1F7F68' }
+      ],
+      nightSw: [
+        { name: 'พื้น', hex: '#141210' }, { name: 'การ์ด', hex: '#1D1A17' }, { name: 'ตัวอักษร', hex: '#EFE8E0' },
+        { name: 'หลัก', hex: '#EE8747' }, { name: 'รอ', hex: '#E9C46A' }, { name: 'สัญญาณ', hex: '#6FC7B4' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

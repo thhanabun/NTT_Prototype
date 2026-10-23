@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>FAST Admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&amp;family=Chakra+Petch:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+<!-- ================= LOGIN ================= -->
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{ false }}">
+<div style="min-height: 820px; box-sizing: border-box; padding: 32px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px">
+  <div style="width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center">
+    <span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px">
+      <span style="width: 34px; height: 34px; border-radius: 11px; background: var(--ink); color: var(--hi); display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg></span>
+      FAST <span style="font-weight: 500; font-size: 14px; color: var(--soft)">Admin</span>
+    </span>
+    <button onClick="{{toggleMode}}" aria-label="{{modeLabel}}" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer">
+      <sc-if value="{{isDay}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></sc-if>
+      <sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></sc-if>
+    </button>
+  </div>
+  <form onSubmit="{{login}}" style="width: 100%; max-width: 420px; box-sizing: border-box; padding: 32px; border-radius: 28px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em; color: var(--soft)">STAFF ONLY</span>
+      <h1 style="margin: 0; font-family: var(--display); font-size: 28px; font-weight: 700">เข้าสู่ระบบ Admin</h1>
+      <p style="margin: 0; font-size: 14px; color: var(--soft)">ใช้บัญชีพนักงานของร้านเพื่อเข้าถึง Dashboard</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="email" style="font-size: 14px; font-weight: 600">อีเมล</label>
+      <input id="email" type="email" value="{{email}}" onChange="{{setEmail}}" placeholder="you@store.test" autocomplete="username" style="height: 50px; box-sizing: border-box; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 400 15px 'Anuphan', sans-serif">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="pw" style="font-size: 14px; font-weight: 600">รหัสผ่าน</label>
+      <div style="display: flex; align-items: center; border-radius: 14px; border: 1px solid var(--line); background: var(--bg)">
+        <input id="pw" type="{{pwType}}" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" style="flex: 1; height: 48px; box-sizing: border-box; padding: 0 14px; border: 0; background: transparent; color: var(--ink); font: 400 15px 'Anuphan', sans-serif">
+        <button type="button" onClick="{{togglePw}}" aria-label="{{pwLabel}}" style="width: 44px; height: 44px; border: 0; background: transparent; color: var(--soft); display: grid; place-items: center; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
+      </div>
+    </div>
+    <sc-if value="{{loginError}}" hint-placeholder-val="{{ false }}">
+      <p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: 13px">{{loginError}}</p>
+    </sc-if>
+    <button type="submit" style="height: 54px; border: 0; border-radius: 16px; background: var(--cta); color: var(--cta-ink); font: 600 16px 'Anuphan', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: var(--cta-glow)">เข้าสู่ระบบ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+    <p style="margin: 0; font-size: 12px; line-height: 1.6; color: var(--soft)">โหมดทดสอบในเครื่อง · บัญชีทดสอบ admin@basketly.test · ไม่มีการยืนยันตัวตนจริง</p>
+  </form>
+</div>
+</sc-if>
+
+<!-- ================= APP SHELL ================= -->
+<sc-if value="{{isDash}}" hint-placeholder-val="{{ true }}">
+<div style="padding-bottom: 120px">
+  <header style="background: var(--surface); border-bottom: 1px solid var(--line)">
+    <div style="max-width: 1360px; margin: 0 auto; padding: 12px 24px 0; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px">
+          <span style="width: 34px; height: 34px; border-radius: 11px; background: var(--ink); color: var(--hi); display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg></span>
+          FAST <span style="font-weight: 500; font-size: 14px; color: var(--soft)">Admin · SHELF-01</span>
+        </span>
+        <span style="flex: 1"></span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--bg); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--mint)"><span style="{{liveDot}}"></span>LIVE · 10:31:13</span>
+        <button onClick="{{toggleMode}}" aria-label="{{modeLabel}}" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer">
+          <sc-if value="{{isDay}}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></sc-if>
+          <sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></sc-if>
+        </button>
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--soft)"><span style="width: 32px; height: 32px; border-radius: 50%; background: var(--warn-bg); color: var(--warn); display: grid; place-items: center; font-weight: 700">A</span>admin@basketly.test</span>
+        <button onClick="{{logout}}" style="height: 38px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 13px 'Anuphan', sans-serif; cursor: pointer">ออกจากระบบ</button>
+      </div>
+
+      <div role="tablist" aria-label="แท็บ" style="display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; margin-bottom: -1px">
+        <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+          <div style="{{tb.wrap}}">
+            <button role="tab" aria-selected="{{tb.selected}}" onClick="{{tb.open}}" style="display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 4px 0 14px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; max-width: 240px">
+              <sc-if value="{{tb.isHome}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{tb.isQuery}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg></sc-if>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{tb.title}}</span>
+            </button>
+            <sc-if value="{{tb.isHome}}" hint-placeholder-val="{{ true }}">
+              <span title="แท็บหลัก ปิดไม่ได้" style="padding: 0 12px 0 4px; color: var(--soft); display: inline-flex"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="ปักหมุด" role="img"><path d="M12 17v5"></path><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"></path></svg></span>
+            </sc-if>
+            <sc-if value="{{tb.isQuery}}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{tb.close}}" aria-label="ปิดแท็บ {{tb.title}}" style="width: 28px; height: 28px; margin-right: 8px; border-radius: 8px; border: 0; background: transparent; color: var(--soft); display: grid; place-items: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </sc-if>
+          </div>
+        </sc-for>
+        <button onClick="{{openChat}}" aria-label="ถามคำถามใหม่ เปิดแท็บผลลัพธ์ใหม่" style="width: 36px; height: 36px; margin: 0 0 4px 4px; border-radius: 10px; border: 1px dashed var(--line); background: transparent; color: var(--soft); display: grid; place-items: center; cursor: pointer; flex-shrink: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ DASHBOARD TAB ============ -->
+  <sc-if value="{{onHome}}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 1360px; margin: 0 auto; padding: 28px 24px 40px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px">
+      <div style="flex: 1; min-width: 260px">
+        <span style="font-size: 14px; color: var(--soft)">วันพฤหัสบดี 23 ต.ค. 2026 · กะเย็น</span>
+        <h1 style="margin: 2px 0 0; font-family: var(--display); font-size: 40px; font-weight: 700; letter-spacing: -0.02em">ภาพรวมร้าน<span style="color: var(--hi)">.</span></h1>
+      </div>
+      <button onClick="{{refresh}}" style="height: 42px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 14px 'Anuphan', sans-serif; display: inline-flex; align-items: center; gap: 8px; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>อัปเดตข้อมูล
+      </button>
+    </div>
+
+    <sc-if value="{{notice}}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="margin: 0; padding: 12px 16px; border-radius: 14px; background: var(--ok-bg); color: var(--ok); font-size: 14px; font-weight: 500">{{notice}}</p>
+    </sc-if>
+
+    <sc-if value="{{hasStaffWork}}" hint-placeholder-val="{{ true }}">
+      <section aria-label="ต้องดำเนินการ" style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 22px; background: var(--warn-bg); color: var(--warn)">
+        <span style="width: 44px; height: 44px; border-radius: 14px; background: var(--surface); display: grid; place-items: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
+        <div style="flex: 1; min-width: 220px; display: flex; flex-direction: column"><b style="font-size: 16px">มี {{staffCount}} เคสรอพนักงานตัดสิน</b><span style="font-size: 13px; color: var(--ink); opacity: .8">รายการเหล่านี้ยังไม่รวมในยอดลูกค้า เคสเก่าสุดรอมา 3 นาที</span></div>
+        <a href="#cases" onClick="{{gotoFirst}}" style="height: 44px; padding: 0 18px; border-radius: 14px; background: var(--warn); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px">ตรวจเคสแรก →</a>
+      </section>
+    </sc-if>
+
+    <section aria-label="ตัวชี้วัดร้าน" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+      <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+        <article style="padding: 18px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13.5px; color: var(--soft)">{{m.label}}</span><span style="{{m.chip}}">{{m.tag}}</span></div>
+          <strong style="font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; letter-spacing: -0.03em; line-height: 1">{{m.value}}</strong>
+          <div style="display: flex; gap: 3px; height: 6px" aria-hidden="true"><sc-for list="{{m.segs}}" as="sg" hint-placeholder-count="12"><span style="{{sg}}"></span></sc-for></div>
+          <span style="font-size: 12.5px; color: var(--soft)">{{m.note}}</span>
+        </article>
+      </sc-for>
+    </section>
+
+    <div id="cases" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section aria-labelledby="cs-h" style="flex: 1 1 340px; min-width: 0; padding: 20px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 id="cs-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">เคสที่ต้องตรวจ</h2>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--surface2)">{{caseCount}}</span>
+        </div>
+        <div role="group" aria-label="กรองเคส" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 14px; background: var(--surface2)">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}</button></sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{caseList}}" as="k" hint-placeholder-count="3">
+            <button onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="{{k.style}}">
+              <span style="{{k.bar}}"></span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+                <span style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><b style="font-size: 15px; font-weight: 600">{{k.title}}</b><span style="{{k.badge}}">{{k.statusLabel}}</span></span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft)">{{k.id}} · {{k.type}}</span>
+                <span style="font-size: 12px; color: var(--soft)">{{k.meta}}</span>
+              </span>
+            </button>
+          </sc-for>
+          <sc-if value="{{noCases}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 24px; text-align: center; color: var(--soft); font-size: 14px">ไม่มีเคสในหมวดนี้</p></sc-if>
+        </div>
+      </section>
+
+      <section aria-labelledby="cd-h" style="flex: 2 1 600px; min-width: 0; padding: 24px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+          <span style="{{sel.tile}}">
+            <sc-if value="{{sel.isCoke}}" hint-placeholder-val="{{ true }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"></path><path d="M5 8h14"></path><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"></path><path d="m12 8 1-6h2"></path></svg></sc-if>
+            <sc-if value="{{sel.isWater}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"></path><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"></path></svg></sc-if>
+          </span>
+          <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--soft)">{{sel.id}} · {{sel.type}}</span>
+            <h2 id="cd-h" style="margin: 0; font-family: var(--display); font-size: 24px; font-weight: 700">{{sel.title}}</h2>
+          </div>
+          <span style="{{sel.badge}}">{{sel.statusLabel}}</span>
+        </div>
+        <p style="margin: 0; padding: 14px 16px; border-radius: 16px; background: var(--surface2); font-size: 14.5px; line-height: 1.65">{{sel.reason}}</p>
+
+        <section aria-labelledby="clip-h" style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+            <h3 id="clip-h" style="margin: 0; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>คลิปจากกล้อง</h3>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)">CAM-01 · {{clip.range}} · ภาพจำลอง</span>
+          </div>
+          <div role="img" aria-label="{{clip.alt}}" style="position: relative; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #2a2521, #0d0c0b 70%); color: #f4efe9">
+            <div style="position: absolute; left: 18%; right: 18%; top: 5%; height: 24%; border-radius: 10px; background: #2b2622; border-bottom: 6px solid #423a33; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; box-sizing: border-box">
+              <div style="border-radius: 8px; background: #362f29; display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding-bottom: 6px; position: relative"><span style="width: 14px; height: 26px; border-radius: 4px; background: #c9473f"></span><span style="width: 14px; height: 26px; border-radius: 4px; background: #c9473f"></span><span style="width: 14px; height: 26px; border-radius: 4px; background: #c9473f"></span><span style="position: absolute; left: 6px; top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #b7aa9d">LANE-1 · Coke</span></div>
+              <div style="border-radius: 8px; background: #362f29; display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding-bottom: 6px; position: relative"><span style="width: 12px; height: 30px; border-radius: 5px 5px 3px 3px; background: #5f9fd8"></span><span style="width: 12px; height: 30px; border-radius: 5px 5px 3px 3px; background: #5f9fd8"></span><span style="position: absolute; left: 6px; top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #b7aa9d">LANE-2 · Water</span></div>
+            </div>
+            <sc-for list="{{clip.people}}" as="pp" hint-placeholder-count="2">
+              <div style="{{pp.box}}">
+                <span style="{{pp.tag}}">{{pp.label}}</span>
+                <span style="position: absolute; left: 50%; top: 10%; transform: translateX(-50%); width: 26%; aspect-ratio: 1; border-radius: 50%; background: #4a413a"></span>
+                <span style="position: absolute; left: 22%; right: 22%; top: 30%; bottom: 22%; border-radius: 40% 40% 12px 12px; background: #3d3530"></span>
+                <span style="position: absolute; left: 14%; right: 14%; bottom: 4%; height: 18%; border-radius: 6px 6px 14px 14px; border: 3px solid #8a7a6a; box-sizing: border-box; display: grid; place-items: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; color: #e8dccf">{{pp.id}}</span>
+              </div>
+            </sc-for>
+            <div style="{{clip.itemBox}}"><span style="{{clip.itemDot}}"></span><span style="position: absolute; left: -2px; bottom: 100%; margin-bottom: 3px; padding: 1px 6px; border-radius: 4px; background: #e9c46a; color: #1a1408; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; white-space: nowrap">{{clip.itemLabel}}</span></div>
+            <span style="position: absolute; left: 12px; top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 8px; background: rgba(0,0,0,.55); font-family: 'JetBrains Mono', monospace; font-size: 11px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #e5534b"></span>CAM-01 · SHELF-01</span>
+            <span style="position: absolute; right: 12px; top: 10px; padding: 4px 9px; border-radius: 8px; background: rgba(0,0,0,.55); font-family: 'JetBrains Mono', monospace; font-size: 11px">{{clip.stamp}}</span>
+            <sc-if value="{{clip.atEvent}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px; background: #e9c46a; color: #1a1408; font-size: 12.5px; font-weight: 700">จังหวะ{{clip.verb}}</span></sc-if>
+            <sc-if value="{{clip.showBigPlay}}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{clip.toggle}}" aria-label="เล่นคลิป" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 68px; height: 68px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: 0 0 0 2px rgba(255,255,255,.35)"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"></path></svg></button>
+            </sc-if>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button onClick="{{clip.toggle}}" aria-label="{{clip.playLabel}}" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--strong); color: var(--strong-ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0">
+              <sc-if value="{{clip.playing}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg></sc-if>
+              <sc-if value="{{clip.paused}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"></path></svg></sc-if>
+            </button>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; white-space: nowrap">{{clip.timeText}}</span>
+            <div style="position: relative; flex: 1; height: 28px; display: flex; align-items: center">
+              <span style="position: absolute; left: 0; right: 0; height: 6px; border-radius: 3px; background: var(--track)"></span>
+              <span style="{{clip.fill}}"></span>
+              <span title="จังหวะที่ชั้นวางส่งสัญญาณ" style="{{clip.marker}}"></span>
+              <span style="{{clip.knob}}"></span>
+              <div style="position: absolute; inset: 0; display: flex">
+                <sc-for list="{{clip.ticks}}" as="tk" hint-placeholder-count="32"><button onClick="{{tk.go}}" aria-label="{{tk.label}}" style="flex: 1; height: 100%; border: 0; padding: 0; background: transparent; cursor: pointer"></button></sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <button onClick="{{clip.back}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12.5px 'Anuphan', sans-serif; cursor: pointer">−0.5 วิ</button>
+            <button onClick="{{clip.fwd}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12.5px 'Anuphan', sans-serif; cursor: pointer">+0.5 วิ</button>
+            <button onClick="{{clip.jump}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--warn-bg); color: var(--warn); font: 600 12.5px 'Anuphan', sans-serif; cursor: pointer">ไปที่จังหวะ{{clip.verb}}</button>
+            <button onClick="{{clip.toggleSpeed}}" aria-label="ความเร็ว {{clip.speedText}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 12.5px 'JetBrains Mono', monospace; cursor: pointer">{{clip.speedText}}</button>
+            <span style="flex: 1"></span>
+            <span style="align-self: center; font-size: 12px; color: var(--soft)">กรอบ = ที่ YOLO11n ตรวจเจอ</span>
+          </div>
+        </section>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+          <div style="padding: 16px; border-radius: 18px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 13px; color: var(--soft)">สัญญาณตอนเกิดเหตุ</span>
+            <sc-for list="{{sel.rssiRows}}" as="r" hint-placeholder-count="2">
+              <div style="display: grid; grid-template-columns: 70px 1fr 74px; align-items: center; gap: 10px">
+                <span style="font-size: 13.5px; font-weight: 600">{{r.label}}</span>
+                <span style="height: 8px; border-radius: 4px; background: var(--track); overflow: hidden"><span style="{{r.bar}}"></span></span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: right">{{r.value}}</span>
+              </div>
+            </sc-for>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)">ห่างกัน {{sel.margin}} · เกณฑ์ตัดสินเอง 10 dB</span>
+          </div>
+          <div style="padding: 16px; border-radius: 18px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 13px; color: var(--soft)">{{sel.confLabel}}</span>
+            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700">{{sel.confText}}</strong>
+            <span style="height: 8px; border-radius: 4px; background: var(--track); overflow: hidden"><span style="{{sel.confBar}}"></span></span>
+            <span style="font-size: 12px; color: var(--soft)">ต่ำกว่า 70% ต้องให้คนยืนยัน</span>
+          </div>
+        </div>
+
+        <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px">
+          <sc-for list="{{sel.details}}" as="d" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-size: 12px; color: var(--soft)">{{d.k}}</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; overflow-wrap: anywhere">{{d.v}}</dd></div>
+          </sc-for>
+        </dl>
+
+        <sc-if value="{{sel.hasAgent}}" hint-placeholder-val="{{ true }}">
+          <details open style="padding: 16px 18px; border-radius: 20px; border: 1px solid var(--line)">
+            <summary style="cursor: pointer; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; list-style: none">
+              <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path></svg></span>
+              Agent ตรวจหลักฐาน 7 ขั้น
+              <span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--soft)">LAYA · 4,820 ms</span>
+            </summary>
+            <ol style="list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column">
+              <sc-for list="{{sel.steps}}" as="st" hint-placeholder-count="6">
+                <li style="display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 7px 0">
+                  <span style="{{st.node}}"></span>
+                  <span style="display: flex; flex-direction: column; gap: 1px"><b style="font-size: 13.5px; font-weight: 600">{{st.head}} <code style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; color: var(--soft)">{{st.tool}}</code></b><span style="font-size: 13px; color: var(--soft)">{{st.summary}}</span></span>
+                </li>
+              </sc-for>
+            </ol>
+          </details>
+        </sc-if>
+
+        <sc-if value="{{sel.isStaff}}" hint-placeholder-val="{{ true }}">
+          <section aria-labelledby="ans-h" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 22px; background: var(--surface2)">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+              <h3 id="ans-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">{{ans.question}}</h3>
+              <span style="padding: 4px 10px; border-radius: 999px; background: var(--surface); font-size: 12px; color: var(--soft)">{{ans.hint}}</span>
+            </div>
+            <div role="radiogroup" aria-labelledby="ans-h" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+              <sc-for list="{{ans.options}}" as="op" hint-placeholder-count="2">
+                <button role="radio" aria-checked="{{op.checked}}" onClick="{{op.pick}}" style="{{op.style}}">
+                  <span style="{{op.letter}}">{{op.id}}</span>
+                  <span style="display: flex; flex-direction: column; text-align: left"><b style="font-size: 17px">Basket {{op.id}}</b><span style="font-size: 12.5px; color: var(--soft)">{{op.note}}</span></span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ans.reason}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>{{ans.reason}}</p></sc-if>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px">
+              <button onClick="{{ans.confirm}}" disabled="{{ans.blocked}}" style="{{ans.confirmStyle}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>{{ans.confirmLabel}}</button>
+              <button onClick="{{reject}}" style="min-height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 14px 'Anuphan', sans-serif; cursor: pointer">ไม่ใช่ทั้งสองตะกร้า · ปิดเคส</button>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: var(--soft)">ปิดเคสโดยไม่เลือกตะกร้าจะไม่เปลี่ยนรายการในตะกร้าใด</p>
+          </section>
+        </sc-if>
+        <sc-if value="{{sel.isWaiting}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding: 14px 16px; border-radius: 16px; background: var(--info-bg); color: var(--info); font-size: 14px">รอคำตอบจากลูกค้า · Basket {{sel.candidate}} · พนักงานยังไม่ต้องตัดสิน</p>
+        </sc-if>
+        <sc-if value="{{sel.isClosed}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding: 14px 16px; border-radius: 16px; background: var(--ok-bg); color: var(--ok); font-size: 14px">{{sel.resolution}}</p>
+        </sc-if>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 700">ประวัติเคส</h3>
+          <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{sel.timeline}}" as="tm" hint-placeholder-count="4">
+              <li style="display: grid; grid-template-columns: 70px 16px 1fr; gap: 8px; align-items: start; padding: 4px 0">
+                <time style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft); padding-top: 2px">{{tm.t}}</time>
+                <span style="width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; border: 2px solid var(--mint)"></span>
+                <span style="font-size: 13.5px"><b style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px">{{tm.a}}</b> · {{tm.d}}</span>
+              </li>
+            </sc-for>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px">
+      <section aria-labelledby="bk-h" style="flex: 2 1 560px; min-width: 0; padding: 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px">
+        <h2 id="bk-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">ตะกร้าในร้าน</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+          <sc-for list="{{baskets}}" as="b" hint-placeholder-count="2">
+            <article style="padding: 18px; border-radius: 22px; background: var(--surface2); display: flex; flex-direction: column; gap: 10px">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3 style="margin: 0; font-size: 17px; font-weight: 700">Basket {{b.id}}</h3>
+                <span style="padding: 4px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 600">ใช้งานอยู่</span>
+              </div>
+              <strong style="font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700">{{b.total}}</strong>
+              <div style="display: flex; gap: 3px; height: 8px" aria-hidden="true"><sc-for list="{{b.segs}}" as="sg" hint-placeholder-count="10"><span style="{{sg}}"></span></sc-for></div>
+              <span style="font-size: 13px; color: var(--soft)">{{b.summary}}</span>
+              <ul style="list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 4px">
+                <sc-for list="{{b.lines}}" as="l" hint-placeholder-count="2"><li style="display: flex; justify-content: space-between; font-size: 14px"><span>{{l.name}} ×{{l.qty}}</span><span style="font-family: 'JetBrains Mono', monospace">{{l.sub}}</span></li></sc-for>
+              </ul>
+              <a href="Shopper.dc.html" style="font-size: 13px; font-weight: 600; color: var(--accent-text)">เปิด Shopper ของ Basket {{b.id}} →</a>
+            </article>
+          </sc-for>
+        </div>
+      </section>
+
+      <section aria-labelledby="sig-h" style="flex: 1 1 360px; min-width: 0; padding: 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 id="sig-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">สัญญาณชั้นวาง</h2>
+          <span style="padding: 4px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700">ONLINE</span>
+        </div>
+        <sc-for list="{{rssi}}" as="r" hint-placeholder-count="3">
+          <div style="display: grid; grid-template-columns: 84px 1fr 96px; align-items: center; gap: 10px">
+            <span style="font-size: 14px; font-weight: 600">{{r.label}}</span>
+            <span style="height: 8px; border-radius: 4px; background: var(--track); overflow: hidden"><span style="{{r.bar}}"></span></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: right">{{r.value}}</span>
+          </div>
+        </sc-for>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div style="padding: 12px; border-radius: 16px; background: var(--surface2); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--soft)">Coke · GPIO 26</span><b style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--ok)">PRESENT</b></div>
+          <div style="padding: 12px; border-radius: 16px; background: var(--surface2); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--soft)">Water · GPIO 27</span><b style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--warn)">EMPTY</b></div>
+        </div>
+        <dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+          <div><dt style="font-size: 12px; color: var(--soft)">Uptime</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 600">4,218 s</dd></div>
+          <div><dt style="font-size: 12px; color: var(--soft)">Queue</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 600">0</dd></div>
+          <div><dt style="font-size: 12px; color: var(--soft)">Dropped</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 600">0</dd></div>
+        </dl>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px">
+      <section aria-labelledby="ev-h" style="flex: 1 1 420px; min-width: 0; padding: 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 id="ev-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">เหตุการณ์ล่าสุด</h2><span style="font-size: 12px; color: var(--soft)">20 รายการล่าสุด</span></div>
+        <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+          <sc-for list="{{events}}" as="e" hint-placeholder-count="5">
+            <li style="display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line)">
+              <span style="{{e.icon}}">{{e.arrow}}</span>
+              <span style="display: flex; flex-direction: column"><b style="font-size: 14px; font-weight: 600">{{e.title}}</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft)">{{e.meta}}</span></span>
+              <time style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--soft)">{{e.t}}</time>
+            </li>
+          </sc-for>
+        </ol>
+      </section>
+      <section aria-labelledby="au-h" style="flex: 1 1 420px; min-width: 0; padding: 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 id="au-h" style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700">บันทึกการทำงาน</h2><span style="font-size: 12px; color: var(--soft)">100 รายการล่าสุด</span></div>
+        <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+          <sc-for list="{{audit}}" as="a" hint-placeholder-count="5">
+            <li style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line)">
+              <span style="display: flex; flex-direction: column"><b style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600">{{a.action}}</b><span style="font-size: 12px; color: var(--soft)">{{a.meta}}</span></span>
+              <time style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--soft)">{{a.t}}</time>
+            </li>
+          </sc-for>
+        </ol>
+      </section>
+    </div>
+
+    <details style="padding: 18px 22px; border-radius: 26px; border: 1px dashed var(--line)">
+      <summary style="cursor: pointer; font-family: var(--display); font-size: 17px; font-weight: 700">Local simulator <span style="font-family: 'Anuphan', sans-serif; font-size: 13px; font-weight: 400; color: var(--soft)">· ส่งสัญญาณจำลองแทน ESP32 (เฉพาะโหมดพัฒนา)</span></summary>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 14px">
+        <sc-for list="{{sims}}" as="sm" hint-placeholder-count="7">
+          <div style="padding: 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+            <b style="font-size: 14px">{{sm.label}}</b>
+            <span style="font-size: 12.5px; color: var(--soft); flex: 1">{{sm.desc}}</span>
+            <button onClick="{{sm.send}}" style="height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface2); color: var(--ink); font: 500 13px 'Anuphan', sans-serif; cursor: pointer">ส่ง event</button>
+          </div>
+        </sc-for>
+      </div>
+    </details>
+  </main>
+  </sc-if>
+
+  <!-- ============ RESULT TAB ============ -->
+  <sc-if value="{{onQuery}}" hint-placeholder-val="{{ false }}">
+  <main style="max-width: 1180px; margin: 0 auto; padding: 28px 24px 40px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; color: var(--soft)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color: var(--hi)" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path></svg>ผลลัพธ์จากแชท · {{R.time}}</span>
+      <span style="padding: 5px 11px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; font-weight: 600">ข้อมูลตัวอย่าง</span>
+      <span style="flex: 1"></span>
+      <button onClick="{{openChat}}" style="height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13.5px 'Anuphan', sans-serif; cursor: pointer">ถามต่อในแชท</button>
+      <button onClick="{{closeActive}}" style="height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--soft); font: 500 13.5px 'Anuphan', sans-serif; cursor: pointer">ปิดแท็บ</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-family: var(--display); font-size: 38px; font-weight: 700; letter-spacing: -0.02em">{{R.title}}</h1>
+      <span style="font-size: 15px; color: var(--soft)">{{R.sub}}</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line)">
+      <span style="width: 30px; height: 30px; border-radius: 50%; background: var(--warn-bg); color: var(--warn); display: grid; place-items: center; font-weight: 700; flex-shrink: 0">A</span>
+      <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: var(--soft)">คุณถามว่า</span><span style="font-size: 15.5px">“{{R.prompt}}”</span></div>
+    </div>
+
+    <section aria-label="สรุปตัวเลข" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+      <sc-for list="{{R.kpis}}" as="kp" hint-placeholder-count="4">
+        <div style="padding: 18px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: var(--soft)">{{kp.label}}</span>
+          <strong style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; letter-spacing: -0.03em">{{kp.value}}</strong>
+          <span style="font-size: 12.5px; color: var(--soft)">{{kp.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section aria-labelledby="ch-h" style="padding: 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 2px"><h2 id="ch-h" style="margin: 0; font-size: 17px; font-weight: 700">{{R.chartTitle}}</h2><span style="font-size: 12.5px; color: var(--soft)">{{R.chartSub}}</span></div>
+        <div role="group" aria-label="รูปแบบการแสดงผล" style="display: flex; gap: 2px; padding: 4px; border-radius: 14px; background: var(--surface2)">
+          <sc-for list="{{R.views}}" as="v" hint-placeholder-count="3"><button onClick="{{v.pick}}" aria-pressed="{{v.pressed}}" style="{{v.style}}">{{v.label}}</button></sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{R.isBar}}" hint-placeholder-val="{{ true }}">
+        <div role="img" aria-label="{{R.chartTitle}} กราฟแท่ง" onMouseLeave="{{clearHover}}" style="position: relative; height: 280px; margin-left: 64px">
+          <sc-for list="{{R.grid}}" as="gl" hint-placeholder-count="3">
+            <div style="{{gl.style}}"><span style="position: absolute; right: 100%; margin-right: 10px; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft); white-space: nowrap">{{gl.label}}</span></div>
+          </sc-for>
+          <div style="position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 2px">
+            <sc-for list="{{R.bars}}" as="br" hint-placeholder-count="7">
+              <div onMouseEnter="{{br.enter}}" style="position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: default">
+                <sc-if value="{{br.showLabel}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; margin-bottom: 6px">{{br.valueText}}</span></sc-if>
+                <span style="{{br.style}}"></span>
+                <sc-if value="{{br.isHover}}" hint-placeholder-val="{{ false }}">
+                  <div style="{{br.tipStyle}}">
+                    <b style="font-size: 13px">{{br.label}}</b>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">{{br.valueText}}</span>
+                    <span style="font-size: 12px; color: var(--soft)">{{br.extra}}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; gap: 2px; margin-left: 64px; margin-top: -8px">
+          <sc-for list="{{R.bars}}" as="br" hint-placeholder-count="7"><span style="flex: 1; text-align: center; font-size: 12px; color: var(--soft)">{{br.label}}</span></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{R.isLine}}" hint-placeholder-val="{{ false }}">
+        <div role="img" aria-label="{{R.chartTitle}} กราฟเส้น" onMouseLeave="{{clearHover}}" style="position: relative; height: 280px; margin-left: 64px">
+          <sc-for list="{{R.grid}}" as="gl" hint-placeholder-count="3">
+            <div style="{{gl.style}}"><span style="position: absolute; right: 100%; margin-right: 10px; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft); white-space: nowrap">{{gl.label}}</span></div>
+          </sc-for>
+          <svg viewBox="0 0 700 280" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible" aria-hidden="true">
+            <path d="{{R.areaPath}}" style="fill: var(--hi); fill-opacity: 0.12; stroke: none"></path>
+            <polyline points="{{R.linePts}}" vector-effect="non-scaling-stroke" style="fill: none; stroke: var(--chart-1); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round"></polyline>
+          </svg>
+          <sc-for list="{{R.dots}}" as="dt" hint-placeholder-count="7">
+            <div onMouseEnter="{{dt.enter}}" style="{{dt.hit}}">
+              <span style="{{dt.dot}}"></span>
+              <sc-if value="{{dt.showLabel}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; bottom: 100%; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; white-space: nowrap">{{dt.valueText}}</span></sc-if>
+              <sc-if value="{{dt.isHover}}" hint-placeholder-val="{{ false }}">
+                <div style="{{dt.tipStyle}}"><b style="font-size: 13px">{{dt.label}}</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">{{dt.valueText}}</span><span style="font-size: 12px; color: var(--soft)">{{dt.extra}}</span></div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="position: relative; height: 18px; margin-left: 64px">
+          <sc-for list="{{R.dots}}" as="dt" hint-placeholder-count="7"><span style="{{dt.xLabel}}">{{dt.label}}</span></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{R.isRank}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 13px; color: var(--soft)">สัดส่วนยอดเงิน</span>
+            <div style="display: flex; gap: 2px; height: 14px" role="img" aria-label="{{R.shareLabel}}"><sc-for list="{{R.rank}}" as="rk" hint-placeholder-count="2"><span style="{{rk.share}}"></span></sc-for></div>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px"><sc-for list="{{R.rank}}" as="rk" hint-placeholder-count="2"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><span style="{{rk.swatch}}"></span>{{rk.name}} <b style="font-family: 'JetBrains Mono', monospace">{{rk.pct}}</b></span></sc-for></div>
+          </div>
+          <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{R.rank}}" as="rk" hint-placeholder-count="2">
+              <li onMouseEnter="{{rk.enter}}" style="{{rk.row}}">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--soft); width: 28px">{{rk.n}}</span>
+                <span style="{{rk.tile}}">
+                  <sc-if value="{{rk.isCoke}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"></path><path d="M5 8h14"></path><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"></path><path d="m12 8 1-6h2"></path></svg></sc-if>
+                  <sc-if value="{{rk.isWater}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"></path><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"></path></svg></sc-if>
+                </span>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px"><b style="font-size: 16px">{{rk.name}}</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700">{{rk.value}}</span></div>
+                  <span style="height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; display: block"><span style="{{rk.bar}}"></span></span>
+                  <span style="font-size: 12.5px; color: var(--soft)">{{rk.extra}}</span>
+                </div>
+              </li>
+            </sc-for>
+          </ol>
+          <p style="margin: 0; font-size: 12.5px; color: var(--soft)">มีสินค้าที่ขายได้ 2 ชนิด จึงแสดงเท่าที่มี</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{R.isTable}}" hint-placeholder-val="{{ false }}">
+        <div style="overflow-x: auto; border-radius: 16px; border: 1px solid var(--line)" role="region" aria-label="ตารางข้อมูล" tabindex="0">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px">
+            <thead><tr style="background: var(--surface2)"><th scope="col" style="text-align: left; padding: 12px 16px; font-weight: 600">{{R.col}}</th><th scope="col" style="text-align: right; padding: 12px 16px; font-weight: 600">ยอดเงิน (฿)</th><th scope="col" style="text-align: right; padding: 12px 16px; font-weight: 600">ชิ้น</th><th scope="col" style="text-align: right; padding: 12px 16px; font-weight: 600">Orders</th></tr></thead>
+            <tbody>
+              <sc-for list="{{R.rows}}" as="r" hint-placeholder-count="7"><tr style="border-top: 1px solid var(--line)"><th scope="row" style="text-align: left; padding: 11px 16px; font-weight: 500">{{r.label}}</th><td style="text-align: right; padding: 11px 16px; font-family: 'JetBrains Mono', monospace">{{r.revenue}}</td><td style="text-align: right; padding: 11px 16px; font-family: 'JetBrains Mono', monospace">{{r.qty}}</td><td style="text-align: right; padding: 11px 16px; font-family: 'JetBrains Mono', monospace">{{r.orders}}</td></tr></sc-for>
+              <tr style="border-top: 2px solid var(--ink)"><th scope="row" style="text-align: left; padding: 12px 16px">รวม</th><td style="text-align: right; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-weight: 700">{{R.sum.revenue}}</td><td style="text-align: right; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-weight: 700">{{R.sum.qty}}</td><td style="text-align: right; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-weight: 700">{{R.sum.orders}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border-radius: 16px; background: var(--surface2)">
+        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center; flex-shrink: 0"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path></svg></span>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6">{{R.insight}}</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="tr-h" style="padding: 20px 22px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline">
+        <h2 id="tr-h" style="margin: 0; font-size: 16px; font-weight: 700">Laya ทำอะไรไปบ้าง</h2>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)">{{R.queryId}} · อ่านอย่างเดียว</span>
+      </div>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px">
+        <sc-for list="{{R.trace}}" as="tc" hint-placeholder-count="4">
+          <li style="display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; padding: 6px 0">
+            <span style="width: 20px; height: 20px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+            <span style="display: flex; flex-direction: column"><b style="font-size: 14px; font-weight: 600">{{tc.title}}</b><code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--soft)">{{tc.detail}}</code></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)">{{tc.ms}}</span>
+          </li>
+        </sc-for>
+      </ol>
+      <details>
+        <summary style="cursor: pointer; font-size: 13px; color: var(--soft)">ดู query plan (JSON)</summary>
+        <pre style="margin: 10px 0 0; padding: 14px; border-radius: 14px; background: var(--bg); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre">{{R.json}}</pre>
+      </details>
+    </section>
+  </main>
+  </sc-if>
+
+  <!-- ============ FLOATING CHAT ============ -->
+  <sc-if value="{{chatOpen}}" hint-placeholder-val="{{ true }}">
+    <section aria-label="แชทถามข้อมูลร้าน" style="{{panelStyle}}">
+      <header style="display: flex; align-items: center; gap: 8px; padding: 14px 14px 10px">
+        <button onClick="{{toggleWide}}" aria-label="ขยายหน้าต่างแชท" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--chat-btn); color: var(--ink); display: grid; place-items: center; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9V5a2 2 0 0 1 2-2h4"></path><path d="M21 15v4a2 2 0 0 1-2 2h-4"></path></svg></button>
+        <span style="flex: 1; display: flex; justify-content: center">
+          <span style="display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border-radius: 999px; background: var(--chat-btn); box-shadow: 0 6px 16px -10px rgba(0,0,0,.35)">
+            <span style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path></svg>
+              <span style="position: absolute; right: -1px; top: -1px; width: 10px; height: 10px; border-radius: 50%; background: #2c9a5b; box-shadow: 0 0 0 2px var(--chat-btn)"></span>
+            </span>
+            <b style="font-size: 15px; font-weight: 600">Laya</b>
+            <span style="font-size: 12px; color: var(--soft)">ผู้ช่วยข้อมูลร้าน</span>
+          </span>
+        </span>
+        <button aria-label="ตัวเลือกเพิ่มเติม" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--chat-btn); color: var(--ink); display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></button>
+        <button onClick="{{closeChat}}" aria-label="ปิดแชท" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--chat-btn); color: var(--ink); display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+      </header>
+
+      <div role="log" aria-live="polite" style="flex: 1; overflow-y: auto; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 20px">
+        <sc-for list="{{msgs}}" as="mg" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column">
+            <sc-if value="{{mg.isUser}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; justify-content: flex-end; align-items: flex-start; gap: 10px">
+                <p style="margin: 0; max-width: 78%; padding: 12px 16px; border-radius: 20px 6px 20px 20px; background: var(--chat-user); font-size: 14.5px; line-height: 1.55; box-shadow: 0 4px 14px -10px rgba(0,0,0,.4)">{{mg.text}}</p>
+                <span style="width: 34px; height: 34px; border-radius: 50%; background: #f08a6a; color: #fff; display: grid; place-items: center; font-weight: 700; flex-shrink: 0">A</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{mg.isAi}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; align-items: flex-start; gap: 10px">
+                <span style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center; flex-shrink: 0">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path></svg>
+                  <sc-if value="{{mg.sparkle}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" style="position: absolute; left: -14px; top: -8px; color: var(--hi)" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path></svg></sc-if>
+                </span>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+                  <sc-if value="{{mg.hasSteps}}" hint-placeholder-val="{{ false }}">
+                    <span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ok)" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>{{mg.steps}}</span>
+                  </sc-if>
+                  <div style="position: relative; max-width: 100%; padding: 13px 16px; border-radius: 6px 20px 20px 20px; background: var(--ai-grad); color: var(--ai-ink); font-size: 14.5px; line-height: 1.55">{{mg.text}}</div>
+                  <sc-if value="{{mg.hasCard}}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{mg.openTab}}" style="width: 100%; text-align: left; padding: 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--chat-user); color: var(--ink); font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 12px">
+                      <span style="display: flex; align-items: flex-end; gap: 2px; width: 64px; height: 40px; padding: 6px; box-sizing: border-box; border-radius: 10px; background: var(--surface2)" aria-hidden="true"><sc-for list="{{mg.mini}}" as="mn" hint-placeholder-count="7"><span style="{{mn}}"></span></sc-for></span>
+                      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><b style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{mg.cardTitle}}</b><span style="font-size: 12px; color: var(--soft)">{{mg.cardMeta}}</span></span>
+                      <span style="font-size: 12.5px; font-weight: 600; color: var(--accent-text); white-space: nowrap">{{mg.cardCta}}</span>
+                    </button>
+                  </sc-if>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; margin-top: -2px; padding: 5px 12px; border-radius: 999px; background: var(--chat-user); font-size: 12px; color: var(--soft); box-shadow: 0 4px 12px -8px rgba(0,0,0,.4)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color: var(--hi)" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path></svg>ตอบโดย AI</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{thinking}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display: flex; align-items: center; gap: 10px">
+            <span style="width: 34px; height: 34px; border-radius: 50%; background: var(--ai-grad); opacity: .6"></span>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--soft)">
+              <span>● อ่านคำถาม</span><span>● เลือกเครื่องมือ query…</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display: flex; gap: 6px; overflow-x: auto; padding: 0 16px 10px">
+        <sc-for list="{{suggestions}}" as="sg" hint-placeholder-count="3"><button onClick="{{sg.ask}}" style="flex-shrink: 0; min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chat-user); color: var(--ink); font: 500 12.5px 'Anuphan', sans-serif; cursor: pointer; white-space: nowrap">{{sg.label}}</button></sc-for>
+      </div>
+      <form onSubmit="{{send}}" style="margin: 0 12px 12px; padding: 10px 10px 10px 14px; border-radius: 22px; background: var(--chat-user); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+        <label for="chat-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden">ถามข้อมูลร้าน</label>
+        <textarea id="chat-q" rows="2" value="{{draft}}" onChange="{{setDraft}}" placeholder="ถามเรื่องยอดขาย สินค้าขายดี…" style="border: 0; outline: 0; resize: none; background: transparent; color: var(--ink); font: 400 14.5px 'Anuphan', sans-serif"></textarea>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <span style="padding: 5px 10px; border-radius: 999px; background: var(--surface2); font-size: 12px; color: var(--soft)">ข้อมูลตัวอย่าง · 7 วัน</span>
+          <span style="padding: 5px 10px; border-radius: 999px; background: var(--surface2); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--soft)">Laya</span>
+          <span style="flex: 1"></span>
+          <button type="submit" aria-label="ส่งคำถาม" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg></button>
+        </div>
+      </form>
+    </section>
+  </sc-if>
+
+  <button onClick="{{toggleChat}}" aria-label="{{launcherLabel}}" aria-expanded="{{chatOpenStr}}" style="position: fixed; left: 24px; bottom: 24px; z-index: 60; width: 62px; height: 62px; border-radius: 50%; border: 0; background: var(--ai-grad); color: var(--ai-ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 0 0 4px var(--bg), 0 0 0 6px var(--hi), 0 14px 30px -10px rgba(0,0,0,.45)">
+    <sc-if value="{{chatOpen}}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></sc-if>
+    <sc-if value="{{chatClosed}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path></svg></sc-if>
+    <span style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #2c9a5b; box-shadow: 0 0 0 3px var(--bg)"></span>
+  </button>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["day","night"],"default":"day"},"screen":{"editor":"enum","options":["dashboard","login"],"default":"dashboard"},"tab":{"editor":"enum","options":["dashboard","q1","q2"],"default":"dashboard"},"chat":{"editor":"enum","options":["open","closed"],"default":"open"},"$preview":{"width":1440,"height":2400}}'>
+class Component extends DCLogic {
+  theme(mode) {
+    if (mode === 'night') return {
+      '--bg': '#141210', '--surface': '#1d1a17', '--surface2': '#27231f', '--ink': '#efe8e0', '--soft': '#a89d92', '--line': '#342f2a',
+      '--accent-text': '#f39a62', '--hi': '#ee8747', '--chart-1': '#e0702f', '--chart-1-strong': '#f39a62', '--track': '#2e2925', '--warn': '#e9c46a', '--warn-bg': '#2d2616', '--ok': '#7fcf9f', '--ok-bg': '#182a20',
+      '--info': '#93b7f0', '--info-bg': '#1a2232', '--mint': '#6fc7b4', '--cta': '#ee8747', '--cta-ink': '#1a0f08', '--strong': '#efe8e0', '--strong-ink': '#141210',
+      '--shadow': '0 0 0 1px #342f2a', '--cta-glow': 'none', '--display': "'Chakra Petch', 'Anuphan', sans-serif",
+      '--ai-grad': 'linear-gradient(135deg, #ee8747, #b8551f)', '--ai-ink': '#1a0f08', '--chat-bg': '#181512', '--chat-user': '#24201c', '--chat-btn': '#24201c',
+      '--tip': '#27231f', 'background': '#141210'
+    };
+    return {
+      '--bg': '#f1ebe3', '--surface': '#fbf8f4', '--surface2': '#ece3d8', '--ink': '#2b2420', '--soft': '#6f6258', '--line': '#e2d8cb',
+      '--accent-text': '#b4471a', '--hi': '#f47b3c', '--chart-1': '#c4521a', '--chart-1-strong': '#8f3a10', '--track': '#e2d8cb', '--warn': '#a14a06', '--warn-bg': '#fdebd3', '--ok': '#2c7a4b', '--ok-bg': '#e1f1e6',
+      '--info': '#2f5ea8', '--info-bg': '#e6eefc', '--mint': '#1f7f68', '--cta': '#c4521a', '--cta-ink': '#ffffff', '--strong': '#2b2420', '--strong-ink': '#ffffff',
+      '--shadow': '0 10px 30px -18px rgba(107,75,46,.45)', '--cta-glow': '0 12px 24px -12px rgba(196,82,26,.8)', '--display': "'Anuphan', sans-serif",
+      '--ai-grad': 'linear-gradient(135deg, #d9622a, #9a3a10)', '--ai-ink': '#ffffff', '--chat-bg': '#f4f1ed', '--chat-user': '#ffffff', '--chat-btn': '#ffffff',
+      '--tip': '#ffffff', 'background': '#f1ebe3'
+    };
+  }
+  seedCases() {
+    return [
+      { id: 'CASE-0014', status: 'OPEN_STAFF', type: 'AMBIGUOUS_PICK', sku: 'COKE', ev: 'PICK', candidate: 'A', time: '10:31:08', conf: 0.62, agent: true,
+        reason: 'RSSI ของ Basket A และ B ต่างกันเพียง 2 dB ต่ำกว่าเกณฑ์ 10 dB · Agent ไม่มั่นใจพอให้ลูกค้ายืนยันเอง จึงส่งให้พนักงานตรวจ',
+        a: -55, b: -57, margin: '2 dB', eventId: 'web-demo-7f3a91', proposed: 'ADD_ITEM', next: 'STAFF_HITL' },
+      { id: 'CASE-0013', status: 'WAITING_CUSTOMER', type: 'AMBIGUOUS_PUT_BACK', sku: 'WATER', ev: 'PUT_BACK', candidate: 'B', time: '10:29:51', conf: 0.71, agent: true,
+        reason: 'ตรวจพบการคืนน้ำดื่มใกล้ Basket B · Agent แนะนำให้ลูกค้ายืนยันก่อนนำออกจากตะกร้า',
+        a: -63, b: -58, margin: '5 dB', eventId: 'web-demo-2c81d0', proposed: 'REMOVE_ITEM', next: 'CUSTOMER_CONFIRM' },
+      { id: 'CASE-0012', status: 'OPEN_STAFF', type: 'ZONE_UNKNOWN', sku: 'WATER', ev: 'PICK', candidate: null, time: '10:28:30', conf: 0, agent: false,
+        reason: 'ไม่มีสัญญาณ RSSI จากตะกร้าใดเลย ระบุตะกร้าไม่ได้ · ต้องให้พนักงานเลือกตะกร้า',
+        a: null, b: null, margin: '—', eventId: 'web-demo-9be4a2', proposed: 'REVIEW_CART', next: 'STAFF_HITL' },
+      { id: 'CASE-0011', status: 'CLOSED', type: 'AMBIGUOUS_PICK', sku: 'COKE', ev: 'PICK', candidate: 'A', time: '10:25:12', conf: 0.78, agent: true,
+        reason: 'ลูกค้า Basket A ยืนยันว่าหยิบ Coca-Cola', resolution: 'customer · YES · Basket A',
+        a: -52, b: -58, margin: '6 dB', eventId: 'web-demo-41aa07', proposed: 'ADD_ITEM', next: 'CLOSE' }
+    ];
+  }
+  seedTabs() {
+    return [
+      { id: 'q1', kind: 'daily', view: 'bar', prompt: 'ยอดขายรายวัน 1 สัปดาห์ เป็นกราฟแท่ง', time: '10:32' },
+      { id: 'q2', kind: 'top', view: 'rank', prompt: 'สินค้าขายดีตามยอดเงิน 7 วัน', time: '10:34' }
+    ];
+  }
+  seedMsgs() {
+    return [
+      { role: 'ai', text: 'สวัสดีครับ ถามข้อมูลร้านได้เลย เช่น ยอดขายรายวัน หรือสินค้าขายดี ผลลัพธ์แต่ละคำถามจะเปิดเป็นแท็บใหม่ให้' },
+      { role: 'user', text: 'ยอดขายรายวัน 1 สัปดาห์ เป็นกราฟแท่ง' },
+      { role: 'ai', text: '7 วันล่าสุดขายได้รวม ฿10,380 วันที่ขายดีที่สุดคือ 23 ต.ค. (฿2,050) เปิดกราฟไว้ในแท็บใหม่แล้วครับ', tab: 'q1', steps: 'query_daily_sales · 1.2 วิ' },
+      { role: 'user', text: 'สินค้าขายดีตามยอดเงิน 7 วัน' },
+      { role: 'ai', text: 'Coca-Cola นำด้วยยอด ฿6,450 หรือ 62% ของยอดขาย แม้ขายได้จำนวนชิ้นใกล้เคียงกับน้ำดื่ม', tab: 'q2', steps: 'query_top_products · 0.9 วิ' }
+    ];
+  }
+  data() {
+    return {
+      daily: [['17 ต.ค.', '2026-10-17', 1240, 62, 31], ['18 ต.ค.', '2026-10-18', 980, 49, 26], ['19 ต.ค.', '2026-10-19', 1430, 72, 35], ['20 ต.ค.', '2026-10-20', 1610, 80, 40], ['21 ต.ค.', '2026-10-21', 1180, 57, 29], ['22 ต.ค.', '2026-10-22', 1890, 95, 46], ['23 ต.ค.', '2026-10-23', 2050, 105, 51]],
+      top: [['COKE', 'Coca-Cola', 6450, 258, 171], ['WATER', 'น้ำดื่ม', 3930, 262, 158]]
+    };
+  }
+  get(k, d) { return this.state && this.state[k] !== undefined ? this.state[k] : d; }
+  badge(status) {
+    const map = { OPEN_STAFF: ['var(--warn-bg)', 'var(--warn)'], WAITING_CUSTOMER: ['var(--info-bg)', 'var(--info)'], CLOSED: ['var(--ok-bg)', 'var(--ok)'] };
+    const c = map[status];
+    return 'padding: 4px 10px; border-radius: 999px; background: ' + c[0] + '; color: ' + c[1] + '; font-size: 12px; font-weight: 600; white-space: nowrap';
+  }
+  classify(text) {
+    const t = text.toLowerCase();
+    const kind = /top|ขายดี|อันดับ|สินค้า/.test(t) ? 'top' : 'daily';
+    let view = kind === 'top' ? 'rank' : 'bar';
+    if (/เส้น|line/.test(t) && kind === 'daily') view = 'line';
+    if (/ตาราง|table/.test(t)) view = 'table';
+    return { kind: kind, view: view };
+  }
+  tabTitle(tab) { return tab.kind === 'top' ? 'สินค้าขายดี · 7 วัน' : 'ยอดขายรายวัน · 7 วัน'; }
+  componentWillUnmount() { clearInterval(this._clip); }
+  stopClip() { clearInterval(this._clip); this.setState({ playing: false }); }
+  startClip() {
+    const self = this;
+    clearInterval(this._clip);
+    this.setState({ playing: true });
+    this._clip = setInterval(function () {
+      const t = self.get('clipT', 0) + 0.1 * self.get('speed', 1);
+      if (t >= 8) { clearInterval(self._clip); self.setState({ clipT: 8, playing: false }); return; }
+      const patch = { clipT: Math.round(t * 100) / 100 };
+      const sid = self.get('selId', 'CASE-0014');
+      const w = self.get('watched', {});
+      if (t >= 4.5 && !w[sid]) { const n = Object.assign({}, w); n[sid] = true; patch.watched = n; }
+      self.setState(patch);
+    }, 100);
+  }
+  renderVals() {
+    const self = this;
+    const mode = this.get('mode', this.props.mode || 'day');
+    const night = mode === 'night';
+    const th = this.theme(mode);
+    const screen = this.get('screen', this.props.screen || 'dashboard');
+    const cases = this.get('cases', this.seedCases());
+    const filter = this.get('filter', 'OPEN');
+    const selId = this.get('selId', 'CASE-0014');
+    const targets = this.get('targets', {});
+    const tabs = this.get('tabs', this.seedTabs());
+    const active = this.get('active', this.props.tab || 'dashboard');
+    const chatOpen = this.get('chatOpen', (this.props.chat || 'open') === 'open');
+    const msgs = this.get('msgs', this.seedMsgs());
+    const hover = this.get('hover', -1);
+    const clipT = this.get('clipT', 0);
+    const playing = this.get('playing', false);
+    const speed = this.get('speed', 1);
+    const watched = this.get('watched', {});
+    const answers = this.get('answers', {});
+    const D = this.data();
+    const fmt = function (n) { return n.toLocaleString('th-TH'); };
+    const statusLabel = { WAITING_CUSTOMER: 'รอลูกค้ายืนยัน', OPEN_STAFF: 'รอพนักงาน', CLOSED: 'ปิดเคสแล้ว' };
+    const names = { COKE: 'Coca-Cola', WATER: 'น้ำดื่ม' };
+    const prodColor = night ? { COKE: '#e0702f', WATER: '#4f86e8' } : { COKE: '#c4521a', WATER: '#2f5ea8' };
+    const tileOf = function (sku, size) {
+      const t = night ? (sku === 'COKE' ? ['#2e1c19', '#ff9a8a'] : ['#17222e', '#8cc0f0']) : (sku === 'COKE' ? ['#ffe1dc', '#c62d26'] : ['#dcefff', '#1f6fb0']);
+      return 'width: ' + size + 'px; height: ' + size + 'px; border-radius: ' + Math.round(size / 3) + 'px; flex-shrink: 0; display: grid; place-items: center; background: ' + t[0] + '; color: ' + t[1];
+    };
+    const segs = function (n, filled, pend) {
+      const out = [];
+      for (let i = 0; i < n; i++) out.push('flex: 1; border-radius: 3px; background: ' + (i < filled ? 'var(--hi)' : i < filled + pend ? 'var(--warn-bg)' : 'var(--track)') + (i >= filled && i < filled + pend ? '; box-shadow: inset 0 0 0 1px var(--warn)' : ''));
+      return out;
+    };
+
+    // ---------- cases ----------
+    const shown = cases.filter(function (c) { return filter === 'ALL' || (filter === 'OPEN' ? c.status !== 'CLOSED' : c.status === filter); });
+    const sel = cases.find(function (c) { return c.id === selId; }) || cases[0];
+    const target = targets[sel.id] !== undefined ? targets[sel.id] : sel.candidate;
+    const staffCount = cases.filter(function (c) { return c.status === 'OPEN_STAFF'; }).length;
+    const openCount = cases.filter(function (c) { return c.status !== 'CLOSED'; }).length;
+    const decide = function (decision) {
+      const t = decision === 'APPROVE' ? (arguments[1] || target) : null;
+      const next = cases.map(function (c) { return c.id === sel.id ? Object.assign({}, c, { status: 'CLOSED', resolution: 'staff · ดูคลิปแล้ว · ' + decision + (t ? ' · Basket ' + t : '') }) : c; });
+      self.setState({ cases: next, notice: sel.id + (decision === 'APPROVE' ? ' ตอบ Basket ' + t + ' แล้ว · ตะกร้าอัปเดต' : ' ปฏิเสธแล้ว · ไม่เปลี่ยนตะกร้า') });
+    };
+    const steps = [
+      ['เลือกเครื่องมือ', 'get_shelf_event', 'อ่าน event และ lane ที่เกิดเหตุ', 's'],
+      ['ผลที่ได้', 'get_shelf_event', 'PICK · LANE-1 · Coca-Cola · 10:31:08', 'o'],
+      ['เลือกเครื่องมือ', 'get_signal_window', 'ขอ RSSI ช่วง ±3 วินาทีรอบเหตุการณ์', 's'],
+      ['ผลที่ได้', 'get_signal_window', 'A เฉลี่ย −55 dBm · B −57 dBm · ต่างกัน 2 dB', 'o'],
+      ['เลือกเครื่องมือ', 'inspect_vision_evidence', 'ตรวจภาพจากกล้องด้วย YOLO11n', 's'],
+      ['ผลที่ได้', 'inspect_vision_evidence', 'พบคน 2 คนใกล้ชั้น · ผูกกับตะกร้าไม่ได้ชัดเจน', 'o'],
+      ['สรุป', 'finish', 'ส่งพนักงานตรวจ · confidence 62%', 'f']
+    ];
+
+    // ---------- tabs ----------
+    const activeTab = tabs.find(function (t) { return t.id === active; });
+    const onHome = !activeTab;
+    const closeTab = function (id) {
+      const rest = tabs.filter(function (t) { return t.id !== id; });
+      self.setState({ tabs: rest, active: active === id ? 'dashboard' : active, hover: -1 });
+    };
+    const tabWrap = function (on) {
+      return 'display: inline-flex; align-items: center; flex-shrink: 0; border-radius: 14px 14px 0 0; font-size: 14px; ' +
+        (on ? 'background: var(--bg); color: var(--ink); font-weight: 600; border: 1px solid var(--line); border-bottom-color: var(--bg)' : 'background: transparent; color: var(--soft); border: 1px solid transparent');
+    };
+    const tabList = [{ id: 'dashboard', title: 'Dashboard', isHome: true, isQuery: false }].concat(tabs.map(function (t) { return { id: t.id, title: self.tabTitle(t), isHome: false, isQuery: true }; }));
+
+    // ---------- result view ----------
+    let R = { sum: {}, kpis: [], views: [], grid: [], bars: [], dots: [], rank: [], rows: [], trace: [] };
+    if (activeTab) {
+      const daily = activeTab.kind === 'daily';
+      const view = activeTab.view;
+      const rowsRaw = daily ? D.daily : D.top;
+      const sumRev = rowsRaw.reduce(function (a, r) { return a + r[daily ? 2 : 2]; }, 0);
+      const sumQty = rowsRaw.reduce(function (a, r) { return a + r[3]; }, 0);
+      const sumOrd = daily ? rowsRaw.reduce(function (a, r) { return a + r[4]; }, 0) : 258;
+      const vals = rowsRaw.map(function (r) { return r[2]; });
+      const max = Math.max.apply(null, vals);
+      const scaleMax = Math.ceil(max / 500) * 500;
+      const H = 280;
+      const maxIdx = vals.indexOf(max);
+      const last = vals.length - 1;
+      const tip = function (leftPct) {
+        return 'position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); z-index: 5; min-width: 130px; padding: 10px 12px; border-radius: 14px; background: var(--tip); border: 1px solid var(--line); box-shadow: 0 12px 28px -12px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 2px; white-space: nowrap';
+      };
+      const grid = [0, scaleMax / 2, scaleMax].map(function (v) {
+        return { label: '฿' + fmt(v), style: 'position: absolute; left: 0; right: 0; bottom: ' + Math.round(v / scaleMax * (H - 30)) + 'px; height: 0; border-top: 1px ' + (v === 0 ? 'solid var(--line)' : 'dashed var(--line)') };
+      });
+      const viewOpts = (daily ? [['bar', 'แท่ง'], ['line', 'เส้น'], ['table', 'ตาราง']] : [['rank', 'อันดับ'], ['table', 'ตาราง']]).map(function (o) {
+        const on = view === o[0];
+        return { label: o[1], pressed: on ? 'true' : 'false',
+          style: 'min-height: 34px; padding: 0 14px; border-radius: 10px; border: 0; font: ' + (on ? '600' : '500') + ' 13px \'Anuphan\', sans-serif; cursor: pointer; ' + (on ? 'background: var(--surface); color: var(--ink); box-shadow: 0 2px 6px -3px rgba(0,0,0,.3)' : 'background: transparent; color: var(--soft)'),
+          pick: function () { self.setState({ tabs: tabs.map(function (t) { return t.id === activeTab.id ? Object.assign({}, t, { view: o[0] }) : t; }), hover: -1 }); } };
+      });
+      const pts = vals.map(function (v, i) { return { x: (4 + i * 92 / last), y: (H - 30) - v / scaleMax * (H - 30) }; });
+      const firstV = vals[0], lastV = vals[last];
+      const change = Math.round((lastV - firstV) / firstV * 100);
+      const minV = Math.min.apply(null, vals), minIdx = vals.indexOf(minV);
+      R = {
+        time: activeTab.time + ' น.',
+        title: daily ? 'ยอดขายรายวัน' : 'สินค้าขายดี',
+        sub: '17–23 ต.ค. 2026 · 7 วัน · ' + (daily ? 'ยอดเงินต่อวัน (บาท)' : 'จัดอันดับตามยอดเงิน'),
+        prompt: activeTab.prompt,
+        kpis: daily ? [
+          { label: 'ยอดขายรวม', value: '฿' + fmt(sumRev), note: '7 วัน' },
+          { label: 'เฉลี่ยต่อวัน', value: '฿' + fmt(Math.round(sumRev / 7)), note: 'ยอดเงิน ÷ 7 วัน' },
+          { label: 'วันที่ขายดีที่สุด', value: rowsRaw[maxIdx][0], note: '฿' + fmt(max) },
+          { label: 'Orders', value: fmt(sumOrd), note: fmt(sumQty) + ' ชิ้น' }
+        ] : [
+          { label: 'ยอดขายรวม', value: '฿' + fmt(sumRev), note: '7 วัน · ทุกสินค้า' },
+          { label: 'อันดับ 1', value: 'Coca-Cola', note: Math.round(D.top[0][2] / sumRev * 100) + '% ของยอดเงิน' },
+          { label: 'ชิ้นที่ขายได้', value: fmt(sumQty), note: '2 ชนิดสินค้า' },
+          { label: 'Orders', value: fmt(sumOrd), note: 'ที่ชำระสำเร็จ' }
+        ],
+        chartTitle: daily ? 'ยอดเงินรายวัน' : 'อันดับสินค้าตามยอดเงิน',
+        chartSub: daily ? 'ชี้ที่แต่ละวันเพื่อดูรายละเอียด' : 'ชี้ที่สินค้าเพื่อดูรายละเอียด',
+        views: viewOpts,
+        isBar: view === 'bar', isLine: view === 'line', isRank: view === 'rank', isTable: view === 'table',
+        grid: grid,
+        bars: rowsRaw.map(function (r, i) {
+          const on = hover === i;
+          return { label: r[0], valueText: '฿' + fmt(r[2]), extra: r[3] + ' ชิ้น · ' + r[4] + ' orders', isHover: on,
+            showLabel: !on && (i === maxIdx || i === last),
+            enter: function () { self.setState({ hover: i }); },
+            tipStyle: tip(),
+            style: 'display: block; width: 100%; max-width: 52px; height: ' + Math.max(4, Math.round(r[2] / scaleMax * (H - 30))) + 'px; border-radius: 4px 4px 0 0; background: ' + (on ? 'var(--chart-1-strong)' : 'var(--chart-1)') + '; margin-bottom: ' + 0 + 'px' };
+        }),
+        linePts: pts.map(function (p) { return (p.x * 7).toFixed(1) + ',' + p.y.toFixed(1); }).join(' '),
+        areaPath: 'M' + (pts[0].x * 7).toFixed(1) + ',' + (H - 30) + ' ' + pts.map(function (p) { return 'L' + (p.x * 7).toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') + ' L' + (pts[last].x * 7).toFixed(1) + ',' + (H - 30) + ' Z',
+        dots: rowsRaw.map(function (r, i) {
+          const on = hover === i;
+          const p = pts[i];
+          return { label: r[0], valueText: '฿' + fmt(r[2]), extra: r[3] + ' ชิ้น · ' + r[4] + ' orders', isHover: on, showLabel: !on && (i === maxIdx || i === last),
+            enter: function () { self.setState({ hover: i }); }, tipStyle: tip(),
+            hit: 'position: absolute; left: ' + p.x + '%; top: 0; bottom: 30px; width: 44px; margin-left: -22px; display: flex; justify-content: center; cursor: default',
+            dot: 'position: absolute; top: ' + (p.y - 6) + 'px; width: ' + (on ? 14 : 10) + 'px; height: ' + (on ? 14 : 10) + 'px; margin-top: ' + (on ? -2 : 0) + 'px; border-radius: 50%; background: var(--chart-1); box-shadow: 0 0 0 2px var(--surface)',
+            xLabel: 'position: absolute; left: ' + p.x + '%; transform: translateX(-50%); font-size: 12px; color: var(--soft); white-space: nowrap' };
+        }),
+        rank: D.top.map(function (r, i) {
+          const on = hover === i;
+          return { n: String(i + 1), name: r[1], value: '฿' + fmt(r[2]), pct: Math.round(r[2] / sumRev * 100) + '%',
+            extra: fmt(r[3]) + ' ชิ้น · ' + fmt(r[4]) + ' orders · ' + Math.round(r[2] / sumRev * 100) + '% ของยอดเงิน',
+            isCoke: r[0] === 'COKE', isWater: r[0] === 'WATER', tile: tileOf(r[0], 44),
+            enter: function () { self.setState({ hover: i }); },
+            row: 'display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid ' + (on ? 'var(--hi)' : 'var(--line)') + '; background: ' + (on ? 'var(--surface2)' : 'var(--surface)'),
+            bar: 'display: block; height: 100%; border-radius: 0 4px 4px 0; width: ' + Math.round(r[2] / max * 100) + '%; background: ' + prodColor[r[0]],
+            share: 'flex: ' + r[2] + ' 1 0; border-radius: 4px; background: ' + prodColor[r[0]],
+            swatch: 'width: 12px; height: 12px; border-radius: 3px; background: ' + prodColor[r[0]] };
+        }),
+        shareLabel: D.top.map(function (r) { return r[1] + ' ' + Math.round(r[2] / sumRev * 100) + '%'; }).join(', '),
+        col: daily ? 'วันที่' : 'สินค้า',
+        rows: rowsRaw.map(function (r) { return { label: daily ? r[0] : r[1], revenue: fmt(r[2]), qty: fmt(r[3]), orders: fmt(r[4]) }; }),
+        sum: { revenue: fmt(sumRev), qty: fmt(sumQty), orders: daily ? fmt(sumOrd) : '—' },
+        insight: daily
+          ? 'ยอดขายสูงสุดวันที่ ' + rowsRaw[maxIdx][0] + ' (฿' + fmt(max) + ') ต่ำสุดวันที่ ' + rowsRaw[minIdx][0] + ' (฿' + fmt(minV) + ') · วันสุดท้ายของช่วง' + (change >= 0 ? 'สูงกว่า' : 'ต่ำกว่า') + 'วันแรก ' + Math.abs(change) + '%'
+          : 'Coca-Cola ทำยอดเงิน ' + Math.round(D.top[0][2] / sumRev * 100) + '% ของทั้งหมด แม้จำนวนชิ้น (258) น้อยกว่าน้ำดื่ม (262) เพราะราคาต่อชิ้นสูงกว่า',
+        queryId: 'QRY-' + activeTab.id.toUpperCase() + '-1023',
+        trace: [
+          { title: 'อ่านคำถาม', detail: '“' + activeTab.prompt + '”', ms: '0.2 วิ' },
+          { title: 'เลือกเครื่องมือ', detail: (daily ? 'query_daily_sales' : 'query_top_products') + ' · selection 93%', ms: '0.7 วิ' },
+          { title: 'รัน query แบบอ่านอย่างเดียว', detail: 'orders 17–23 ต.ค. · ' + rowsRaw.length + ' แถว', ms: '38 ms' },
+          { title: 'สร้างผลลัพธ์', detail: 'แสดงเป็น ' + ({ bar: 'กราฟแท่ง', line: 'กราฟเส้น', table: 'ตาราง', rank: 'อันดับ' })[view], ms: '0.1 วิ' }
+        ],
+        json: JSON.stringify({ tool: daily ? 'query_daily_sales' : 'query_top_products', startDate: '2026-10-17', endDate: '2026-10-23', metric: 'revenue', chart: view, limit: daily ? undefined : 10, source: 'DEMO' }, null, 2)
+      };
+    }
+
+    // ---------- chat ----------
+    const askNow = function (text) {
+      if (!text || !text.trim() || self.get('thinking', false)) return;
+      const curTabs = self.get('tabs', self.seedTabs());
+      const curMsgs = self.get('msgs', self.seedMsgs());
+      const n = self.get('seq', 3);
+      const id = 'q' + n;
+      const cls = self.classify(text);
+      self.setState({ msgs: curMsgs.concat([{ role: 'user', text: text.trim() }]), draft: '', thinking: true, seq: n + 1 });
+      setTimeout(function () {
+        const tab = { id: id, kind: cls.kind, view: cls.view, prompt: text.trim(), time: '10:3' + Math.min(9, n + 2) };
+        const reply = cls.kind === 'top'
+          ? 'สินค้าขายดี 7 วันล่าสุด: Coca-Cola ฿6,450 ตามด้วยน้ำดื่ม ฿3,930 เปิดผลไว้ในแท็บใหม่แล้วครับ'
+          : 'ยอดขาย 7 วันล่าสุดรวม ฿10,380 เฉลี่ยวันละ ฿1,483 เปิดผลไว้ในแท็บใหม่แล้วครับ';
+        self.setState({
+          thinking: false,
+          tabs: self.get('tabs', curTabs).concat([tab]),
+          active: id, hover: -1,
+          msgs: self.get('msgs', curMsgs).concat([{ role: 'ai', text: reply, tab: id, steps: (cls.kind === 'top' ? 'query_top_products' : 'query_daily_sales') + ' · 1.0 วิ' }])
+        });
+      }, 1100);
+    };
+    const lastAi = msgs.map(function (m) { return m.role; }).lastIndexOf('ai');
+    const miniFor = function (tabId) {
+      const t = tabs.find(function (x) { return x.id === tabId; });
+      const vals = t && t.kind === 'top' ? [6450, 3930] : D.daily.map(function (r) { return r[2]; });
+      const mx = Math.max.apply(null, vals);
+      return vals.map(function (v) { return 'flex: 1; height: ' + Math.max(3, Math.round(v / mx * 28)) + 'px; border-radius: 2px 2px 0 0; background: var(--chart-1)'; });
+    };
+
+    return {
+      rootStyle: 'position: relative; min-height: 100vh; color: var(--ink); font-family: \'Anuphan\', sans-serif; ' + Object.keys(th).map(function (k) { return k + ': ' + th[k]; }).join('; '),
+      isDay: !night, isNight: night,
+      modeLabel: night ? 'เปลี่ยนเป็นโหมดปกติ' : 'เปลี่ยนเป็น Night mode',
+      toggleMode: function () { self.setState({ mode: night ? 'day' : 'night' }); },
+      liveDot: 'width: 8px; height: 8px; border-radius: 50%; background: var(--mint)' + (night ? '; box-shadow: 0 0 10px var(--mint)' : ''),
+      isLogin: screen === 'login', isDash: screen !== 'login',
+      email: this.get('email', ''),
+      setEmail: function (e) { self.setState({ email: e && e.target ? e.target.value : '' }); },
+      pwType: this.get('showPw', false) ? 'text' : 'password',
+      pwLabel: this.get('showPw', false) ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน',
+      togglePw: function () { self.setState({ showPw: !self.get('showPw', false) }); },
+      loginError: this.get('loginError', ''),
+      login: function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const em = self.get('email', '');
+        if (!em) return self.setState({ loginError: 'กรุณากรอกอีเมล' });
+        if (em.indexOf('@') < 1) return self.setState({ loginError: 'กรุณากรอกอีเมลให้ถูกต้อง' });
+        self.setState({ screen: 'dashboard', loginError: '' });
+      },
+      logout: function () { self.setState({ screen: 'login' }); },
+      refresh: function () { self.setState({ notice: 'อัปเดตข้อมูลล่าสุดแล้ว · 10:31:13' }); },
+      notice: this.get('notice', ''),
+
+      tabs: tabList.map(function (t) {
+        const on = t.id === (activeTab ? activeTab.id : 'dashboard');
+        return Object.assign({}, t, { selected: on ? 'true' : 'false', wrap: tabWrap(on),
+          open: function () { self.setState({ active: t.id, hover: -1 }); },
+          close: function () { closeTab(t.id); } });
+      }),
+      onHome: onHome, onQuery: !onHome,
+      closeActive: function () { if (activeTab) closeTab(activeTab.id); },
+      R: R,
+      clearHover: function () { self.setState({ hover: -1 }); },
+
+      hasStaffWork: staffCount > 0, staffCount: staffCount,
+      gotoFirst: function () { const f = cases.find(function (c) { return c.status === 'OPEN_STAFF'; }); if (f) { clearInterval(self._clip); self.setState({ selId: f.id, filter: 'OPEN', clipT: 0, playing: false }); } },
+      metrics: [
+        { label: 'ยอดที่ยืนยันในร้าน', value: '฿70', note: '2 ตะกร้า · ยังไม่ชำระ', tag: 'ตอนนี้', chip: 'padding: 3px 9px; border-radius: 999px; background: var(--surface2); font-size: 11.5px; color: var(--soft)', segs: segs(12, 9, 3) },
+        { label: 'เคสรอพนักงาน', value: String(staffCount), note: 'เปิดอยู่ทั้งหมด ' + openCount + ' เคส', tag: staffCount ? 'ต้องทำ' : 'เรียบร้อย', chip: 'padding: 3px 9px; border-radius: 999px; background: ' + (staffCount ? 'var(--warn-bg); color: var(--warn)' : 'var(--ok-bg); color: var(--ok)') + '; font-size: 11.5px; font-weight: 600', segs: segs(12, 0, staffCount * 3) },
+        { label: 'ตะกร้าที่ใช้งาน', value: '2 / 2', note: 'Basket A · Basket B', tag: 'เต็ม', chip: 'padding: 3px 9px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 11.5px; font-weight: 600', segs: segs(12, 12, 0) },
+        { label: 'ชั้นวาง SHELF-01', value: 'ONLINE', note: 'สัญญาณล่าสุด 10:31:12', tag: 'ESP32', chip: 'padding: 3px 9px; border-radius: 999px; background: var(--surface2); font-size: 11.5px; color: var(--soft); font-family: \'JetBrains Mono\', monospace', segs: segs(12, 12, 0) }
+      ],
+      caseCount: shown.length,
+      filters: [['OPEN', 'ยังเปิด'], ['OPEN_STAFF', 'รอพนักงาน'], ['WAITING_CUSTOMER', 'รอลูกค้า'], ['CLOSED', 'ปิดแล้ว'], ['ALL', 'ทั้งหมด']].map(function (f) {
+        const on = filter === f[0];
+        return { label: f[1], pressed: on ? 'true' : 'false', pick: function () { self.setState({ filter: f[0] }); },
+          style: 'flex: 1; min-height: 34px; padding: 0 10px; border-radius: 10px; border: 0; font: ' + (on ? '600' : '500') + ' 12.5px \'Anuphan\', sans-serif; cursor: pointer; white-space: nowrap; ' + (on ? 'background: var(--surface); color: var(--ink); box-shadow: 0 2px 6px -3px rgba(0,0,0,.3)' : 'background: transparent; color: var(--soft)') };
+      }),
+      noCases: !shown.length,
+      caseList: shown.map(function (c) {
+        const on = c.id === sel.id;
+        const col = c.status === 'OPEN_STAFF' ? 'var(--warn)' : c.status === 'WAITING_CUSTOMER' ? 'var(--info)' : 'var(--ok)';
+        return { id: c.id, statusLabel: statusLabel[c.status], badge: self.badge(c.status), title: names[c.sku] + ' · ' + (c.ev === 'PICK' ? 'หยิบ' : 'คืน'), type: c.type,
+          meta: (c.candidate ? 'Basket ' + c.candidate : 'ยังไม่ทราบตะกร้า') + ' · ' + c.time + ' · ▶ คลิป 8 วิ', pressed: on ? 'true' : 'false',
+          pick: function () { clearInterval(self._clip); self.setState({ selId: c.id, clipT: 0, playing: false }); },
+          bar: 'width: 4px; align-self: stretch; border-radius: 4px; background: ' + col,
+          style: 'text-align: left; display: flex; gap: 12px; padding: 12px; border-radius: 18px; cursor: pointer; font-family: inherit; color: var(--ink); ' + (on ? 'background: var(--surface2); border: 1px solid var(--hi)' : 'background: var(--surface); border: 1px solid var(--line)') };
+      }),
+      sel: {
+        id: sel.id, statusLabel: statusLabel[sel.status], badge: this.badge(sel.status),
+        title: (sel.ev === 'PICK' ? 'หยิบ ' : 'คืน ') + names[sel.sku], type: sel.type,
+        isCoke: sel.sku === 'COKE', isWater: sel.sku === 'WATER', tile: tileOf(sel.sku, 56),
+        reason: sel.reason,
+        rssiRows: [['Basket A', sel.a], ['Basket B', sel.b]].map(function (r) {
+          return { label: r[0], value: r[1] === null ? 'ไม่มีสัญญาณ' : r[1] + ' dBm', bar: 'display: block; height: 100%; border-radius: 0 4px 4px 0; width: ' + (r[1] === null ? 0 : Math.round((r[1] + 100) * 1.5)) + '%; background: var(--mint)' };
+        }),
+        margin: sel.margin,
+        details: [
+          { k: 'Event ID', v: sel.eventId }, { k: 'เวลา', v: '23/10 ' + sel.time }, { k: 'ตะกร้าที่เสนอ', v: sel.candidate ? 'Basket ' + sel.candidate : 'ยังระบุไม่ได้' },
+          { k: 'การทำงานที่เสนอ', v: sel.proposed }, { k: 'ขั้นตอนถัดไป', v: sel.next }, { k: 'Zone', v: 'SHELF-01 / LANE-' + (sel.sku === 'COKE' ? '1' : '2') }
+        ],
+        confLabel: sel.agent ? 'ความมั่นใจของ Agent · LAYA' : 'ความมั่นใจของกฎระบบ',
+        confText: Math.round(sel.conf * 100) + '%',
+        confBar: 'display: block; height: 100%; border-radius: 0 4px 4px 0; width: ' + Math.max(2, Math.round(sel.conf * 100)) + '%; background: ' + (sel.conf >= 0.7 ? 'var(--mint)' : 'var(--warn)'),
+        hasAgent: sel.agent && sel.id === 'CASE-0014',
+        steps: steps.map(function (s) {
+          return { head: s[0], tool: s[1], summary: s[2],
+            node: 'width: 12px; height: 12px; margin: 5px 0 0 4px; border-radius: 50%; ' + (s[3] === 's' ? 'border: 2px solid var(--soft)' : s[3] === 'o' ? 'background: var(--mint)' : 'background: var(--hi)') };
+        }),
+        isStaff: sel.status === 'OPEN_STAFF', isWaiting: sel.status === 'WAITING_CUSTOMER', isClosed: sel.status === 'CLOSED',
+        candidate: sel.candidate, resolution: 'ปิดเคสแล้ว · ' + (sel.resolution || ''),
+        timeline: [
+          { t: sel.time, a: 'EVENT_RECEIVED', d: 'SHELF-01 · ' + sel.ev },
+          { t: sel.time, a: sel.agent ? 'AGENT_STARTED' : 'POLICY_EVALUATED', d: sel.agent ? 'LAYA · agentic' : 'ไม่มีหลักฐาน RSSI' },
+          { t: sel.time.slice(0, 6) + String(Math.min(59, Number(sel.time.slice(6)) + 5)).padStart(2, '0'), a: 'ROUTED', d: sel.next }
+        ].concat(sel.status === 'CLOSED' ? [{ t: '10:32:40', a: 'CLOSED', d: sel.resolution || '' }] : [])
+      },
+      ans: (function () {
+        const put = sel.ev === 'PUT_BACK';
+        const choice = answers[sel.id] || null;
+        const seen = Boolean(watched[sel.id]) || clipT >= 4.5;
+        const info = { A: '฿55 · 3 ชิ้น · Active', B: '฿15 · 1 ชิ้น · Active' };
+        const reason = !seen ? 'ดูคลิปให้ถึงจังหวะ' + (put ? 'คืน' : 'หยิบ') + 'ก่อนตอบ' : !choice ? 'เลือก Basket A หรือ B' : '';
+        return {
+          question: put ? 'ดูคลิปแล้ว ' + names[sel.sku] + ' ถูกคืนจากตะกร้าไหน?' : 'ดูคลิปแล้ว ' + names[sel.sku] + ' ไปอยู่ตะกร้าไหน?',
+          hint: sel.candidate ? 'Agent คาดว่า Basket ' + sel.candidate + ' · ' + Math.round(sel.conf * 100) + '%' : 'ระบบระบุตะกร้าไม่ได้',
+          options: ['A', 'B'].map(function (id) {
+            const on = choice === id;
+            return { id: id, note: info[id], checked: on ? 'true' : 'false',
+              pick: function () { const n = Object.assign({}, answers); n[sel.id] = id; self.setState({ answers: n }); },
+              style: 'display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 14px 16px; border-radius: 20px; cursor: pointer; font-family: inherit; color: var(--ink); background: var(--surface); ' + (on ? 'border: 2px solid var(--hi); box-shadow: var(--shadow)' : 'border: 1px solid var(--line)'),
+              letter: 'width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; flex-shrink: 0; font: 700 26px \'JetBrains Mono\', monospace; ' + (on ? 'background: var(--cta); color: var(--cta-ink)' : 'background: var(--surface2); color: var(--ink)') };
+          }),
+          reason: reason,
+          blocked: Boolean(reason),
+          confirmLabel: choice ? (put ? 'ยืนยัน: นำ ' + names[sel.sku] + ' ออกจาก Basket ' + choice : 'ยืนยัน: ใส่ ' + names[sel.sku] + ' ลง Basket ' + choice) : 'ยืนยันคำตอบ',
+          confirmStyle: 'min-height: 52px; padding: 0 20px; border-radius: 16px; border: 0; font: 600 15px \'Anuphan\', sans-serif; display: inline-flex; align-items: center; gap: 8px; ' + (reason ? 'background: var(--track); color: var(--soft); cursor: not-allowed' : 'background: var(--cta); color: var(--cta-ink); cursor: pointer'),
+          confirm: function () { if (!reason) { self.stopClip(); decide('APPROVE', choice); } }
+        };
+      })(),
+      clip: (function () {
+        const truth = { 'CASE-0014': 'A', 'CASE-0013': 'B', 'CASE-0012': 'B', 'CASE-0011': 'A' }[sel.id] || 'A';
+        const put = sel.ev === 'PUT_BACK';
+        const shelf = { x: sel.sku === 'COKE' ? 32 : 60, y: 17 };
+        const bask = truth === 'A' ? { x: 21, y: 74 } : { x: 73, y: 74 };
+        const from = put ? bask : shelf, to = put ? shelf : bask;
+        let k = Math.max(0, Math.min(1, (clipT - 3.5) / 2));
+        k = k * k * (3 - 2 * k);
+        const x = from.x + (to.x - from.x) * k, y = from.y + (to.y - from.y) * k;
+        const parts = sel.time.split(':').map(Number);
+        const base = parts[0] * 3600 + parts[1] * 60 + parts[2] - 4;
+        const clock = function (sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s2 = sec % 60; return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + s2.toFixed(1).padStart(4, '0'); };
+        const near = function (id) { return clipT >= 4 && truth === id; };
+        const toggle = function () { if (playing) self.stopClip(); else { if (clipT >= 8) self.setState({ clipT: 0 }); self.startClip(); } };
+        const seek = function (t) { const v = Math.max(0, Math.min(8, t)); const patch = { clipT: v }; if (v >= 4.5) { const w = Object.assign({}, watched); w[sel.id] = true; patch.watched = w; } self.setState(patch); };
+        const pct = clipT / 8 * 100;
+        const ticks = [];
+        for (let i = 0; i < 32; i++) { (function (i) { ticks.push({ label: 'ไปที่วินาที ' + (i * 0.25).toFixed(2), go: function () { seek(i * 0.25); } }); })(i); }
+        return {
+          range: clock(base).slice(0, 8) + '–' + clock(base + 8).slice(0, 8),
+          alt: 'คลิปกล้อง CAM-01 ช่วง 8 วินาทีรอบเหตุการณ์ ' + (put ? 'คืน ' : 'หยิบ ') + names[sel.sku] + ' มีลูกค้าถือ Basket A ทางซ้าย และ Basket B ทางขวา',
+          people: ['A', 'B'].map(function (id) {
+            const hot = near(id);
+            return { id: id, label: 'person 0.9' + (id === 'A' ? '3' : '1') + ' · Basket ' + id,
+              box: 'position: absolute; top: 34%; width: 30%; height: 62%; ' + (id === 'A' ? 'left: 6%' : 'right: 6%') + '; border-radius: 6px; border: 2px solid ' + (hot ? '#ee8747' : 'rgba(255,255,255,.45)'),
+              tag: 'position: absolute; left: -2px; bottom: 100%; margin-bottom: 3px; padding: 1px 6px; border-radius: 4px; font-family: \'JetBrains Mono\', monospace; font-size: 10px; font-weight: 700; white-space: nowrap; ' + (hot ? 'background: #ee8747; color: #1a0f08' : 'background: rgba(255,255,255,.75); color: #1a1408') };
+          }),
+          itemBox: 'position: absolute; left: ' + x.toFixed(1) + '%; top: ' + y.toFixed(1) + '%; width: 6%; height: 11%; transform: translate(-50%, -50%); border: 2px solid #e9c46a; border-radius: 4px; display: grid; place-items: center',
+          itemDot: 'width: 46%; height: 70%; border-radius: 3px; background: ' + (sel.sku === 'COKE' ? '#c9473f' : '#5f9fd8'),
+          itemLabel: (sel.sku === 'COKE' ? 'can' : 'bottle') + ' 0.8' + (sel.sku === 'COKE' ? '4' : '1'),
+          stamp: clock(base + clipT),
+          atEvent: clipT >= 3.5 && clipT <= 5.5,
+          verb: put ? 'คืน' : 'หยิบ',
+          showBigPlay: !playing && clipT === 0,
+          playing: playing, paused: !playing,
+          playLabel: playing ? 'หยุดคลิป' : 'เล่นคลิป',
+          toggle: toggle,
+          timeText: '0:0' + Math.floor(clipT) + '.' + Math.floor((clipT % 1) * 10) + ' / 0:08',
+          fill: 'position: absolute; left: 0; width: ' + pct + '%; height: 6px; border-radius: 3px; background: var(--hi)',
+          marker: 'position: absolute; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); border-radius: 2px; background: var(--warn); box-shadow: 0 0 0 2px var(--surface)',
+          knob: 'position: absolute; left: ' + pct + '%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 3px var(--hi)',
+          ticks: ticks,
+          back: function () { seek(clipT - 0.5); }, fwd: function () { seek(clipT + 0.5); }, jump: function () { seek(3.5); },
+          speedText: speed === 1 ? '1×' : '0.5×',
+          toggleSpeed: function () { self.setState({ speed: speed === 1 ? 0.5 : 1 }); }
+        };
+      })(),
+      reject: function () { self.stopClip(); decide('REJECT'); },
+      rssi: [['Basket A', -55, ''], ['Basket B', -57, ''], ['HV-001', -61, ' อ้างอิง']].map(function (r) {
+        return { label: r[0], value: r[1] + ' dBm' + r[2], bar: 'display: block; height: 100%; border-radius: 0 4px 4px 0; width: ' + Math.round((r[1] + 100) * 1.5) + '%; background: ' + (r[2] ? 'var(--soft)' : 'var(--mint)') };
+      }),
+      baskets: [
+        { id: 'A', total: '฿55', summary: '3 ชิ้นยืนยันแล้ว · รอพนักงาน 1 รายการ', lines: [{ name: 'Coca-Cola', qty: 1, sub: '฿25' }, { name: 'น้ำดื่ม', qty: 2, sub: '฿30' }], segs: segs(10, 8, 2) },
+        { id: 'B', total: '฿15', summary: '1 ชิ้นยืนยันแล้ว · รอลูกค้ายืนยัน 1 รายการ', lines: [{ name: 'น้ำดื่ม', qty: 1, sub: '฿15' }], segs: segs(10, 5, 5) }
+      ],
+      events: [
+        ['↗', 'PICK · Coca-Cola', 'web-demo-7f3a91 · LANE-1', '10:31:08', 'warn'],
+        ['↙', 'PUT_BACK · น้ำดื่ม', 'web-demo-2c81d0 · LANE-2', '10:29:51', 'warn'],
+        ['↗', 'PICK · น้ำดื่ม', 'web-demo-9be4a2 · LANE-2', '10:28:30', 'warn'],
+        ['↗', 'PICK · น้ำดื่ม', 'esp32-000193 · LANE-2', '10:27:40', 'ok'],
+        ['↗', 'PICK · Coca-Cola', 'esp32-000188 · LANE-1', '10:26:02', 'ok']
+      ].map(function (e) {
+        return { arrow: e[0], title: e[1], meta: e[2], t: e[3], icon: 'width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; ' + (e[4] === 'ok' ? 'background: var(--ok-bg); color: var(--ok)' : 'background: var(--warn-bg); color: var(--warn)') };
+      }),
+      audit: [
+        ['CASE_ROUTED_STAFF', 'agent · CASE-0014', '10:31:13'], ['AGENT_COMPLETED', 'LAYA · CASE-0014 · 4,820 ms', '10:31:13'],
+        ['CASE_WAITING_CUSTOMER', 'agent · CASE-0013', '10:29:55'], ['CUSTOMER_CONFIRMED', 'customer · CASE-0011 · YES', '10:25:40'],
+        ['SESSION_STARTED', 'shopper · Basket B', '10:22:03']
+      ].map(function (a) { return { action: a[0], meta: a[1], t: a[2] }; }),
+      sims: [
+        ['Clear pick → A', 'Basket A มี RSSI ใกล้กว่าชัดเจน'], ['Clear pick → B', 'Basket B มี RSSI ใกล้กว่าชัดเจน'],
+        ['Ambiguous pick', 'ใกล้กันมาก ให้ Agent ประเมินก่อนส่งลูกค้าหรือพนักงาน'], ['Tied RSSI', 'RSSI เท่ากัน ส่งให้พนักงานตรวจสอบ'],
+        ['Unknown zone', 'ไม่มีหลักฐาน RSSI ยังระบุตะกร้าไม่ได้'], ['Put back → A', 'คืนสินค้าที่เลือกจาก Basket A'],
+        ['Duplicate delivery', 'ส่ง event ID เดิมอีกครั้ง ตะกร้าต้องไม่เพิ่มซ้ำ']
+      ].map(function (s) { return { label: s[0], desc: s[1], send: function () { self.setState({ notice: 'ส่ง ' + s[0] + ' แล้ว (สาธิต)' }); } }; }),
+
+      chatOpen: chatOpen, chatClosed: !chatOpen, chatOpenStr: chatOpen ? 'true' : 'false',
+      launcherLabel: chatOpen ? 'ปิดแชท' : 'เปิดแชทถามข้อมูลร้าน',
+      toggleChat: function () { self.setState({ chatOpen: !chatOpen }); },
+      openChat: function () { self.setState({ chatOpen: true }); },
+      closeChat: function () { self.setState({ chatOpen: false }); },
+      toggleWide: function () { self.setState({ wide: !self.get('wide', false) }); },
+      panelStyle: 'position: fixed; left: 24px; bottom: 104px; z-index: 59; width: ' + (this.get('wide', false) ? 560 : 400) + 'px; max-width: calc(100vw - 48px); height: 660px; max-height: calc(100vh - 130px); border-radius: 30px; background: var(--chat-bg); border: 1px solid var(--line); box-shadow: 0 30px 70px -24px rgba(0,0,0,.45); display: flex; flex-direction: column; overflow: hidden',
+      thinking: this.get('thinking', false),
+      msgs: msgs.map(function (m, i) {
+        const t = m.tab ? tabs.find(function (x) { return x.id === m.tab; }) : null;
+        return { isUser: m.role === 'user', isAi: m.role === 'ai', text: m.text, sparkle: i === lastAi,
+          hasSteps: Boolean(m.steps), steps: m.steps || '',
+          hasCard: Boolean(m.tab), mini: m.tab ? miniFor(m.tab) : [],
+          cardTitle: t ? self.tabTitle(t) : 'แท็บถูกปิดแล้ว', cardMeta: t ? 'ข้อมูลตัวอย่าง · 17–23 ต.ค.' : 'ถามใหม่เพื่อเปิดอีกครั้ง',
+          cardCta: t ? (active === t.id ? 'เปิดอยู่' : 'เปิดแท็บ ↗') : '',
+          openTab: function () { if (t) self.setState({ active: t.id, hover: -1 }); } };
+      }),
+      suggestions: ['ยอดขายรายวัน เป็นกราฟเส้น', 'สินค้าขายดี 7 วัน', 'ยอดขายรายวัน เป็นตาราง'].map(function (s) { return { label: s, ask: function () { askNow(s); } }; }),
+      draft: this.get('draft', ''),
+      setDraft: function (e) { self.setState({ draft: e && e.target ? e.target.value : '' }); },
+      send: function (e) { if (e && e.preventDefault) e.preventDefault(); askNow(self.get('draft', '')); }
+    };
+  }
+}
+</script>
+</body>
+</html>

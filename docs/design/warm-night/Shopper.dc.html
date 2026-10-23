@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>FAST Shopper</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&amp;family=Chakra+Petch:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+
+<!-- ============ LOGIN ============ -->
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 22px 22px 26px; display: flex; flex-direction: column; gap: 18px">
+  <header style="display: flex; justify-content: space-between; align-items: center">
+    <span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px">
+      <span style="width: 34px; height: 34px; border-radius: 11px; background: var(--ink); color: var(--hi); display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg></span>
+      FAST
+    </span>
+    <button onClick="{{toggleMode}}" aria-label="{{modeLabel}}" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer">
+      <sc-if value="{{isDay}}" hint-placeholder-val="{{ true }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></sc-if>
+      <sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></sc-if>
+    </button>
+  </header>
+
+  <div style="position: relative; height: 170px">
+    <svg viewBox="0 0 300 190" style="width: 100%; height: 170px; display: block" aria-hidden="true">
+      <sc-for list="{{introArc}}" as="g" hint-placeholder-count="13"><rect x="138" y="14" width="24" height="44" rx="10" fill="{{g.fill}}" transform="{{g.tf}}"></rect></sc-for>
+    </svg>
+    <span style="position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); width: 62px; height: 62px; border-radius: 22px; background: var(--surface); color: var(--accent-text); display: grid; place-items: center; box-shadow: var(--shadow)">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 11-1 9"></path><path d="m19 11-4-7"></path><path d="M2 11h20"></path><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"></path><path d="M4.5 15.5h15"></path><path d="m5 11 4-7"></path><path d="m9 11 1 9"></path></svg>
+    </span>
+  </div>
+
+  <div style="text-align: center; display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-family: var(--display); font-size: 30px; line-height: 1.25; font-weight: 700">ยินดีต้อนรับสู่ FAST</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: var(--soft)">หยิบ จ่าย ไปได้เลย ไม่ต้องต่อคิว</p>
+  </div>
+
+  <sc-if value="{{loginPhone}}" hint-placeholder-val="{{ true }}">
+    <form onSubmit="{{requestOtp}}" style="display: flex; flex-direction: column; gap: 10px">
+      <label for="phone" style="font-size: 14px; font-weight: 600">เบอร์โทรศัพท์</label>
+      <div style="display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line)">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--soft)">+66</span>
+        <span style="width: 1px; height: 22px; background: var(--line)"></span>
+        <input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" value="{{phone}}" onChange="{{setPhone}}" placeholder="08X XXX XXXX" style="flex: 1; min-width: 0; height: 50px; border: 0; outline: 0; background: transparent; color: var(--ink); font: 500 16px 'JetBrains Mono', monospace">
+      </div>
+      <sc-if value="{{phoneError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13px; color: var(--warn)">{{phoneError}}</p></sc-if>
+      <button type="submit" style="height: 54px; border: 0; border-radius: 18px; background: var(--cta); color: var(--cta-ink); font: 600 16px 'Anuphan', sans-serif; cursor: pointer; box-shadow: var(--cta-glow)">รับรหัส OTP</button>
+    </form>
+  </sc-if>
+
+  <sc-if value="{{loginOtp}}" hint-placeholder-val="{{ false }}">
+    <form onSubmit="{{verifyOtp}}" style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <b style="font-size: 15px">กรอกรหัส 6 หลัก</b>
+        <span style="font-size: 13px; color: var(--soft)">ส่งไปที่ {{phoneMasked}} · <button type="button" onClick="{{backToPhone}}" style="border: 0; padding: 0; background: none; color: var(--accent-text); font: 600 13px 'Anuphan', sans-serif; cursor: pointer; text-decoration: underline">เปลี่ยนเบอร์</button></span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px" aria-label="รหัส OTP">
+        <sc-for list="{{otpBoxes}}" as="o" hint-placeholder-count="6"><span style="{{o.style}}">{{o.d}}</span></sc-for>
+      </div>
+      <span style="font-size: 12.5px; color: var(--soft)">ขอรหัสใหม่ได้ใน 0:42</span>
+      <button type="submit" style="height: 54px; border: 0; border-radius: 18px; background: var(--cta); color: var(--cta-ink); font: 600 16px 'Anuphan', sans-serif; cursor: pointer; box-shadow: var(--cta-glow)">ยืนยันและเข้าสู่ระบบ</button>
+    </form>
+  </sc-if>
+
+  <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--soft)"><span style="flex: 1; height: 1px; background: var(--line)"></span>หรือ<span style="flex: 1; height: 1px; background: var(--line)"></span></div>
+
+  <button onClick="{{asGuest}}" style="min-height: 64px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-align: left">
+    <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface2); display: grid; place-items: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg></span>
+    <span style="flex: 1; display: flex; flex-direction: column"><b style="font-size: 15.5px; font-weight: 600">ใช้งานแบบ Guest</b><span style="font-size: 12.5px; color: var(--soft)">ไม่ต้องสมัคร · ใบเสร็จเก็บไว้ในเครื่องนี้</span></span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+  </button>
+
+  <p style="margin: auto 0 0; text-align: center; font-size: 12px; line-height: 1.6; color: var(--soft)">สมาชิกดูใบเสร็จย้อนหลังได้ทุกเครื่อง<br>ต้นแบบนี้ไม่มีการส่ง OTP หรือยืนยันตัวตนจริง</p>
+</div>
+</sc-if>
+
+<!-- ============ CONNECT ============ -->
+<sc-if value="{{isConnect}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px 20px 24px; display: flex; flex-direction: column; gap: 18px">
+  <header style="display: flex; align-items: center; gap: 10px">
+    <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface2); display: grid; place-items: center; font-weight: 700">{{avatar}}</span>
+    <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 12.5px; color: var(--soft)">สวัสดี</span><b style="font-size: 16px">{{userName}}</b></span>
+    <span style="{{userChip}}">{{userTag}}</span>
+  </header>
+
+  <ol style="list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; font-size: 12px; color: var(--soft)" aria-label="ขั้นตอน">
+    <li style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 4px; background: var(--hi)"></span><b style="color: var(--ink); font-weight: 600">1 เชื่อมตะกร้า</b></li>
+    <li style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 4px; background: var(--track)"></span>2 หยิบสินค้า</li>
+    <li style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 4px; background: var(--track)"></span>3 ชำระเงิน</li>
+  </ol>
+
+  <button onClick="{{openScan}}" style="position: relative; overflow: hidden; min-height: 190px; border-radius: 28px; border: 0; background: var(--hero); color: var(--hero-ink); font-family: inherit; cursor: pointer; text-align: left; padding: 22px; display: flex; flex-direction: column; justify-content: space-between">
+    <span style="position: absolute; right: -30px; top: -30px; width: 170px; height: 170px; border-radius: 50%; border: 22px solid rgba(255,255,255,.12)"></span>
+    <span style="width: 54px; height: 54px; border-radius: 18px; background: rgba(255,255,255,.18); display: grid; place-items: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg></span>
+    <span style="display: flex; flex-direction: column; gap: 4px"><b style="font-family: var(--display); font-size: 24px; font-weight: 700">สแกน QR บนตะกร้า</b><span style="font-size: 14px; opacity: .9">เริ่มช้อปได้ทันที ระบบนับเฉพาะสินค้าที่ยืนยันแล้ว</span></span>
+  </button>
+
+  <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--soft)"><span style="flex: 1; height: 1px; background: var(--line)"></span>หรือเลือกตะกร้าเอง<span style="flex: 1; height: 1px; background: var(--line)"></span></div>
+
+  <fieldset style="border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+    <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden">เลือกตะกร้า</legend>
+    <sc-for list="{{basketOptions}}" as="b" hint-placeholder-count="2">
+      <button onClick="{{b.pick}}" aria-pressed="{{b.selected}}" style="{{b.style}}">
+        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px">{{b.id}}</span>
+        <span style="font-size: 14px; font-weight: 600">Basket {{b.id}}</span>
+        <span style="font-size: 12px; color: var(--soft)">พร้อมใช้งาน</span>
+      </button>
+    </sc-for>
+  </fieldset>
+
+  <button onClick="{{start}}" style="min-height: 54px; border: 0; border-radius: 18px; background: var(--strong); color: var(--strong-ink); font: 600 15px 'Anuphan', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+    เริ่มช้อปด้วย Basket {{basket}}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+  </button>
+  <p style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--mint)"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--mint)"></span>เชื่อมต่อแล้ว · อัปเดตอัตโนมัติ</p>
+</div>
+</sc-if>
+
+<!-- ============ SCAN ============ -->
+<sc-if value="{{isScan}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; position: relative; background: #0b0a09; color: #f4efe9; display: flex; flex-direction: column">
+  <div style="position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 42%, #2c2723, #0b0a09 75%)"></div>
+  <header style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 22px 20px">
+    <span style="font-weight: 600; font-size: 17px">สแกนตะกร้า</span>
+    <button onClick="{{closeScan}}" aria-label="ปิดกล้อง" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+    </button>
+  </header>
+  <div style="position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px">
+    <div style="position: relative; width: 240px; height: 240px" role="img" aria-label="กรอบสำหรับวาง QR">
+      <span style="position: absolute; left: 0; top: 0; width: 46px; height: 46px; border-left: 5px solid var(--hi); border-top: 5px solid var(--hi); border-top-left-radius: 26px"></span>
+      <span style="position: absolute; right: 0; top: 0; width: 46px; height: 46px; border-right: 5px solid var(--hi); border-top: 5px solid var(--hi); border-top-right-radius: 26px"></span>
+      <span style="position: absolute; left: 0; bottom: 0; width: 46px; height: 46px; border-left: 5px solid var(--hi); border-bottom: 5px solid var(--hi); border-bottom-left-radius: 26px"></span>
+      <span style="position: absolute; right: 0; bottom: 0; width: 46px; height: 46px; border-right: 5px solid var(--hi); border-bottom: 5px solid var(--hi); border-bottom-right-radius: 26px"></span>
+      <span style="position: absolute; left: 20px; right: 20px; top: 52%; height: 2px; background: var(--hi); box-shadow: 0 0 14px var(--hi)"></span>
+    </div>
+    <p style="margin: 0; font-size: 15px; color: #d8d0c7">วาง QR บนตะกร้าให้อยู่ในกรอบ</p>
+    <button onClick="{{start}}" style="min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; font: 500 14px 'Anuphan', sans-serif; cursor: pointer">จำลอง: อ่าน QR สำเร็จ</button>
+  </div>
+  <div style="position: relative; margin: 0 12px 12px; padding: 18px; border-radius: 26px; background: var(--surface); color: var(--ink); display: flex; flex-direction: column; gap: 12px">
+    <p style="margin: 0; font-size: 13px; color: var(--soft)">กล้องใช้ไม่ได้หรือไม่มี QR? เลือกตะกร้าแทน</p>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button onClick="{{startA}}" style="height: 50px; border-radius: 16px; border: 0; background: var(--surface2); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">Basket A</button>
+      <button onClick="{{startB}}" style="height: 50px; border-radius: 16px; border: 0; background: var(--surface2); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">Basket B</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ SHOP ============ -->
+<sc-if value="{{isShop}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 18px 18px 0; display: flex; flex-direction: column; gap: 14px">
+  <header style="display: flex; align-items: center; gap: 8px">
+    <span style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 11-1 9"></path><path d="m19 11-4-7"></path><path d="M2 11h20"></path><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"></path><path d="m5 11 4-7"></path><path d="m9 11 1 9"></path></svg>
+      Basket {{basket}}
+      <span style="{{liveStyle}}"><span style="{{liveDot}}"></span>{{liveText}}</span>
+    </span>
+    <span style="flex: 1"></span>
+    <button onClick="{{openHelp}}" aria-label="ขอความช่วยเหลือ" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+    </button>
+  </header>
+
+  <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--warn-bg); color: var(--warn)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"></path><path d="M8.5 16.43a5 5 0 0 1 7 0"></path><path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path><path d="M5 13a10 10 0 0 1 5.24-2.76"></path><path d="m2 2 20 20"></path></svg>
+      <span style="flex: 1; display: flex; flex-direction: column; font-size: 13px"><b style="font-weight: 600">การเชื่อมต่อขาดหาย</b><span>ยอดที่เห็นอาจไม่ใช่ล่าสุด · ลองใหม่ ครั้งที่ 2</span></span>
+      <button onClick="{{reconnect}}" style="height: 40px; padding: 0 14px; border-radius: 12px; border: 0; background: var(--warn); color: var(--bg); font: 600 13px 'Anuphan', sans-serif; cursor: pointer">ลองใหม่</button>
+    </div>
+  </sc-if>
+
+  <section aria-label="สรุปยอด" style="{{gaugeWrap}}">
+    <svg viewBox="0 0 300 190" style="width: 100%; display: block" aria-hidden="true">
+      <sc-for list="{{arc}}" as="g" hint-placeholder-count="13"><rect x="138" y="14" width="24" height="44" rx="10" fill="{{g.fill}}" transform="{{g.tf}}"></rect></sc-for>
+    </svg>
+    <div style="position: absolute; left: 0; right: 0; bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+      <span style="font-size: 12px; color: var(--soft)">ยืนยันแล้ว · {{count}} ชิ้น</span>
+      <strong style="font-family: 'JetBrains Mono', monospace; font-size: 46px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.05"><span style="color: var(--accent-text); font-size: 28px; vertical-align: 12px; margin-right: 2px">฿</span>{{totalText}}</strong>
+      <span style="{{gaugeNoteStyle}}">{{gaugeNote}}</span>
+    </div>
+  </section>
+
+  <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line)">
+    <span style="display: flex; align-items: flex-end; gap: 3px; height: 24px" aria-hidden="true"><sc-for list="{{bars}}" as="bar" hint-placeholder-count="5"><span style="{{bar.style}}"></span></sc-for></span>
+    <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 13px; font-weight: 600">สัญญาณตะกร้า</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft)">ใกล้ LANE 01 · −52 dBm</span></span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: var(--mint)" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49"></path><path d="M7.76 16.24a6 6 0 0 1 0-8.49"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
+  </div>
+
+  <sc-if value="{{hasCase}}" hint-placeholder-val="{{ true }}">
+    <section aria-labelledby="ask-h" style="{{askStyle}}">
+      <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--warn)">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>{{caseTag}}</span>
+        <span>{{caseLane}}{{caseCounter}}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="{{caseTile}}">
+          <sc-if value="{{caseIsCoke}}" hint-placeholder-val="{{ true }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"></path><path d="M5 8h14"></path><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"></path><path d="m12 8 1-6h2"></path></svg></sc-if>
+          <sc-if value="{{caseIsWater}}" hint-placeholder-val="{{ false }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"></path><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"></path></svg></sc-if>
+        </span>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+          <h2 id="ask-h" style="margin: 0; font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.3">คุณ{{caseVerb}} <span style="color: var(--accent-text)">{{caseName}}</span> ใช่ไหม?</h2>
+          <p style="margin: 0; font-size: 12.5px; color: var(--soft)">{{caseExplain}}</p>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; gap: 3px; height: 6px" aria-hidden="true"><span style="width: 54%; border-radius: 3px; background: var(--mint)"></span><span style="width: 46%; border-radius: 3px; background: var(--track)"></span></div>
+        <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft)"><span>A −55 dBm · 54%</span><span>B −57 dBm · 46%</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px">
+        <button onClick="{{answerYes}}" style="height: 52px; border-radius: 16px; border: 0; background: var(--strong); color: var(--strong-ink); font: 600 15px 'Anuphan', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>ใช่ ฉัน{{caseVerb}}</button>
+        <button onClick="{{answerNo}}" style="height: 52px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface2); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">ไม่ใช่ ให้พนักงานดู</button>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{hasStaff}}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="display: flex; gap: 12px; padding: 14px; border-radius: 22px; background: var(--info-bg); color: var(--info)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+        <b style="font-size: 15px; font-weight: 600">พนักงานกำลังตรวจสอบ {{staff}} รายการ</b>
+        <span style="font-size: 13px; color: var(--ink); opacity: .8">รายการที่ไม่แน่ชัดยังไม่รวมในยอด รอผลก่อนชำระเงิน</span>
+        <button onClick="{{staffResolve}}" style="align-self: flex-start; margin-top: 6px; min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid currentColor; background: transparent; color: var(--info); font: 500 12px 'Anuphan', sans-serif; cursor: pointer">สาธิต: พนักงานปิดเคสแล้ว</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <section aria-labelledby="cart-h" style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 4px 4px 0">
+      <h2 id="cart-h" style="margin: 0; font-family: var(--display); font-size: 18px; font-weight: 700">ในตะกร้า</h2>
+      <span style="font-size: 12px; color: var(--soft)">ยืนยันแล้ว {{count}} ชิ้น</span>
+    </div>
+    <sc-if value="{{emptyCart}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 22px; border-radius: 22px; background: var(--surface); border: 1px dashed var(--line); text-align: center; display: flex; flex-direction: column; gap: 4px">
+        <b style="font-size: 15px; font-weight: 600">ตะกร้ายังว่างอยู่</b>
+        <span style="font-size: 13px; color: var(--soft)">หยิบสินค้าจากชั้น รายการจะขึ้นที่นี่เอง</span>
+      </div>
+    </sc-if>
+    <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+      <div style="display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 10px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line)">
+        <span style="{{l.tile}}">
+          <sc-if value="{{l.isCoke}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"></path><path d="M5 8h14"></path><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"></path><path d="m12 8 1-6h2"></path></svg></sc-if>
+          <sc-if value="{{l.isWater}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"></path><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"></path></svg></sc-if>
+        </span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <b style="font-size: 15px; font-weight: 600">{{l.name}}</b>
+          <span style="font-size: 12px; color: var(--soft)">{{l.unit}} · ×{{l.qty}} <span style="color: var(--ok); font-weight: 600">· ยืนยันแล้ว</span></span>
+        </div>
+        <strong style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; padding-right: 6px">{{l.sub}}</strong>
+      </div>
+    </sc-for>
+  </section>
+
+  <section aria-labelledby="feed-h" style="display: flex; flex-direction: column; gap: 4px">
+    <h2 id="feed-h" style="margin: 0; padding: 4px 4px 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .14em; color: var(--soft)">ความเคลื่อนไหว</h2>
+    <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+      <sc-for list="{{events}}" as="e" hint-placeholder-count="3">
+        <li style="display: grid; grid-template-columns: 62px 26px 1fr; gap: 6px; padding: 6px 0">
+          <time style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft); padding-top: 4px">{{e.t}}</time>
+          <span style="{{e.node}}"></span>
+          <span style="display: flex; flex-direction: column"><b style="{{e.titleStyle}}">{{e.title}}</b><span style="font-size: 12px; color: var(--soft)">{{e.note}}</span></span>
+        </li>
+      </sc-for>
+    </ol>
+  </section>
+
+  <section aria-label="โหมดสาธิต" style="padding: 12px; border-radius: 18px; border: 1px dashed var(--line); display: flex; flex-direction: column; gap: 8px">
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft)">โหมดสาธิต · แทนสัญญาณจากชั้นวาง</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <button onClick="{{simClear}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12px 'Anuphan', sans-serif; cursor: pointer">หยิบ Coke (ชัดเจน)</button>
+      <button onClick="{{simAmbiguous}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12px 'Anuphan', sans-serif; cursor: pointer">หยิบน้ำ (ไม่แน่ชัด)</button>
+      <button onClick="{{simReturn}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12px 'Anuphan', sans-serif; cursor: pointer">คืน Coke</button>
+      <button onClick="{{toggleOffline}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 12px 'Anuphan', sans-serif; cursor: pointer">ตัด/ต่อการเชื่อมต่อ</button>
+    </div>
+  </section>
+
+  <div style="position: sticky; bottom: 0; margin: 4px -18px 0; padding: 14px 18px 14px; background: var(--fade)">
+    <p id="pay-reason" style="margin: 0 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; color: var(--soft)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>{{payReason}}
+    </p>
+    <button onClick="{{goCheckout}}" disabled="{{payDisabled}}" aria-describedby="pay-reason" style="{{payStyle}}"><span>ไปชำระเงิน</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700">{{totalMoney}}</span></button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ CHECKOUT ============ -->
+<sc-if value="{{isCheckout}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 18px 18px 22px; display: flex; flex-direction: column; gap: 16px">
+  <header style="display: flex; align-items: center; gap: 10px">
+    <button onClick="{{backToShop}}" aria-label="กลับไปที่ตะกร้า" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+    <h1 style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 700">ตรวจสอบก่อนชำระ</h1>
+  </header>
+  <section aria-label="รายการ" style="padding: 18px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--soft)"><span>Basket {{basket}} · {{count}} ชิ้น</span><span>ยืนยันแล้วทุกรายการ</span></div>
+    <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="{{l.tileSm}}">
+          <sc-if value="{{l.isCoke}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"></path><path d="M5 8h14"></path><path d="m12 8 1-6h2"></path></svg></sc-if>
+          <sc-if value="{{l.isWater}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.116 4.104A1 1 0 0 1 6.11 3h11.78a1 1 0 0 1 .994 1.105L17.19 20.21A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.79z"></path></svg></sc-if>
+        </span>
+        <span style="flex: 1; font-size: 15px">{{l.name}} <span style="color: var(--soft)">×{{l.qty}}</span></span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{l.sub}}</span>
+      </div>
+    </sc-for>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; padding-top: 12px; border-top: 1px dashed var(--line)"><b style="font-size: 16px">ยอดชำระ</b><strong style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700">{{totalMoney}}</strong></div>
+  </section>
+  <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+    <legend style="font-size: 15px; font-weight: 700; margin-bottom: 8px">วิธีชำระเงิน</legend>
+    <sc-for list="{{payMethods}}" as="pm" hint-placeholder-count="2">
+      <button onClick="{{pm.pick}}" aria-pressed="{{pm.on}}" style="{{pm.style}}">
+        <span style="{{pm.radio}}"></span>
+        <span style="flex: 1; display: flex; flex-direction: column; text-align: left"><b style="font-size: 15px">{{pm.label}}</b><span style="font-size: 12.5px; color: var(--soft)">{{pm.note}}</span></span>
+      </button>
+    </sc-for>
+  </fieldset>
+  <p style="margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--surface2); font-size: 12.5px; color: var(--soft)">การชำระเงินจำลอง · ไม่มีการเรียกเก็บเงินจริงในต้นแบบนี้</p>
+  <span style="flex: 1"></span>
+  <button onClick="{{pay}}" style="{{confirmStyle}}">
+    <sc-if value="{{paying}}" hint-placeholder-val="{{ false }}"><span>กำลังชำระเงิน…</span></sc-if>
+    <sc-if value="{{notPaying}}" hint-placeholder-val="{{ true }}"><span>ยืนยันชำระ {{totalMoney}}</span></sc-if>
+  </button>
+</div>
+</sc-if>
+
+<!-- ============ RECEIPT ============ -->
+<sc-if value="{{isReceipt}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 36px 20px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px">
+  <span style="width: 76px; height: 76px; border-radius: 50%; background: var(--cta); color: var(--cta-ink); display: grid; place-items: center; box-shadow: var(--cta-glow)">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg>
+  </span>
+  <div style="text-align: center; display: flex; flex-direction: column; gap: 4px">
+    <h1 style="margin: 0; font-family: var(--display); font-size: 28px; font-weight: 700">ชำระเรียบร้อย</h1>
+    <p style="margin: 0; font-size: 14px; color: var(--soft)">ปิด session ของ Basket {{basket}} แล้ว · วางตะกร้าคืนได้เลย</p>
+  </div>
+  <section aria-label="ใบเสร็จ" style="width: 100%; box-sizing: border-box; padding: 20px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--soft); padding-bottom: 10px; border-bottom: 1px dashed var(--line)"><span>ORDER MOCK-DEMO-001</span><span>23/10 · 10:33</span></div>
+    <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+      <div style="display: flex; align-items: baseline; gap: 8px; font-size: 15px"><span>{{l.name}} ×{{l.qty}}</span><span style="flex: 1; border-bottom: 1.5px dotted var(--line)"></span><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{l.sub}}</span></div>
+    </sc-for>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; padding-top: 12px; border-top: 3px double var(--ink)">
+      <b style="font-size: 17px; font-weight: 700">รวม</b>
+      <strong style="font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700">{{totalMoney}}</strong>
+    </div>
+    <p style="margin: 0; font-size: 12px; color: var(--soft)">{{payMethodLabel}} · การชำระเงินจำลอง</p>
+  </section>
+  <sc-if value="{{isGuest}}" hint-placeholder-val="{{ true }}">
+    <div style="width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--info-bg); color: var(--info)">
+      <span style="flex: 1; font-size: 13px; line-height: 1.5">ใบเสร็จนี้เก็บไว้ในเครื่องนี้เท่านั้น เข้าสู่ระบบด้วยเบอร์โทรเพื่อเก็บไว้ดูทุกเครื่อง</span>
+      <button onClick="{{toLogin}}" style="min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid currentColor; background: transparent; color: var(--info); font: 600 13px 'Anuphan', sans-serif; cursor: pointer; white-space: nowrap">เข้าสู่ระบบ</button>
+    </div>
+  </sc-if>
+  <button onClick="{{newSession}}" style="width: 100%; min-height: 54px; border-radius: 18px; border: 0; background: var(--strong); color: var(--strong-ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">เตรียมช้อปครั้งใหม่</button>
+  <button onClick="{{goHistory}}" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 13.5px 'Anuphan', sans-serif; cursor: pointer">ดูใบเสร็จทั้งหมด</button>
+</div>
+</sc-if>
+
+<!-- ============ HISTORY ============ -->
+<sc-if value="{{isHistory}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 22px 18px 22px; display: flex; flex-direction: column; gap: 14px">
+  <h1 style="margin: 0; font-family: var(--display); font-size: 28px; font-weight: 700">ใบเสร็จ</h1>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+    <div style="padding: 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; color: var(--soft)">ใช้จ่ายเดือนนี้</span><strong style="font-family: 'JetBrains Mono', monospace; font-size: 24px">{{monthTotal}}</strong></div>
+    <div style="padding: 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; color: var(--soft)">จำนวนครั้ง</span><strong style="font-family: 'JetBrains Mono', monospace; font-size: 24px">{{orderCount}}</strong></div>
+  </div>
+  <sc-if value="{{isGuest}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--info-bg); color: var(--info)">
+      <span style="flex: 1; font-size: 13px; line-height: 1.5">โหมด Guest แสดงเฉพาะใบเสร็จในเครื่องนี้</span>
+      <button onClick="{{toLogin}}" style="min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid currentColor; background: transparent; color: var(--info); font: 600 13px 'Anuphan', sans-serif; cursor: pointer">เข้าสู่ระบบ</button>
+    </div>
+  </sc-if>
+  <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{orders}}" as="od" hint-placeholder-count="3">
+      <li style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line)">
+        <span style="width: 44px; height: 44px; border-radius: 14px; background: var(--surface2); color: var(--accent-text); display: grid; place-items: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M8 7h8"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column"><b style="font-size: 15px">{{od.date}}</b><span style="font-size: 12.5px; color: var(--soft)">{{od.meta}}</span></span>
+        <strong style="font-family: 'JetBrains Mono', monospace; font-size: 17px">{{od.total}}</strong>
+      </li>
+    </sc-for>
+  </ol>
+</div>
+</sc-if>
+
+<!-- ============ PROFILE ============ -->
+<sc-if value="{{isProfile}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 22px 18px 22px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 24px; background: var(--hero); color: var(--hero-ink)">
+    <span style="width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 22px; font-weight: 700">{{avatar}}</span>
+    <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><b style="font-family: var(--display); font-size: 20px">{{userName}}</b><span style="font-size: 13px; opacity: .9">{{userSub}}</span></span>
+  </div>
+  <sc-if value="{{isGuest}}" hint-placeholder-val="{{ true }}">
+    <button onClick="{{toLogin}}" style="min-height: 54px; border-radius: 18px; border: 0; background: var(--cta); color: var(--cta-ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">เข้าสู่ระบบด้วยเบอร์โทร</button>
+  </sc-if>
+  <section aria-labelledby="set-h" style="border-radius: 22px; background: var(--surface); border: 1px solid var(--line); overflow: hidden">
+    <h2 id="set-h" style="margin: 0; padding: 14px 16px 6px; font-size: 13px; font-weight: 600; color: var(--soft)">การแสดงผล</h2>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px 14px">
+      <span style="font-size: 15px">ธีม</span>
+      <div role="group" aria-label="ธีม" style="display: flex; gap: 2px; padding: 4px; border-radius: 12px; background: var(--surface2)">
+        <button onClick="{{setDay}}" aria-pressed="{{dayPressed}}" style="{{dayBtn}}">ปกติ</button>
+        <button onClick="{{setNight}}" aria-pressed="{{nightPressed}}" style="{{nightBtn}}">Night</button>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid var(--line)"><span style="font-size: 15px">ภาษา</span><span style="font-size: 14px; color: var(--soft)">ไทย</span></div>
+    <button onClick="{{toggleNotif}}" aria-pressed="{{notifOn}}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--ink); font: 400 15px 'Anuphan', sans-serif; cursor: pointer"><span>แจ้งเตือนเมื่อต้องยืนยันสินค้า</span><span style="{{notifTrack}}"><span style="{{notifKnob}}"></span></span></button>
+  </section>
+  <section aria-labelledby="help-h" style="border-radius: 22px; background: var(--surface); border: 1px solid var(--line); overflow: hidden">
+    <h2 id="help-h" style="margin: 0; padding: 14px 16px 6px; font-size: 13px; font-weight: 600; color: var(--soft)">ช่วยเหลือ</h2>
+    <button onClick="{{openHelp}}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 14px; border: 0; background: transparent; color: var(--ink); font: 400 15px 'Anuphan', sans-serif; cursor: pointer"><span>เรียกพนักงาน</span><span style="color: var(--soft)">›</span></button>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid var(--line)"><span style="font-size: 15px">FAST ทำงานอย่างไร</span><span style="color: var(--soft)">›</span></div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid var(--line)"><span style="font-size: 15px">เวอร์ชัน</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--soft)">prototype 0.3</span></div>
+  </section>
+  <button onClick="{{logout}}" style="min-height: 50px; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--warn); font: 600 15px 'Anuphan', sans-serif; cursor: pointer">{{logoutLabel}}</button>
+</div>
+</sc-if>
+
+<!-- ============ TAB BAR ============ -->
+<sc-if value="{{showTabs}}" hint-placeholder-val="{{ false }}">
+  <nav aria-label="เมนูหลัก" style="flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px 10px 14px; background: var(--surface); border-top: 1px solid var(--line)">
+    <sc-for list="{{tabItems}}" as="ti" hint-placeholder-count="3">
+      <button onClick="{{ti.go}}" aria-current="{{ti.current}}" style="{{ti.style}}">
+        <span style="{{ti.pill}}">
+          <sc-if value="{{ti.isCart}}" hint-placeholder-val="{{ true }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 11-1 9"></path><path d="m19 11-4-7"></path><path d="M2 11h20"></path><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"></path><path d="m5 11 4-7"></path><path d="m9 11 1 9"></path></svg></sc-if>
+          <sc-if value="{{ti.isReceipt}}" hint-placeholder-val="{{ false }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M8 7h8"></path><path d="M8 11h8"></path></svg></sc-if>
+          <sc-if value="{{ti.isMe}}" hint-placeholder-val="{{ false }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg></sc-if>
+          <sc-if value="{{ti.badge}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: -6px; top: -4px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--warn); color: var(--bg); font: 700 11px 'JetBrains Mono', monospace; display: grid; place-items: center">{{ti.badge}}</span></sc-if>
+        </span>
+        <span>{{ti.label}}</span>
+      </button>
+    </sc-for>
+  </nav>
+</sc-if>
+
+<!-- ============ SHEETS & TOAST ============ -->
+<sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="position: absolute; left: 18px; right: 18px; top: 16px; z-index: 30; padding: 12px 16px; border-radius: 16px; background: var(--strong); color: var(--strong-ink); font-size: 14px; font-weight: 500; box-shadow: 0 12px 30px -12px rgba(0,0,0,.5)">{{toast}}</div>
+</sc-if>
+<sc-if value="{{helpOpen}}" hint-placeholder-val="{{ false }}">
+  <div style="position: absolute; inset: 0; z-index: 20; background: rgba(10,8,6,.5); display: flex; align-items: flex-end">
+    <section role="dialog" aria-modal="true" aria-labelledby="help-title" style="width: 100%; box-sizing: border-box; padding: 12px 18px 24px; border-radius: 28px 28px 0 0; background: var(--surface); display: flex; flex-direction: column; gap: 10px">
+      <span style="align-self: center; width: 40px; height: 5px; border-radius: 9px; background: var(--line); margin-bottom: 6px"></span>
+      <h2 id="help-title" style="margin: 0; font-family: var(--display); font-size: 21px; font-weight: 700">ต้องการความช่วยเหลือ?</h2>
+      <button onClick="{{callStaff}}" style="min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer; text-align: left"><span style="width: 36px; height: 36px; border-radius: 12px; background: var(--info-bg); color: var(--info); display: grid; place-items: center">!</span>เรียกพนักงานมาที่ตะกร้า</button>
+      <button onClick="{{reportWrong}}" style="min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer; text-align: left"><span style="width: 36px; height: 36px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); display: grid; place-items: center">?</span>รายการในตะกร้าไม่ถูกต้อง</button>
+      <button onClick="{{leaveBasket}}" style="min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 600 15px 'Anuphan', sans-serif; cursor: pointer; text-align: left"><span style="width: 36px; height: 36px; border-radius: 12px; background: var(--surface2); display: grid; place-items: center">↩</span>เลิกใช้ตะกร้านี้</button>
+      <button onClick="{{closeHelp}}" style="min-height: 48px; border-radius: 16px; border: 0; background: transparent; color: var(--soft); font: 500 15px 'Anuphan', sans-serif; cursor: pointer">ปิด</button>
+    </section>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["day","night"],"default":"day"},"scenario":{"editor":"enum","options":["login","otp","connect","scan","pending","multi","return","staff","offline","ready","checkout","receipt","history","profile","help"],"default":"login"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  products() {
+    return {
+      COKE: { name: 'Coca-Cola', unit: '฿25 / กระป๋อง', price: 25, lane: '01' },
+      WATER: { name: 'น้ำดื่ม', unit: '฿15 / ขวด', price: 15, lane: '02' }
+    };
+  }
+  baseEvents() {
+    return [
+      { t: '10:27:40', kind: 'ok', title: 'หยิบ น้ำดื่ม ×2', note: 'ยืนยันอัตโนมัติ · สัญญาณห่าง 21 dB' },
+      { t: '10:26:02', kind: 'ok', title: 'หยิบ Coca-Cola', note: 'ยืนยันอัตโนมัติ · สัญญาณห่าง 18 dB' },
+      { t: '10:24:15', kind: 'start', title: 'เริ่ม session', note: 'Basket A · สแกน QR' }
+    ];
+  }
+  init() {
+    const sc = this.props.scenario || 'login';
+    const s = { screen: 'shop', loginStep: 'phone', user: 'member', basket: 'A', lines: [{ sku: 'COKE', qty: 1 }, { sku: 'WATER', qty: 2 }], cases: [], staff: 0, offline: false, events: this.baseEvents(), clock: 31, pay: 'qr', paid: 0, help: false, notif: true };
+    if (sc === 'login') { s.screen = 'login'; s.user = null; s.lines = []; s.events = []; }
+    if (sc === 'otp') { s.screen = 'login'; s.loginStep = 'otp'; s.user = null; s.phone = '0812345678'; }
+    if (sc === 'connect') { s.screen = 'connect'; s.user = 'guest'; s.lines = []; s.events = []; }
+    if (sc === 'scan') { s.screen = 'scan'; }
+    if (sc === 'pending') { s.cases = [{ sku: 'COKE', kind: 'PICK' }]; s.events = [{ t: '10:31:08', kind: 'wait', title: 'หยิบ Coca-Cola', note: 'รอคุณยืนยัน · สัญญาณใกล้กัน' }].concat(s.events); }
+    if (sc === 'multi') { s.cases = [{ sku: 'COKE', kind: 'PICK' }, { sku: 'WATER', kind: 'PUT_BACK' }]; s.events = [{ t: '10:31:20', kind: 'wait', title: 'คืน น้ำดื่ม', note: 'รอคุณยืนยัน' }, { t: '10:31:08', kind: 'wait', title: 'หยิบ Coca-Cola', note: 'รอคุณยืนยัน' }].concat(s.events); }
+    if (sc === 'return') { s.cases = [{ sku: 'WATER', kind: 'PUT_BACK' }]; s.events = [{ t: '10:31:20', kind: 'wait', title: 'คืน น้ำดื่ม', note: 'รอคุณยืนยัน' }].concat(s.events); }
+    if (sc === 'staff') { s.staff = 1; s.events = [{ t: '10:31:40', kind: 'staff', title: 'ส่งให้พนักงานตรวจ', note: 'คุณตอบว่าไม่ใช่ของคุณ' }].concat(s.events); }
+    if (sc === 'offline') { s.offline = true; }
+    if (sc === 'checkout') { s.screen = 'checkout'; }
+    if (sc === 'receipt') { s.screen = 'receipt'; s.user = 'guest'; s.paid = 1; }
+    if (sc === 'history') { s.screen = 'history'; s.paid = 1; }
+    if (sc === 'profile') { s.screen = 'profile'; s.user = 'guest'; }
+    if (sc === 'help') { s.help = true; }
+    return s;
+  }
+  getS() { return (this.state && this.state.s) || this.init(); }
+  put(patch) { this.setState({ s: Object.assign({}, this.getS(), patch) }); }
+  now(s) { const c = (s.clock || 31) + 1; return { c: c, t: '10:' + String(c).padStart(2, '0') + ':' + String((c * 7) % 60).padStart(2, '0') }; }
+  addLine(lines, sku, d) {
+    const found = lines.find(function (l) { return l.sku === sku; });
+    if (!found) return d > 0 ? lines.concat([{ sku: sku, qty: d }]) : lines;
+    return lines.map(function (l) { return l.sku === sku ? { sku: sku, qty: Math.max(0, l.qty + d) } : l; }).filter(function (l) { return l.qty > 0; });
+  }
+  theme(mode) {
+    if (mode === 'night') return {
+      '--bg': '#141210', '--surface': '#1d1a17', '--surface2': '#27231f', '--ink': '#efe8e0', '--soft': '#a89d92', '--line': '#342f2a',
+      '--accent-text': '#f39a62', '--hi': '#ee8747', '--track': '#2e2925', '--warn': '#e9c46a', '--warn-bg': '#2d2616', '--ok': '#7fcf9f', '--ok-bg': '#182a20',
+      '--info': '#93b7f0', '--info-bg': '#1a2232', '--mint': '#6fc7b4', '--cta': '#ee8747', '--cta-ink': '#1a0f08', '--strong': '#efe8e0', '--strong-ink': '#141210',
+      '--shadow': '0 0 0 1px #342f2a', '--cta-glow': 'none', '--fade': 'linear-gradient(180deg, rgba(20,18,16,0), #141210 32%)',
+      '--hero': 'linear-gradient(140deg, #3a2417, #1d1a17)', '--hero-ink': '#f6e7da',
+      '--display': "'Chakra Petch', 'Anuphan', sans-serif", 'background': '#141210'
+    };
+    return {
+      '--bg': '#f1ebe3', '--surface': '#fbf8f4', '--surface2': '#ece3d8', '--ink': '#2b2420', '--soft': '#6f6258', '--line': '#e2d8cb',
+      '--accent-text': '#b4471a', '--hi': '#f47b3c', '--track': '#e2d8cb', '--warn': '#a14a06', '--warn-bg': '#fdebd3', '--ok': '#2c7a4b', '--ok-bg': '#e1f1e6',
+      '--info': '#2f5ea8', '--info-bg': '#e6eefc', '--mint': '#1f7f68', '--cta': '#c4521a', '--cta-ink': '#ffffff', '--strong': '#2b2420', '--strong-ink': '#ffffff',
+      '--shadow': '0 10px 30px -18px rgba(107,75,46,.45)', '--cta-glow': '0 12px 24px -12px rgba(196,82,26,.8)', '--fade': 'linear-gradient(180deg, rgba(241,235,227,0), #f1ebe3 32%)',
+      '--hero': 'linear-gradient(140deg, #d9622a, #9a3a10)', '--hero-ink': '#ffffff',
+      '--display': "'Anuphan', sans-serif", 'background': '#f1ebe3'
+    };
+  }
+  arc(mode, confirmed, pending) {
+    const n = 13, out = [];
+    const sum = confirmed + pending;
+    const filled = sum ? Math.round(confirmed / sum * n) : 0;
+    for (let i = 0; i < n; i++) {
+      const angle = -100 + 200 / (n - 1) * i;
+      let fill = mode === 'night' ? '#2e2925' : '#e2d8cb';
+      if (sum && i < filled) fill = mode === 'night' ? 'hsl(' + (18 + i * 1.3) + ' 74% ' + (50 + i * 0.9) + '%)' : 'hsl(' + (16 + i * 1.5) + ' 84% ' + (50 + i * 0.9) + '%)';
+      else if (sum && pending) fill = mode === 'night' ? '#4d3523' : '#f6c7a4';
+      out.push({ fill: fill, tf: 'rotate(' + angle + ' 150 160)' });
+    }
+    return out;
+  }
+  tile(mode, sku, size, radius) {
+    const t = mode === 'night'
+      ? (sku === 'COKE' ? ['#2e1c19', '#ff9a8a'] : ['#17222e', '#8cc0f0'])
+      : (sku === 'COKE' ? ['#ffe1dc', '#c62d26'] : ['#dcefff', '#1f6fb0']);
+    return 'width: ' + size + 'px; height: ' + size + 'px; border-radius: ' + radius + 'px; background: ' + t[0] + '; color: ' + t[1] + '; display: grid; place-items: center; flex-shrink: 0';
+  }
+  renderVals() {
+    const self = this;
+    const mode = (this.state && this.state.mode) || this.props.mode || 'day';
+    const night = mode === 'night';
+    const s = this.getS();
+    const P = this.products();
+    const th = this.theme(mode);
+    const money = function (n) { return '฿' + n.toLocaleString('th-TH'); };
+    const total = s.lines.reduce(function (a, l) { return a + P[l.sku].price * l.qty; }, 0);
+    const count = s.lines.reduce(function (a, l) { return a + l.qty; }, 0);
+    const c = s.cases[0];
+    const pendingValue = s.cases.reduce(function (a, k) { return a + (k.kind === 'PICK' ? P[k.sku].price : 0); }, 0);
+    const blocked = s.offline ? 'เชื่อมต่อใหม่ก่อนยืนยันยอดล่าสุด'
+      : s.cases.length ? 'ยืนยันรายการที่รออยู่ก่อนชำระเงิน'
+      : s.staff ? 'รอพนักงานตรวจสอบ ' + s.staff + ' รายการ'
+      : !s.lines.length ? 'ยังไม่มีสินค้าที่ยืนยันแล้ว' : '';
+    const payDisabled = Boolean(blocked);
+    const pushEvent = function (cur, ev) { const n = self.now(cur); return { clock: n.c, events: [Object.assign({ t: n.t }, ev)].concat(cur.events) }; };
+    const startWith = function (id) { self.put({ screen: 'shop', basket: id, lines: [], cases: [], staff: 0, offline: false, clock: 24, events: [{ t: '10:24:15', kind: 'start', title: 'เริ่ม session', note: 'Basket ' + id }] }); };
+    const toast = function (msg) { self.setState({ toast: msg }); setTimeout(function () { self.setState({ toast: '' }); }, 2400); };
+    const nodeColor = { ok: 'var(--mint)', wait: 'var(--warn)', staff: 'var(--info)', start: 'var(--hi)' };
+    const guest = s.user !== 'member';
+    const inSession = ['shop', 'checkout'].indexOf(s.screen) >= 0 || (s.screen === 'history' && s.lines.length && !s.paid) || (s.screen === 'profile' && s.lines.length && !s.paid);
+    const cartScreen = s.screen === 'connect' || s.screen === 'shop';
+    const segBtn = function (on) { return 'min-height: 36px; padding: 0 14px; border-radius: 9px; border: 0; cursor: pointer; font: ' + (on ? '600' : '500') + ' 13px \'Anuphan\', sans-serif; ' + (on ? 'background: var(--surface); color: var(--ink); box-shadow: 0 2px 6px -3px rgba(0,0,0,.35)' : 'background: transparent; color: var(--soft)'); };
+    const digits = (s.otp || '482916').split('');
+    const phone = s.phone || '';
+    const orders = (guest ? [] : [{ date: '21 ต.ค. · 18:42', meta: 'Basket B · 2 ชิ้น', total: '฿40' }, { date: '18 ต.ค. · 09:15', meta: 'Basket A · 1 ชิ้น', total: '฿25' }, { date: '12 ต.ค. · 20:03', meta: 'Basket A · 3 ชิ้น', total: '฿55' }]);
+    const allOrders = (s.paid ? [{ date: 'วันนี้ · 10:33', meta: 'Basket ' + s.basket + ' · ' + count + ' ชิ้น · MOCK-DEMO-001', total: money(total) }] : []).concat(orders);
+    const monthSum = (s.paid ? total : 0) + (guest ? 0 : 120);
+    return {
+      rootStyle: 'width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; color: var(--ink); font-family: \'Anuphan\', sans-serif; ' + Object.keys(th).map(function (k) { return k + ': ' + th[k]; }).join('; '),
+      isDay: !night, isNight: night,
+      modeLabel: night ? 'เปลี่ยนเป็นโหมดปกติ' : 'เปลี่ยนเป็น Night mode',
+      toggleMode: function () { self.setState({ mode: night ? 'day' : 'night' }); },
+      setDay: function () { self.setState({ mode: 'day' }); }, setNight: function () { self.setState({ mode: 'night' }); },
+      dayPressed: night ? 'false' : 'true', nightPressed: night ? 'true' : 'false', dayBtn: segBtn(!night), nightBtn: segBtn(night),
+      isLogin: s.screen === 'login', isConnect: s.screen === 'connect', isScan: s.screen === 'scan', isShop: s.screen === 'shop',
+      isCheckout: s.screen === 'checkout', isReceipt: s.screen === 'receipt', isHistory: s.screen === 'history', isProfile: s.screen === 'profile',
+
+      introArc: this.arc(mode, 1, 0),
+      loginPhone: s.loginStep !== 'otp', loginOtp: s.loginStep === 'otp',
+      phone: phone,
+      setPhone: function (e) { self.put({ phone: (e && e.target ? e.target.value : '').replace(/[^0-9 ]/g, '') }); },
+      phoneError: s.phoneError || '',
+      requestOtp: function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const d = phone.replace(/\D/g, '');
+        if (d.length !== 10 || d[0] !== '0') return self.put({ phoneError: 'กรอกเบอร์มือถือ 10 หลัก เช่น 0812345678' });
+        self.put({ loginStep: 'otp', phoneError: '' });
+      },
+      phoneMasked: (function () { const d = phone.replace(/\D/g, '') || '0812345678'; return d.slice(0, 3) + '-xxx-' + d.slice(6); })(),
+      otpBoxes: digits.map(function (d, i) { return { d: d, style: 'height: 54px; border-radius: 14px; display: grid; place-items: center; font: 700 22px \'JetBrains Mono\', monospace; background: var(--surface); border: ' + (i === 5 ? '2px solid var(--hi)' : '1px solid var(--line)') }; }),
+      verifyOtp: function (e) { if (e && e.preventDefault) e.preventDefault(); self.put({ user: 'member', screen: 'connect', loginStep: 'phone', lines: [], events: [] }); },
+      backToPhone: function () { self.put({ loginStep: 'phone' }); },
+      asGuest: function () { self.put({ user: 'guest', screen: 'connect', lines: [], events: [] }); },
+      toLogin: function () { self.put({ screen: 'login', loginStep: 'phone' }); },
+
+      avatar: guest ? 'G' : 'ส',
+      userName: guest ? 'Guest' : 'สมาชิก 081-xxx-5678',
+      userSub: guest ? 'ใบเสร็จเก็บไว้ในเครื่องนี้เท่านั้น' : 'เข้าสู่ระบบด้วยเบอร์โทร',
+      userTag: guest ? 'Guest' : 'สมาชิก',
+      userChip: 'padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; ' + (guest ? 'background: var(--surface2); color: var(--soft)' : 'background: var(--ok-bg); color: var(--ok)'),
+      basket: s.basket,
+      basketOptions: ['A', 'B'].map(function (id) {
+        const sel = s.basket === id;
+        return { id: id, selected: sel ? 'true' : 'false', pick: function () { self.put({ basket: id }); },
+          style: 'height: 108px; border-radius: 22px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 2px; padding: 14px; text-align: left; font-family: inherit; color: var(--ink); background: var(--surface); ' + (sel ? 'border: 2px solid var(--hi); box-shadow: var(--shadow)' : 'border: 1px solid var(--line)') };
+      }),
+      openScan: function () { self.put({ screen: 'scan' }); },
+      closeScan: function () { self.put({ screen: 'connect' }); },
+      start: function () { startWith(s.basket); },
+      startA: function () { startWith('A'); },
+      startB: function () { startWith('B'); },
+
+      offline: s.offline,
+      liveText: s.offline ? 'OFFLINE' : 'LIVE',
+      liveStyle: 'display: inline-flex; align-items: center; gap: 5px; margin-left: 4px; font-family: \'JetBrains Mono\', monospace; font-size: 10.5px; font-weight: 600; color: ' + (s.offline ? 'var(--warn)' : 'var(--mint)'),
+      liveDot: 'width: 7px; height: 7px; border-radius: 50%; background: ' + (s.offline ? 'var(--warn)' : 'var(--mint)'),
+      reconnect: function () { self.put({ offline: false }); },
+      toggleOffline: function () { self.put({ offline: !s.offline }); },
+      gaugeWrap: 'position: relative; margin: -4px 0 0;' + (s.offline ? ' opacity: .55' : ''),
+      arc: this.arc(mode, total, pendingValue),
+      count: count,
+      totalText: total.toFixed(2),
+      totalMoney: money(total),
+      gaugeNote: s.cases.length ? '+' + money(pendingValue) + ' รอยืนยัน · ' + s.cases.length + ' รายการ' : s.staff ? 'พนักงานกำลังตรวจ ' + s.staff + ' รายการ' : s.lines.length ? 'ทุกรายการยืนยันแล้ว' : 'เริ่มหยิบสินค้าได้เลย',
+      gaugeNoteStyle: 'font-size: 12.5px; font-weight: 600; color: ' + (s.cases.length ? 'var(--warn)' : s.staff ? 'var(--info)' : 'var(--ok)'),
+      bars: [8, 12, 16, 20, 24].map(function (h, i) { return { style: 'width: 5px; height: ' + h + 'px; border-radius: 2px; background: ' + (i < (s.offline ? 1 : 4) ? (s.offline ? 'var(--warn)' : 'var(--mint)') : 'var(--track)') }; }),
+      hasCase: Boolean(c),
+      askStyle: 'display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 26px; background: var(--surface); ' + (night ? 'border: 1.5px solid #6b5426' : 'border: 1.5px solid #f6c7a4; box-shadow: var(--shadow)'),
+      caseTag: c && c.kind === 'PUT_BACK' ? 'PUT BACK DETECTED' : 'PICK DETECTED',
+      caseLane: c ? 'LANE ' + P[c.sku].lane : '',
+      caseCounter: s.cases.length > 1 ? ' · 1/' + s.cases.length : '',
+      caseTile: c ? this.tile(mode, c.sku, 60, 18) : '',
+      caseIsCoke: Boolean(c && c.sku === 'COKE'), caseIsWater: Boolean(c && c.sku === 'WATER'),
+      caseVerb: c && c.kind === 'PUT_BACK' ? 'คืน' : 'หยิบ',
+      caseName: c ? P[c.sku].name : '',
+      caseExplain: c && c.kind === 'PUT_BACK' ? 'ตะกร้า 2 ใบอยู่ใกล้ชั้น · จะนำออกหลังคุณยืนยันเท่านั้น' : 'ตะกร้า 2 ใบอยู่ใกล้ชั้น · รายการนี้ยังไม่รวมในยอด',
+      answerYes: function () {
+        if (!c) return;
+        self.put(Object.assign({ cases: s.cases.slice(1), lines: self.addLine(s.lines, c.sku, c.kind === 'PUT_BACK' ? -1 : 1) }, pushEvent(s, { kind: 'ok', title: (c.kind === 'PUT_BACK' ? 'คืน ' : 'หยิบ ') + P[c.sku].name, note: 'ยืนยันโดยคุณ' })));
+      },
+      answerNo: function () {
+        if (!c) return;
+        self.put(Object.assign({ cases: s.cases.slice(1), staff: s.staff + 1 }, pushEvent(s, { kind: 'staff', title: 'ส่งให้พนักงานตรวจ', note: P[c.sku].name + ' · คุณตอบว่าไม่ใช่' })));
+      },
+      hasStaff: s.staff > 0,
+      staff: s.staff,
+      staffResolve: function () { self.put(Object.assign({ staff: 0 }, pushEvent(s, { kind: 'ok', title: 'พนักงานปิดเคส', note: 'ไม่เปลี่ยนรายการในตะกร้า' }))); },
+      emptyCart: !s.lines.length,
+      lines: s.lines.map(function (l) {
+        return { name: P[l.sku].name, unit: P[l.sku].unit, qty: l.qty, sub: money(P[l.sku].price * l.qty), isCoke: l.sku === 'COKE', isWater: l.sku === 'WATER', tile: self.tile(mode, l.sku, 48, 16), tileSm: self.tile(mode, l.sku, 34, 11) };
+      }),
+      events: s.events.map(function (e) {
+        return Object.assign({}, e, {
+          node: 'width: 12px; height: 12px; margin: 6px 0 0 6px; border-radius: 50%; border: 2px solid ' + nodeColor[e.kind] + (e.kind === 'wait' ? '; background: ' + nodeColor[e.kind] : ''),
+          titleStyle: 'font-size: 13.5px; font-weight: 600; color: ' + (e.kind === 'wait' ? 'var(--warn)' : e.kind === 'staff' ? 'var(--info)' : 'var(--ink)')
+        });
+      }),
+      simClear: function () { self.put(Object.assign({ lines: self.addLine(s.lines, 'COKE', 1) }, pushEvent(s, { kind: 'ok', title: 'หยิบ Coca-Cola', note: 'ยืนยันอัตโนมัติ · สัญญาณชัด' }))); },
+      simAmbiguous: function () { self.put(Object.assign({ cases: s.cases.concat([{ sku: 'WATER', kind: 'PICK' }]) }, pushEvent(s, { kind: 'wait', title: 'หยิบ น้ำดื่ม', note: 'รอคุณยืนยัน · สัญญาณใกล้กัน' }))); },
+      simReturn: function () { self.put(Object.assign({ cases: s.cases.concat([{ sku: 'COKE', kind: 'PUT_BACK' }]) }, pushEvent(s, { kind: 'wait', title: 'คืน Coca-Cola', note: 'รอคุณยืนยัน' }))); },
+      payReason: blocked || 'ยอดรวมเฉพาะสินค้าที่ยืนยันแล้ว',
+      payDisabled: payDisabled,
+      payStyle: 'width: 100%; height: 58px; border-radius: 20px; border: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font: 600 16px \'Anuphan\', sans-serif; ' +
+        (payDisabled ? 'background: var(--surface2); color: var(--soft); cursor: not-allowed' : 'background: var(--cta); color: var(--cta-ink); cursor: pointer; box-shadow: var(--cta-glow)'),
+      goCheckout: function () { if (!payDisabled) self.put({ screen: 'checkout' }); },
+      backToShop: function () { self.put({ screen: 'shop' }); },
+      payMethods: [['qr', 'สแกน QR ชำระเงิน', 'จ่ายผ่านแอปธนาคาร'], ['card', 'บัตรเครดิต / เดบิต', 'Visa · Mastercard · JCB']].map(function (m) {
+        const on = s.pay === m[0];
+        return { label: m[1], note: m[2], on: on ? 'true' : 'false', pick: function () { self.put({ pay: m[0] }); },
+          style: 'display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; cursor: pointer; font-family: inherit; color: var(--ink); background: var(--surface); ' + (on ? 'border: 2px solid var(--hi)' : 'border: 1px solid var(--line)'),
+          radio: 'width: 20px; height: 20px; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; ' + (on ? 'border: 6px solid var(--hi)' : 'border: 2px solid var(--line)') };
+      }),
+      payMethodLabel: s.pay === 'card' ? 'บัตรเครดิต / เดบิต' : 'สแกน QR ชำระเงิน',
+      paying: Boolean(this.state && this.state.paying), notPaying: !(this.state && this.state.paying),
+      confirmStyle: 'min-height: 58px; border-radius: 20px; border: 0; background: var(--cta); color: var(--cta-ink); font: 600 16px \'Anuphan\', sans-serif; cursor: pointer; box-shadow: var(--cta-glow)' + (this.state && this.state.paying ? '; opacity: .7' : ''),
+      pay: function () {
+        if (self.state && self.state.paying) return;
+        self.setState({ paying: true });
+        setTimeout(function () { self.setState({ paying: false, s: Object.assign({}, self.getS(), { screen: 'receipt', paid: 1 }) }); }, 1000);
+      },
+      isGuest: guest,
+      newSession: function () { self.put({ screen: 'connect', lines: [], cases: [], staff: 0, offline: false, events: [], paid: 0 }); },
+      goHistory: function () { self.put({ screen: 'history' }); },
+      orders: allOrders,
+      monthTotal: money(monthSum),
+      orderCount: String(allOrders.length),
+      notifOn: s.notif ? 'true' : 'false',
+      toggleNotif: function () { self.put({ notif: !s.notif }); },
+      notifTrack: 'position: relative; width: 46px; height: 28px; border-radius: 999px; flex-shrink: 0; background: ' + (s.notif ? 'var(--hi)' : 'var(--track)'),
+      notifKnob: 'position: absolute; top: 3px; left: ' + (s.notif ? 21 : 3) + 'px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3)',
+      logout: function () { self.put({ screen: 'login', user: null, loginStep: 'phone', lines: [], cases: [], staff: 0, events: [], paid: 0 }); },
+      logoutLabel: guest ? 'ออกจากโหมด Guest' : 'ออกจากระบบ',
+
+      showTabs: ['connect', 'shop', 'history', 'profile'].indexOf(s.screen) >= 0,
+      tabItems: [['cart', 'ตะกร้า'], ['receipt', 'ใบเสร็จ'], ['me', 'ฉัน']].map(function (t) {
+        const on = t[0] === 'cart' ? cartScreen : t[0] === 'receipt' ? s.screen === 'history' : s.screen === 'profile';
+        return { label: t[1], isCart: t[0] === 'cart', isReceipt: t[0] === 'receipt', isMe: t[0] === 'me', current: on ? 'page' : 'false',
+          badge: t[0] === 'cart' && s.cases.length && !cartScreen ? String(s.cases.length) : '',
+          go: function () { self.put({ screen: t[0] === 'cart' ? (s.events.length ? 'shop' : 'connect') : t[0] === 'receipt' ? 'history' : 'profile' }); },
+          style: 'display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 52px; border: 0; background: transparent; cursor: pointer; font: ' + (on ? '600' : '500') + ' 12px \'Anuphan\', sans-serif; color: ' + (on ? 'var(--ink)' : 'var(--soft)'),
+          pill: 'position: relative; width: 56px; height: 30px; border-radius: 999px; display: grid; place-items: center; ' + (on ? 'background: var(--surface2); color: var(--accent-text)' : '') };
+      }),
+
+      toast: (this.state && this.state.toast) || '',
+      helpOpen: Boolean(s.help),
+      openHelp: function () { self.put({ help: true }); },
+      closeHelp: function () { self.put({ help: false }); },
+      callStaff: function () { self.put({ help: false }); toast('แจ้งพนักงานแล้ว · กำลังไปที่ Basket ' + s.basket); },
+      reportWrong: function () { self.put({ help: false }); toast('ส่งเรื่องให้พนักงานตรวจตะกร้าแล้ว'); },
+      leaveBasket: function () { self.put({ help: false, screen: 'connect', lines: [], cases: [], staff: 0, events: [] }); toast('ปิด session แล้ว · วางตะกร้าคืนได้เลย'); }
+    };
+  }
+}
+</script>
+</body>
+</html>

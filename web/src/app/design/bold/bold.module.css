@@ -1,0 +1,46 @@
+.screen { --bg: #fff6e0; --ink: #141414; --yellow: #ffd23f; --pink: #ff5c8a; --blue: #3d6bff; --green: #2bd47d;
+  --b: 2.5px solid var(--ink); --sh: 4px 4px 0 var(--ink);
+  position: relative; height: 100%; overflow-y: auto; background: var(--bg) radial-gradient(#14141414 1.2px, transparent 1.3px) 0 0 / 18px 18px; color: var(--ink); padding: 52px 18px 0; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.logo { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: var(--ink); color: var(--yellow); font-weight: 600; font-size: 18px; transform: rotate(-3deg); border-radius: 8px; }
+.basket { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border: var(--b); border-radius: 999px; background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); font-weight: 500; font-size: 14px; }
+
+.totalCard { position: relative; margin-top: 20px; padding: 18px 20px; background: var(--pink); border: var(--b); border-radius: 22px; box-shadow: 6px 6px 0 var(--ink); color: #fff; }
+.totalCard small { font-size: 15px; font-weight: 500; color: var(--ink); }
+.totalCard strong { display: block; font-size: 64px; line-height: 1.05; font-weight: 600; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; letter-spacing: -.02em; }
+.sticker { position: absolute; right: 16px; top: -14px; padding: 6px 12px; background: var(--yellow); color: var(--ink); border: var(--b); border-radius: 12px; font-weight: 600; transform: rotate(6deg); }
+
+.ask { margin-top: 20px; padding: 18px; background: var(--yellow); border: var(--b); border-radius: 22px; box-shadow: var(--sh); }
+.askIcon { float: right; width: 72px; height: 72px; border: var(--b); border-radius: 18px; display: grid; place-items: center; transform: rotate(5deg); margin: -34px -6px 0 10px; box-shadow: 3px 3px 0 var(--ink); }
+.ask h2 { font-size: 23px; font-weight: 600; line-height: 1.35; }
+.ask u { text-decoration-thickness: 4px; text-decoration-color: var(--pink); text-underline-offset: 3px; }
+.ask p { font-size: 13.5px; margin-top: 4px; }
+.askBtns { clear: both; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.askBtns button, .pay button, .sim, .doneCard button { border: var(--b); box-shadow: var(--sh); transition: transform .08s, box-shadow .08s; }
+.askBtns button:active, .pay button:active, .sim:active, .doneCard button:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+.askBtns button { height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 18px; font-weight: 600; }
+.yes { background: var(--green); }
+.no { background: #fff; }
+.sim { width: 100%; margin-top: 20px; height: 54px; border-radius: 16px; background: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; }
+
+.h { font-size: 20px; font-weight: 600; margin: 26px 0 12px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile { position: relative; padding: 14px; border: var(--b); border-radius: 18px; box-shadow: var(--sh); min-height: 118px; display: flex; flex-direction: column; }
+.tile:nth-child(odd) { transform: rotate(-1deg); }
+.tile:nth-child(even) { transform: rotate(1deg); }
+.tile h3 { font-size: 16px; font-weight: 500; margin-top: auto; }
+.tile b { font-size: 20px; font-weight: 600; }
+.qty { position: absolute; right: 10px; top: 10px; padding: 2px 9px; background: #fff; border: var(--b); border-radius: 999px; font-weight: 600; font-size: 14px; }
+
+.pay { position: sticky; bottom: 0; margin: 22px -18px 0; padding: 16px 18px 28px; background: linear-gradient(180deg, transparent, var(--bg) 30%); }
+.pay p { text-align: center; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.pay button { width: 100%; height: 62px; border-radius: 18px; background: var(--blue); color: #fff; font-size: 20px; font-weight: 600; }
+.pay button:disabled { background: #e7e1cf; color: #8b8573; box-shadow: 2px 2px 0 #8b8573; border-color: #8b8573; }
+
+.done { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: #14141499; padding: 24px; }
+.doneCard { width: 100%; padding: 28px 22px; text-align: center; background: var(--green); border: var(--b); border-radius: 26px; box-shadow: 8px 8px 0 var(--ink); animation: pop .3s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes pop { from { transform: scale(.6) rotate(-6deg); } }
+.doneCard h2 { font-size: 34px; font-weight: 600; margin-top: 8px; }
+.doneCard button { margin-top: 16px; padding: 12px 26px; border-radius: 14px; background: var(--yellow); font-weight: 600; font-size: 17px; }
+.screen button:focus-visible { outline: 3px dashed var(--blue); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .doneCard { animation: none; } .askBtns button, .pay button, .sim, .doneCard button { transition: none; } }
