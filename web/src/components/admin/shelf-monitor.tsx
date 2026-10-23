@@ -1,13 +1,25 @@
+"use client";
+
+import { useState } from "react";
 import { Signal } from "lucide-react";
 import type { Shelf } from "@/lib/api/types";
 import { formatTime } from "./case-details";
 import styles from "./admin.module.css";
 
-export function ShelfMonitor({ shelf }: { shelf?: Shelf }) {
+export function ShelfMonitor({ shelves }: { shelves: Shelf[] }) {
+  const [selectedId, setSelectedId] = useState("SHELF-01");
+  const shelf = shelves.find(shelf => shelf.shelfId === selectedId) ?? shelves[0];
   const device = shelf?.device;
   const status = device?.status || "UNKNOWN";
   return <section className={styles.card} aria-labelledby="proximity-heading">
-    <div className={styles.sectionHeading}><div><h2 id="proximity-heading">สัญญาณชั้นวาง</h2></div><span className={`${styles.badge} ${status === "ONLINE" ? styles.green : styles.amber}`} data-testid="device-status">{status}</span></div>
+    <div className={styles.sectionHeading}><h2 id="proximity-heading">ชั้นวาง</h2><span className={styles.smallLabel}>เปิดใช้งาน {shelves.filter(shelf => shelf.enabled).length} / {shelves.length}</span></div>
+    <div className={styles.shelfPicker} role="group" aria-label="เลือกชั้นวาง">
+      {shelves.map(item => <button type="button" key={item.shelfId} disabled={!item.enabled} aria-pressed={selectedId === item.shelfId} onClick={() => setSelectedId(item.shelfId)}>
+        <strong>{item.label}</strong><small>{item.shelfId}</small>
+        <span className={`${styles.badge} ${!item.enabled ? styles.neutral : item.device?.status === "ONLINE" ? styles.green : styles.amber}`}>{!item.enabled ? "ยังไม่เปิดใช้" : item.device?.status === "ONLINE" ? "ออนไลน์" : item.device?.status === "OFFLINE" ? "ออฟไลน์" : "รอสัญญาณ"}</span>
+      </button>)}
+    </div>
+    <div className={styles.shelfDetailHeading}><h3>{shelf?.label}</h3><span className={`${styles.badge} ${status === "ONLINE" ? styles.green : styles.amber}`} data-testid="device-status">{status}</span></div>
     <p className={styles.muted}><Signal size={14} aria-hidden="true" /> ความใกล้ตะกร้า · RSSI</p>
     {(["A", "B", "HV01"] as const).map(id => {
       const reading = device?.rssi[id];

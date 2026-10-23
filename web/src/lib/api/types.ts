@@ -77,8 +77,10 @@ export interface RssiReadings {
 
 export interface Shelf {
   shelfId: string;
+  label?: string;
+  enabled?: boolean;
   status: string;
-  lastSeenAt: string;
+  lastSeenAt: string | null;
   fsmState: string;
   rssi: RssiReadings;
   lastEventId: string | null;
@@ -130,6 +132,7 @@ export interface Resolution {
 export interface BasketCase {
   caseId: string;
   eventId: string;
+  shelfId?: string;
   type: CaseType;
   eventType: EventType;
   sku: Sku;
@@ -154,7 +157,9 @@ export interface BasketCase {
       number: number;
       phase: "SELECT" | "OBSERVE";
       action: string;
-      source?: "MODEL";
+      source?: "MODEL" | "POLICY";
+      durationMs?: number;
+      remainingTimeMs?: number;
       summary: string;
       model?: string;
       confidence?: number;
@@ -208,6 +213,7 @@ export interface Order {
 export interface ApiState {
   products: Product[];
   shelf: Shelf;
+  shelves?: Shelf[];
   baskets: Basket[];
   cases: BasketCase[];
   recentEvents: ShelfEvent[];

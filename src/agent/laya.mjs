@@ -64,7 +64,7 @@ export async function requestLayaBasketDecision({ context, ...options }) {
 export async function requestLayaToolDecision({ context, actions, ...options }) {
   const question = {
     type: "choice",
-    instructions: "Choose ONE useful next investigation action from the current observations. Gather missing evidence, analyze contradictions, or DECIDE when enough evidence is available. STOP_STAFF if evidence is inadequate. Do not repeat completed actions. Read-only actions cannot change a cart.",
+    instructions: "Choose ONE useful next investigation action from the current observations. Prioritize missingCoreEvidence and respect remainingTimeMs. Gather relevant evidence, analyze contradictions, or DECIDE when enough evidence is available. STOP_STAFF if evidence is inadequate. Do not repeat completed actions. Read-only actions cannot change a cart.",
     criteria: Object.fromEntries(actions.map(action => [action.id, action.description])),
   };
   const { choice, ...assessment } = await requestChoice({ ...options, state: context, question, answerKey: "next_action", label: "tool" });

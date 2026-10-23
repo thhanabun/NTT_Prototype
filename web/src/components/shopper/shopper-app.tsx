@@ -6,12 +6,14 @@ import { BasketScanner } from "./basket-scanner";
 import { ConnectionStatus } from "@/components/connection-status";
 import { useShopper } from "./use-shopper";
 import { ProductArt } from "./product-art";
+import { SHELF_OPTIONS } from "@/lib/shelves";
 import styles from "./shopper.module.css";
 
 export const money = (amount: number) => `฿${amount.toLocaleString("th-TH")}`;
 export function ShopperApp() {
   const shop = useShopper();
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [selectedShelf, setSelectedShelf] = useState("SHELF-01");
   const { basket, loading, pending, stale } = shop;
   const product = shop.state?.products.find((item) => item.sku === shop.currentCase?.sku);
   const isReturn = shop.currentCase?.eventType === "PUT_BACK";
@@ -35,6 +37,7 @@ export function ShopperApp() {
             <button className={styles.refreshIcon} aria-label="อัปเดตตะกร้า" disabled={loading || pending} onClick={() => void shop.refresh()}><RefreshCw size={16} aria-hidden="true" /></button></div>
           </section>
           <section className={styles.card} aria-labelledby="products-heading"><div className={styles.sectionHeading}><div><h2 id="products-heading">สินค้าในร้าน</h2></div><span className={styles.smallLabel}>{shop.state?.products.length ?? 0} รายการ</span></div>
+            <div className={styles.shelfPicker} role="group" aria-label="เลือกชั้นวางสินค้า">{SHELF_OPTIONS.map(shelf => <button type="button" key={shelf.shelfId} disabled={!shelf.enabled} aria-pressed={selectedShelf === shelf.shelfId} onClick={() => setSelectedShelf(shelf.shelfId)}>{shelf.label}{!shelf.enabled && <small>ยังไม่เปิดใช้</small>}</button>)}</div>
             {shop.state?.products.map((product) => <div className={styles.productRow} key={product.sku}><ProductArt sku={product.sku} /><div className={styles.productCopy}><h3>{product.name}</h3><strong>{money(product.price)} <small>/ ชิ้น</small></strong></div></div>)}
           </section>
         </div>

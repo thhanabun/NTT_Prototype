@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { decideStaffCase } from "@/lib/api/client";
+import { decideStaffCase, resetDemo } from "@/lib/api/client";
 import { useLiveState } from "@/lib/api/live-state";
 import type { BasketId } from "@/lib/api/types";
 
@@ -50,6 +50,14 @@ export function useAdmin() {
     });
   }
 
+  async function reset() {
+    return execute(async () => {
+      await resetDemo();
+      setSelectedId(null);
+      return "ล้างข้อมูลแล้ว พร้อมเริ่มใหม่";
+    });
+  }
+
   return { state, loading, stale, error, updatedAt, refresh, selectedCase, selectedId,
-    connection:live.connection, retryAttempt:live.retryAttempt, pending, notice, execute, decide, selectCase: (id: string) => { if (!locked.current) setSelectedId(id); } };
+    connection:live.connection, retryAttempt:live.retryAttempt, pending, notice, execute, decide, reset, selectCase: (id: string) => { if (!locked.current) setSelectedId(id); } };
 }

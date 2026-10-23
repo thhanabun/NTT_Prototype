@@ -162,6 +162,11 @@
 .refreshIcon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 1px solid #dce4da; border-radius: 10px; color: #006d5b; }
 .refreshIcon:hover { background: #eff8e8; }
 .itemCount { font-size: 12px; background: #eff3e9; color: #4c694b; padding: 7px 11px; border-radius: 8px; white-space: nowrap; }
+.shelfPicker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+.shelfPicker button { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; min-height: 52px; padding: 9px 5px; background: #f7f9f3; border: 1px solid #dce4da; border-radius: 10px; color: #526b56; font-size: 12px; font-weight: 600; }
+.shelfPicker button[aria-pressed="true"] { color: #006d5b; background: #eff8e8; border-color: #006d5b; }
+.shelfPicker button:disabled { opacity: .5; }
+.shelfPicker small { font-size: 10px; font-weight: 400; }
 .cartCard { border-top: 4px solid #006d5b; }
 .checkoutReason:empty { display: none; }
 .cartLine > strong, .quantity, .totalRow strong { font-variant-numeric: tabular-nums; }

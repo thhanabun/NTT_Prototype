@@ -3,6 +3,7 @@
 .dashboard button:disabled { cursor: not-allowed; opacity: .55; }
 .dashboard button:focus-visible, .dashboard a:focus-visible, .dashboard input:focus-visible, .dashboard ol:focus-visible, .dashboard pre:focus-visible { outline: 3px solid #006d5b; outline-offset: 3px; }
 .hero { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+.heroActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .eyebrow { font-size: 12px; letter-spacing: .15em; font-weight: 700; color: #687f70; margin-bottom: 7px; }
 .hero h1 { font-size: clamp(30px, 4vw, 40px); font-weight: 750; letter-spacing: -.035em; line-height: 1.5; }
 .hero h1 span { color: var(--teal); }
@@ -10,6 +11,8 @@
 .outlineButton, .primaryButton, .rejectButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border-radius: 10px; font-size: 12px !important; font-weight: 600 !important; }
 .outlineButton { background: white; border: 1px solid #dce4da; color: #486a57; }
 .outlineButton:hover { background: #f0f8fa; }
+.resetButton { color: #af423a; border-color: #edc3bb; }
+.resetButton:not(:disabled):hover { background: #fff1ef; }
 .primaryButton { background: var(--teal); border: 1px solid var(--teal); color: white; }
 .rejectButton { background: #fff5f3; border: 1px solid #edc3bb; color: #af423a; }
 .primaryButton:disabled, .rejectButton:disabled { background: #edf2f3; color: #7c8f94; border-color: #dbe5e7; }
@@ -148,4 +151,14 @@
 .timeline, .tools { border-top: 1px solid #e4e9df; padding-top: 18px; }
 .tools { max-height: 360px; overflow-y: auto; }
 .hardwareMetrics { justify-content: space-between; }
+.shelfPicker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 20px; }
+.shelfPicker button { display: flex; align-items: flex-start; flex-direction: column; gap: 7px; min-width: 0; padding: 14px 10px; border: 1px solid #dfe6dc; border-radius: 12px; text-align: left; background: #f8faf5; }
+.shelfPicker button[aria-pressed="true"] { background: #eff8e8; border-color: #006d5b; }
+.shelfPicker strong { font-size: 14px; }
+.shelfPicker small { color: var(--muted); font-size: 10px; }
+.shelfPicker .badge { font-size: 10px; padding: 4px 6px; }
+.shelfDetailHeading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 17px; border-top: 1px solid #e4e9df; margin-bottom: 10px; }
+.shelfDetailHeading h3 { font-size: 16px; font-weight: 700; }
+.simulatorPickers { display: flex; flex-wrap: wrap; gap: 18px; }
 @media(max-width: 950px) { .logsGrid { grid-template-columns: 1fr; } }
+@media(max-width: 720px) { .heroActions { width: 100%; } .heroActions button { flex: 1; } }

@@ -100,9 +100,10 @@ export function recordAgentAction(store, caseId, investigationId, step) {
   if (item.status === "CLOSED" || item.agent?.status !== "RUNNING" || item.agent.investigationId !== investigationId) throw new Error("Investigation is no longer active");
   item.agent.steps.push(step);
   if (step.toolCall) item.toolCalls.push(step.toolCall);
-  const action = step.toolCall ? "AGENT_TOOL_COMPLETED" : "AGENT_ACTION_SELECTED";
-  addCaseTimeline(item, action, { actionId: step.action, reason: step.summary });
-  addAuditEntry(store, action, agentActor(item.agent.provider), { caseId, eventId: item.eventId, step: step.number, actionId: step.action, tool: step.toolCall?.name, status: step.toolCall?.status, summary: step.summary, model: step.model, confidence: step.confidence });
+  const action = step.toolCall ? "AGENT_TOOL_COMPLETED" : step.source === "POLICY" ? "AGENT_BUDGET_DECISION" : "AGENT_ACTION_SELECTED";
+  const timing = { source: step.source, durationMs: step.durationMs, remainingTimeMs: step.remainingTimeMs };
+  addCaseTimeline(item, action, { actionId: step.action, reason: step.summary, ...timing });
+  addAuditEntry(store, action, step.source === "POLICY" ? "POLICY" : agentActor(item.agent.provider), { caseId, eventId: item.eventId, step: step.number, actionId: step.action, tool: step.toolCall?.name, status: step.toolCall?.status, summary: step.summary, model: step.model, confidence: step.confidence, ...timing });
   return item;
 }
 

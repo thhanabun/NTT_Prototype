@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { FlaskConical, Send } from "lucide-react";
 import { submitShelfEvent } from "@/lib/api/client";
 import type { ShelfEventInput } from "@/lib/api/types";
+import { SHELF_OPTIONS } from "@/lib/shelves";
 import styles from "./admin.module.css";
 
 const scenarios = [
@@ -23,6 +24,7 @@ export function LocalSimulator({ disabled, shelfId, run }: {
   run: (action: () => Promise<string>) => Promise<void>;
 }) {
   const [lane, setLane] = useState("LANE-1");
+  const [selectedShelf, setSelectedShelf] = useState(shelfId);
   const last = useRef<ShelfEventInput | null>(null);
   const [hasLast, setHasLast] = useState(false);
 
@@ -34,7 +36,7 @@ export function LocalSimulator({ disabled, shelfId, run }: {
         tie:{A:-56,B:-56}, unknown:{A:null,B:null}, "put-back":{A:-48,B:-73},
       };
       const payload = scenario === "duplicate" ? last.current! : {
-        eventId: `web-demo-${crypto.randomUUID()}`, shelfId, laneId: lane,
+        eventId: `web-demo-${crypto.randomUUID()}`, shelfId: selectedShelf, laneId: lane,
         eventType: scenario === "put-back" ? "PUT_BACK" as const : "PICK" as const,
         rssi: readings[scenario],
       };
@@ -52,7 +54,10 @@ export function LocalSimulator({ disabled, shelfId, run }: {
       <summary><FlaskConical size={18} aria-hidden="true" /> Local simulator <span>จำลอง event สำหรับทดสอบ</span></summary>
       <p className={styles.muted}>ส่งสัญญาณจำลองแทน ESP32</p>
       <p className={styles.footnote}>เชื่อมตะกร้าใน Shopper ก่อนเริ่มทดสอบ</p>
-      <label className={styles.lanePicker}>Shelf lane<select value={lane} disabled={disabled} onChange={(event)=>setLane(event.target.value)}><option value="LANE-1">Lane 01 · Coke</option><option value="LANE-2">Lane 02 · Water</option></select></label>
+      <div className={styles.simulatorPickers}>
+        <label className={styles.lanePicker}>Shelf<select aria-label="Simulator shelf" value={selectedShelf} disabled={disabled} onChange={event => { setSelectedShelf(event.target.value); last.current = null; setHasLast(false); }}>{SHELF_OPTIONS.map(shelf => <option key={shelf.shelfId} value={shelf.shelfId} disabled={!shelf.enabled}>{shelf.label}{shelf.enabled ? "" : " · ยังไม่เปิดใช้"}</option>)}</select></label>
+        <label className={styles.lanePicker}>Shelf lane<select value={lane} disabled={disabled} onChange={(event)=>setLane(event.target.value)}><option value="LANE-1">Lane 01 · Coke</option><option value="LANE-2">Lane 02 · Water</option></select></label>
+      </div>
       <div className={styles.simulatorGrid}>{scenarios.map(item=><div key={item.id}><div><h3>{item.label}</h3><p>{item.description}</p></div><button className={styles.outlineButton} disabled={disabled || (item.id==="duplicate" && !hasLast)} onClick={()=>send(item.id)}><Send size={13} aria-hidden="true" /> {item.label}</button></div>)}</div>
     </details>
   );

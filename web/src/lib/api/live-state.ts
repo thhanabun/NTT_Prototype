@@ -45,8 +45,10 @@ function update(changes: Partial<LiveSnapshot>) {
 function accept(value: ApiState) {
   update({ state:validate(value), loading:false, stale:false, error:"", updatedAt:new Date().toISOString() });
   clearTimeout(deviceExpiry);
-  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true" && value.shelf.device?.status === "ONLINE" && value.shelf.device.lastSeenAt) {
-    deviceExpiry = setTimeout(() => { if (active) void readState(false); }, Math.max(100, Date.parse(value.shelf.device.lastSeenAt) + value.shelf.device.timeoutMs + 100 - Date.now()));
+  const onlineDevices = (value.shelves ?? [value.shelf]).flatMap(shelf => shelf.device?.status === "ONLINE" && shelf.device.lastSeenAt ? [shelf.device] : []);
+  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true" && onlineDevices.length) {
+    const expiresAt = Math.min(...onlineDevices.map(device => Date.parse(device.lastSeenAt!) + device.timeoutMs));
+    deviceExpiry = setTimeout(() => { if (active) void readState(false); }, Math.max(100, expiresAt + 100 - Date.now()));
   }
 }
 function disconnect() {

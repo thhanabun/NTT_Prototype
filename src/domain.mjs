@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { deviceState } from "./device-state.mjs";
+import { shelfStates } from "./shelves.mjs";
 
 const PRODUCT_BY_LANE = {
   "LANE-1": "COKE",
@@ -86,6 +87,7 @@ function createCase(store, event, details) {
   const caseItem = {
     caseId: "CASE-" + String(store.caseSequence).padStart(3, "0"),
     eventId: event.eventId,
+    shelfId: event.shelfId,
     type: details.type,
     eventType: event.eventType,
     sku: event.sku,
@@ -430,6 +432,7 @@ export function snapshot(store, now = Date.now()) {
   return {
     products: Object.values(store.products),
     shelf: { ...store.shelf, device: deviceState(store, now) },
+    shelves: shelfStates(store, now),
     baskets,
     cases: store.cases.slice(0, 30),
     recentEvents: store.events.slice(0, 20),

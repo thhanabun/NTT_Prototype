@@ -5,8 +5,10 @@ import { SCRIPT_DESCRIPTIONS } from "./analysis-scripts.mjs";
 const REQUIRED = ["get_shelf_event", "get_basket_evidence", "get_cart_history"];
 const SCRIPT_DEPENDENCIES = { rssi_stability: "get_signal_window", switch_bounce: "get_event_neighbors", cart_consistency: "get_cart_history" };
 
-function availableActions(completed) {
+function availableActions(completed, cameraEvidence) {
   const actions = Object.entries(TOOL_DESCRIPTIONS).filter(([name]) => name !== "run_evidence_analysis" && !completed.has(name))
+    .filter(([name]) => name !== "inspect_vision_evidence" || cameraEvidence.some(frame => frame.frameId))
+    .filter(([name]) => name !== "get_camera_evidence" || cameraEvidence.length > 0)
     .map(([id, description]) => ({ id, description, tool: id }));
   for (const [scriptId, description] of Object.entries(SCRIPT_DESCRIPTIONS)) {
     const id = "analyze_" + scriptId;
@@ -47,6 +49,8 @@ export async function runAgentInvestigation(repository, caseId, {
   const completed = new Set();
   const observations = [];
   const signal = AbortSignal.timeout(timeoutMs);
+  const deadlineAt = performance.now() + timeoutMs;
+  let estimatedModelMs = 4000;
   let number = 0;
 
   function activeCase(store) {
@@ -71,16 +75,29 @@ export async function runAgentInvestigation(repository, caseId, {
     for (number = 1; number <= maxSteps; number++) {
       const store = await repository.read();
       const item = activeCase(store);
-      const actions = availableActions(completed);
-      const selection = await withinDeadline(signal, () => planner({ signal, actions, context: {
+      const cameraEvidence = (store.cameraEvidence || []).filter(frame => frame.eventId === item.eventId);
+      const missingCoreEvidence = REQUIRED.filter(name => !completed.has(name));
+      const remainingTimeMs = Math.max(0, Math.floor(deadlineAt - performance.now()));
+      const remainingSteps = maxSteps - number + 1;
+      let actions = availableActions(completed, cameraEvidence);
+      // Reserve calls for missing core evidence and the final basket model, without fixing tool order.
+      if (missingCoreEvidence.length && (remainingSteps <= missingCoreEvidence.length + 1 || remainingTimeMs <= (missingCoreEvidence.length + 2) * estimatedModelMs + 500)) {
+        actions = actions.filter(action => missingCoreEvidence.includes(action.id) || action.id === "STOP_STAFF");
+      }
+      const budgetDecision = !missingCoreEvidence.length && (remainingSteps === 1 || remainingTimeMs <= estimatedModelMs * 2 + 500);
+      const selectionStarted = performance.now();
+      const selection = budgetDecision ? { action: "DECIDE" } : await withinDeadline(signal, () => planner({ signal, actions, context: {
         task: { type: item.type, eventType: item.eventType, sku: item.sku, visionFrames: (store.cameraEvidence || []).filter(frame => frame.eventId === item.eventId && frame.frameId).map(frame => ({ frameId: frame.frameId, source: frame.source })).slice(0, 2) },
-        remainingSteps: maxSteps - number + 1,
-        missingCoreEvidence: REQUIRED.filter(name => !completed.has(name)),
+        remainingSteps,
+        remainingTimeMs,
+        missingCoreEvidence,
         observations: observations.map(entry => ({ action: entry.action, summary: entry.summary.slice(0, 240) })),
       } }));
+      const selectionDurationMs = Math.round(performance.now() - selectionStarted);
+      if (!budgetDecision) estimatedModelMs = Math.max(estimatedModelMs, selectionDurationMs * 1.25);
       const action = actions.find(entry => entry.id === selection.action);
       if (!action) throw new Error("Planner selected an unavailable or repeated action");
-      await persistStep({ number, phase: "SELECT", action: action.id, source: "MODEL", summary: `Selected ${action.id}`, model: selection.model, confidence: selection.confidence, probabilities: selection.probabilities, availableActions: actions.map(entry => entry.id) });
+      await persistStep({ number, phase: "SELECT", action: action.id, source: budgetDecision ? "POLICY" : "MODEL", summary: budgetDecision ? "Core evidence is complete; reserve the remaining budget for the basket decision model." : `Selected ${action.id}`, model: selection.model, confidence: selection.confidence, probabilities: selection.probabilities, durationMs: selectionDurationMs, remainingTimeMs: Math.max(0, Math.floor(deadlineAt - performance.now())), availableActions: actions.map(entry => entry.id) });
       if (action.id === "STOP_STAFF") return finish({ escalateReason: "The model stopped evidence collection and requested staff review." });
       if (action.id === "DECIDE") {
         const latest = activeCase(await repository.read());

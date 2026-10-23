@@ -20,6 +20,7 @@ export function CaseDetails({ item, product, actions }: { item: BasketCase; prod
       <div className={styles.caseIntro}><FileSearch size={23} aria-hidden="true" /><div><h3>{product?.name ?? item.sku}</h3><p>{item.type.replaceAll("_", " ")} · {item.eventType}</p></div></div>
       <p className={styles.reason}>{item.reason}</p>
       <dl className={styles.details}>
+        {item.shelfId && <div><dt>Shelf</dt><dd>{item.shelfId}</dd></div>}
         <div><dt>Event ID</dt><dd>{item.eventId}</dd></div><div><dt>สร้างเมื่อ</dt><dd>{formatTime(item.createdAt)}</dd></div>
         <div><dt>ตะกร้าที่เสนอ</dt><dd>{item.candidate ? `Basket ${item.candidate}` : "ยังระบุไม่ได้"}</dd></div><div><dt>การทำงานที่เสนอ</dt><dd>{item.proposedAction}</dd></div>
         <div><dt>ขั้นตอนถัดไป</dt><dd>{item.nextAction}</dd></div><div><dt>Zone evidence</dt><dd>{item.evidence.zone ?? "—"}</dd></div>

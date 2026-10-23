@@ -93,13 +93,13 @@ test("Agent-selected RSSI script can veto a confident model recommendation when 
 test("Agent can stop after unavailable evidence; no forced fallback tools or decision inference", async () => {
   await fixture(async repository => {
     let index = 0;
-    const sequence = ["get_camera_evidence", "STOP_STAFF"];
+    const sequence = ["get_signal_window", "STOP_STAFF"];
     const { result } = await runAgentInvestigation(repository, "CASE-001", { provider: "LAYA", planner: async ({ context }) => {
       if (index) assert.match(context.observations[0].summary, /NO_DATA/);
       return { action: sequence[index++], model: "fixture" };
     }, decision: async () => { throw new Error("Must not run"); } });
     assert.equal(result.agent.status, "COMPLETED"); assert.equal(result.status, "OPEN_STAFF");
-    assert.deepEqual(result.toolCalls.map(call => call.name), ["get_camera_evidence"]);
+    assert.deepEqual(result.toolCalls.map(call => call.name), ["get_signal_window"]);
   });
 });
 
@@ -111,6 +111,37 @@ test("Invalid planner action, step budget and deadline all preserve carts and ro
     }, decision: async () => { throw new Error("Must not run"); } });
     assert.equal(result.status, "OPEN_STAFF"); assert.deepEqual(store.carts, { A: {}, B: {} });
     assert.match(result.reason, mode === "invalid" ? /unavailable/ : mode === "budget" ? /budget/ : /deadline/);
+  });
+});
+
+test("Agent excludes unavailable cameras and reserves the deadline for the real decision provider", async () => {
+  await fixture(async repository => {
+    const order = ["get_cart_history", "get_basket_evidence", "get_shelf_event"];
+    let planned = 0, decisions = 0;
+    const { result, store } = await runAgentInvestigation(repository, "CASE-001", {
+      provider: "LAYA", timeoutMs: 1000,
+      planner: async ({ actions, context }) => {
+        assert.ok(context.remainingTimeMs > 0);
+        assert.ok(actions.every(action => order.includes(action.id) || action.id === "STOP_STAFF"));
+        const action = order[planned++];
+        assert.ok(actions.some(item => item.id === action));
+        await delay(10);
+        return { action, model: "fixture-planner" };
+      },
+      decision: async ({ context }) => {
+        decisions++;
+        assert.equal(context.event.eventId, event.eventId);
+        return { candidate: "A", confidence: 0.9, model: "fixture-decision" };
+      },
+    });
+    assert.equal(planned, 3); assert.equal(decisions, 1);
+    assert.equal(result.agent.status, "COMPLETED");
+    assert.equal(result.status, "WAITING_CUSTOMER");
+    assert.deepEqual(result.toolCalls.map(call => call.name), order);
+    assert.equal(result.agent.steps.at(-1).action, "DECIDE");
+    assert.equal(result.agent.steps.at(-1).source, "POLICY");
+    assert.ok(store.auditLog.some(item => item.action === "AGENT_BUDGET_DECISION" && item.actor === "POLICY"));
+    assert.deepEqual(store.carts, { A: {}, B: {} });
   });
 });
 
