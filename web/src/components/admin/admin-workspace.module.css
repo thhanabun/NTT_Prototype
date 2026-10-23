@@ -1,0 +1,14 @@
+.workspace { width: 100%; }
+.tabBar { display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; overflow-y: hidden; margin: 0 0 22px; border-bottom: 1px solid var(--c-line); scrollbar-width: thin; }
+.tab { display: inline-flex; align-items: center; flex-shrink: 0; max-width: 280px; border-radius: 16px 16px 0 0; color: var(--c-soft); font-size: 14px; }
+.tab > button:first-child { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 8px 0 16px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+.tab:hover { color: var(--c-ink); }
+.tabOn { background: var(--c-surface); color: var(--c-ink); font-weight: 600; box-shadow: inset 0 -3px 0 var(--c-hi); }
+.tabTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pin { display: inline-flex; padding: 0 12px 0 2px; color: var(--c-soft); }
+.close { display: grid; place-items: center; width: 32px; height: 32px; margin-right: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--c-soft); cursor: pointer; }
+.close:hover { background: var(--c-surface2); color: var(--c-ink); }
+.newTab { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; margin: 0 0 4px 4px; border: 1px dashed var(--c-line); border-radius: 12px; background: transparent; color: var(--c-soft); cursor: pointer; }
+.newTab:hover { background: var(--c-surface2); color: var(--c-ink); }
+.tab button:focus-visible, .newTab:focus-visible { outline: 3px solid var(--c-hi); outline-offset: -2px; }
+@media (max-width: 600px) { .tab { max-width: 200px; font-size: 13px; } .tab > button:first-child { padding-left: 12px; } }

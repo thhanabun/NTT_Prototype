@@ -30,6 +30,8 @@ try {
   const errors = [], results = [];
   let requests = 0, failQuery = false;
   await page.addInitScript(() => { window.EventSource = undefined; });
+  // The dev-only Next.js indicator sits bottom-left, exactly where the chat launcher is.
+  await page.addInitScript(() => { document.addEventListener('DOMContentLoaded', () => { const style = document.createElement('style'); style.textContent = 'nextjs-portal{display:none!important}'; document.head.append(style); }); });
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
@@ -43,9 +45,11 @@ try {
   });
   await page.goto(`${process.env.SHOPPER_TEST_ORIGIN || 'http://localhost:3001'}/admin`);
   await loginAdmin(page);
+  // Chat lives in a floating dock; every answer opens its own result tab beside the pinned Dashboard tab.
+  await page.getByRole('button', { name: 'เปิดแชทถามข้อมูลร้าน', exact: true }).click();
   const panel = page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true });
   await panel.getByRole('heading', { name: 'ถามข้อมูลร้าน', exact: true }).waitFor();
-  const latest = () => panel.locator('[class*="answer"]').last();
+  const latest = () => page.locator('[role="tabpanel"]:not([hidden]) article').last();
   async function query(message, doubleClick = false) {
     console.log('QUERY ' + message);
     await panel.getByLabel('คำถามสถิติ', { exact: true }).fill(message);

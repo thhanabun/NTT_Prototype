@@ -13,6 +13,7 @@
     "test:auth": "node tests/auth.e2e.mjs",
     "test:admin": "node tests/admin.e2e.mjs",
     "test:stats": "node tests/stats.e2e.mjs",
+    "test:workspace": "node tests/workspace.e2e.mjs",
     "test:realtime": "node tests/realtime.e2e.mjs",
     "test:telemetry": "node tests/telemetry.e2e.mjs",
     "test:cloud": "node tests/cloud.e2e.mjs",
