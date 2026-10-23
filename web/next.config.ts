@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1"],
+  // The site has its own floating menu bottom-left; the Next.js dev badge would sit on top of it. Error overlays still show.
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   async rewrites() {

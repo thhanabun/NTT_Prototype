@@ -1,7 +1,3 @@
-.launcher { position: fixed; left: 24px; bottom: 24px; z-index: 60; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; border: 0; background: var(--c-ai); color: var(--c-ai-ink); cursor: pointer; box-shadow: 0 0 0 4px var(--c-bg), 0 0 0 6px var(--c-hi), 0 14px 30px -10px rgba(0, 0, 0, .45); }
-.launcher:hover { filter: brightness(1.06); }
-.launcher:focus-visible { outline: 3px solid var(--c-ink); outline-offset: 6px; }
-.online { position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #2c9a5b; box-shadow: 0 0 0 3px var(--c-bg); }
 .panel { position: fixed; left: 24px; bottom: 104px; z-index: 59; width: 410px; max-width: calc(100vw - 32px); height: 680px; max-height: calc(100dvh - 128px); display: flex; flex-direction: column; overflow: hidden; border-radius: 30px; background: var(--c-bg); border: 1px solid var(--c-line); box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .5); color: var(--c-ink); font-family: var(--font-anuphan), sans-serif; }
 .wide { width: 580px; }
 .panel button:focus-visible, .panel select:focus-visible, .panel textarea:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 2px; }
@@ -55,4 +51,4 @@
 .spin { animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin, .thinking svg { animation: none; } }
-@media (max-width: 600px) { .launcher { left: 14px; bottom: 14px; width: 58px; height: 58px; } .panel { left: 8px; right: 8px; bottom: 84px; width: auto; max-width: none; max-height: calc(100dvh - 104px); border-radius: 26px; } .wide { width: auto; } }
+@media (max-width: 600px) { .panel { left: 8px; right: 8px; bottom: 84px; width: auto; max-width: none; max-height: calc(100dvh - 104px); border-radius: 26px; } .wide { width: auto; } }

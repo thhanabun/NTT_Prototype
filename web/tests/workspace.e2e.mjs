@@ -24,8 +24,6 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [];
   await page.addInitScript(() => { window.EventSource = undefined; });
-  // The dev-only Next.js indicator sits bottom-left, exactly where the chat launcher is.
-  await page.addInitScript(() => { document.addEventListener('DOMContentLoaded', () => { const style = document.createElement('style'); style.textContent = 'nextjs-portal{display:none!important}'; document.head.append(style); }); });
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
@@ -45,6 +43,7 @@ try {
   assert.equal(await page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true }).count(), 0, 'chat starts closed');
   assert.equal(await page.getByRole('button', { name: /ปิดแท็บ/ }).count(), 0, 'Dashboard tab cannot be closed');
 
+  await page.getByRole('button', { name: /เมนูลัด FAST/ }).click();
   await page.getByRole('button', { name: 'เปิดแชทถามข้อมูลร้าน', exact: true }).click();
   const panel = page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true });
   const ask = async message => {
@@ -102,6 +101,28 @@ try {
   await page.waitForFunction(() => getComputedStyle(document.body).backgroundColor === 'rgb(20, 18, 16)'); // body fades over 0.2s
   await page.reload();
   assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'night', 'theme survives reload');
+
+  // Floating menu: drag moves it (no menu opens), position survives reload, tap opens settings incl. sign-out.
+  const dock = page.getByRole('button', { name: /เมนูลัด FAST/ });
+  const start = await dock.boundingBox();
+  await page.mouse.move(start.x + 31, start.y + 31);
+  await page.mouse.down();
+  await page.mouse.move(900, 300, { steps: 8 });
+  await page.mouse.up();
+  const moved = await dock.boundingBox();
+  assert.ok(Math.abs(moved.x + 31 - 900) < 3 && Math.abs(moved.y + 31 - 300) < 3, `dock follows the pointer (${moved.x},${moved.y})`);
+  assert.equal(await page.locator('#fast-quick-menu').count(), 0, 'dragging does not open the menu');
+  await page.reload();
+  await dock.waitFor();
+  await page.waitForFunction(() => { const button = [...document.querySelectorAll('button')].find(item => item.getAttribute('aria-label')?.startsWith('เมนูลัด')); return button && Math.abs(button.getBoundingClientRect().left - 869) < 3; });
+  await dock.click();
+  const quick = page.getByRole('group', { name: 'เมนูลัดและการตั้งค่า' });
+  await quick.getByRole('button', { name: /ออกจากระบบ Admin/ }).waitFor();
+  await quick.getByRole('button', { name: /ย้ายปุ่มกลับมุมล่างซ้าย/ }).click();
+  assert.ok((await dock.boundingBox()).x < 40, 'reset returns the dock to the corner');
+  await dock.click();
+  assert.equal(await page.locator('nextjs-portal [data-nextjs-toast]').isVisible(), false, 'Next.js dev badge is hidden');
+  await page.keyboard.press('Escape');
 
   // Narrow screens: no horizontal overflow with the chat open.
   for (const width of [320, 390, 768]) {

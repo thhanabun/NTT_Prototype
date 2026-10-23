@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Expand, LoaderCircle, MessageCircle, MoreHorizontal, Shrink, Sparkles, X } from "lucide-react";
+import { OPEN_CHAT_EVENT } from "@/components/floating-menu";
 import { queryStatistics } from "@/lib/api/client";
 import type { StatsPlan, StatsResponse } from "@/lib/api/types";
 import { describeStats, sourceLabel, statsTabTitle } from "./stats-format";
@@ -29,6 +30,12 @@ export function ChatDock({ open, onOpenChange, activeResultId, onResult, onOpenR
   const input = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { history.current?.scrollTo({ top: history.current.scrollHeight }); }, [entries, open]);
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
+  // The site-wide floating menu opens this chat.
+  useEffect(() => {
+    const show = () => onOpenChange(true);
+    window.addEventListener(OPEN_CHAT_EVENT, show);
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, show);
+  }, [onOpenChange]);
   const previous: StatsPlan | undefined = entries.findLast((entry) => entry.response && entry.response.source === (source === "demo" ? "DEMO" : "MOCK_CHECKOUT_ORDERS"))?.response?.plan;
 
   async function submit(text = message) {
@@ -48,10 +55,6 @@ export function ChatDock({ open, onOpenChange, activeResultId, onResult, onOpenR
   }
 
   return <>
-    <button type="button" className={styles.launcher} aria-expanded={open} aria-controls="stat-chat" aria-label={open ? "ปิดแชทถามข้อมูลร้าน" : "เปิดแชทถามข้อมูลร้าน"} onClick={() => onOpenChange(!open)}>
-      {open ? <X size={24} aria-hidden="true" /> : <MessageCircle size={26} aria-hidden="true" />}
-      <span className={styles.online} aria-hidden="true" />
-    </button>
     {open && <section id="stat-chat" className={`${styles.panel} ${wide ? styles.wide : ""}`} aria-labelledby="stat-query-heading">
       <header className={styles.header}>
         <button type="button" className={styles.round} aria-label={wide ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} onClick={() => setWide(!wide)}>{wide ? <Shrink size={17} aria-hidden="true" /> : <Expand size={17} aria-hidden="true" />}</button>

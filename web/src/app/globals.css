@@ -176,9 +176,9 @@ body { background: var(--c-bg); color: var(--c-ink); transition: background-colo
 .site-nav a:hover { color: var(--c-ink); }
 .theme-toggle { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--c-line); background: var(--c-surface); color: var(--c-ink); cursor: pointer; }
 .theme-toggle:hover { background: var(--c-surface2); }
-.theme-toggle .icon-sun { display: none; }
-html[data-theme="night"] .theme-toggle .icon-sun { display: block; }
-html[data-theme="night"] .theme-toggle .icon-moon { display: none; }
+.icon-sun { display: none; }
+html[data-theme="night"] .icon-sun { display: block; }
+html[data-theme="night"] .icon-moon { display: none; }
 .site-header a:focus-visible, .home a:focus-visible, .theme-toggle:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 3px; }
 .site-main { display: flex; flex-direction: column; flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
 .home { width: 100%; max-width: 1000px; margin: auto; padding: 65px 0; }

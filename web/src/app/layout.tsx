@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Anuphan, Chakra_Petch, JetBrains_Mono } from "next/font/google";
 import { AppNavigation } from "@/components/app-navigation";
+import { FloatingMenu } from "@/components/floating-menu";
 import "./globals.css";
 
 const anuphan = Anuphan({ subsets: ["thai", "latin"], weight: ["400", "500", "600", "700"], variable: "--font-anuphan", display: "swap" });
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <main className="site-main">
           {children}
         </main>
+        <FloatingMenu />
       </body>
     </html>
   );
