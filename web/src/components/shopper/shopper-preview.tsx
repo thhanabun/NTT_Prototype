@@ -57,9 +57,8 @@ export function ShopperPreview() {
     <div className={styles.shopper} lang="th">
       <div className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>BASKETLY / SHOPPER EXPERIENCE</p>
-          <h1>หยิบง่าย จ่ายสบาย<span>.</span></h1>
-          <p className={styles.heroCopy}>ตะกร้าของคุณ อัปเดตตามทุกการหยิบ<br className={styles.mobileBreak} /> พร้อมให้คุณยืนยันเมื่อระบบไม่แน่ใจ</p>
+          <p className={styles.eyebrow}>FAST / UI PREVIEW</p>
+          <h1>ช้อปได้เลย<span>.</span></h1>
         </div>
         <span className={styles.previewBadge}><Sparkles size={15} aria-hidden="true" /> UI preview · ข้อมูลตัวอย่าง</span>
       </div>
@@ -97,7 +96,7 @@ export function ShopperPreview() {
             </div>}
             {scannerNotice && <div className={styles.infoNotice} role="status">ตัวอย่างหน้าจอ QR: การเปิดกล้องและอ่าน QR จริงจะเชื่อมใน Phase 4 ตอนนี้เลือก Basket A หรือ B เพื่อทดลองได้</div>}
             <div className={styles.connection}><span className={view === "offline" ? styles.offlineDot : styles.onlineDot} />
-              {view === "offline" ? "ตัวอย่าง: การเชื่อมต่อขาดหาย" : "โหมดตัวอย่าง · ไม่มีการเชื่อมต่อ backend"}
+              {view === "offline" ? "ตัวอย่าง: การเชื่อมต่อขาดหาย" : "ข้อมูลตัวอย่าง"}
             </div>
           </section>
 
@@ -108,7 +107,6 @@ export function ShopperPreview() {
                 <h3>{product.name}</h3><p>{product.sku === "COKE" ? "Original taste · 325 ml" : "Natural water · 600 ml"}</p><strong>{money(product.price)} <small>/ {product.sku === "COKE" ? "กระป๋อง" : "ขวด"}</small></strong>
               </div><span className={styles.lane}>Lane {product.sku === "COKE" ? "01" : "02"}</span>
             </div>)}
-            <p className={styles.shelfHint}><Sparkles size={15} aria-hidden="true" /> เมื่อเชื่อม backend สินค้าจะอัปเดตจาก shelf event</p>
           </section>
           <div className={styles.trustNote}><ShieldCheck size={21} aria-hidden="true" /><p><strong>ให้คุณมั่นใจก่อนจ่าย</strong><br />รายการที่ยังไม่ยืนยัน จะไม่รวมอยู่ในยอดชำระ</p></div>
         </div>
@@ -138,11 +136,11 @@ export function ShopperPreview() {
           {view === "action-error" && <div className={styles.errorNotice} role="alert"><CircleAlert size={18} aria-hidden="true" /><div>คำขอไม่สำเร็จ รายการที่ยืนยันไว้ยังคงเดิม<button onClick={() => changeView("cart")}>โหลดข้อมูลล่าสุด (ตัวอย่าง)</button></div></div>}
           {notice && <p className={styles.actionNotice} role="status">{notice}</p>}
 
-          {view === "receipt" ? <section className={styles.receipt} aria-labelledby="receipt-heading"><span className={styles.receiptCheck}><CheckCheck size={27} aria-hidden="true" /></span><p className={styles.eyebrow}>MOCK CHECKOUT COMPLETE</p><h3 id="receipt-heading">ขอบคุณที่ช้อปกับเรา</h3><p>ปิด session ของ Basket {basketId} แล้ว</p><dl><div><dt>Order</dt><dd>{receipt.orderId}</dd></div>{receipt.lines.map((line) => <div key={line.sku}><dt>{line.name} ×{line.quantity}</dt><dd>{money(line.subtotal)}</dd></div>)}<div className={styles.receiptTotal}><dt>รวม</dt><dd>{money(receipt.total)}</dd></div></dl><p className={styles.mockLabel}>ใบเสร็จตัวอย่าง · ไม่มีการเรียกเก็บเงินจริง</p><button className={styles.outlineButton} onClick={() => changeView("connect")}>เริ่มช้อปครั้งใหม่ <ArrowRight size={15} aria-hidden="true" /></button></section>
+          {view === "receipt" ? <section className={styles.receipt} aria-labelledby="receipt-heading"><span className={styles.receiptCheck}><CheckCheck size={27} aria-hidden="true" /></span><p className={styles.eyebrow}>ขอบคุณที่ใช้ FAST</p><h3 id="receipt-heading">ขอบคุณที่ช้อปกับเรา</h3><p>ปิด session ของ Basket {basketId} แล้ว</p><dl><div><dt>Order</dt><dd>{receipt.orderId}</dd></div>{receipt.lines.map((line) => <div key={line.sku}><dt>{line.name} ×{line.quantity}</dt><dd>{money(line.subtotal)}</dd></div>)}<div className={styles.receiptTotal}><dt>รวม</dt><dd>{money(receipt.total)}</dd></div></dl><p className={styles.mockLabel}>ใบเสร็จตัวอย่าง · ไม่มีการเรียกเก็บเงินจริง</p><button className={styles.outlineButton} onClick={() => changeView("connect")}>เริ่มช้อปครั้งใหม่ <ArrowRight size={15} aria-hidden="true" /></button></section>
             : <div className={styles.checkoutArea}><div className={styles.summaryRow}><span>ยอดสินค้าที่ยืนยันแล้ว</span><strong>{isLoading || view === "error" ? "—" : money(basket.total)}</strong></div><div className={styles.totalRow}><span>ยอดรวม</span><strong>{isLoading || view === "error" ? "—" : money(basket.total)}</strong></div>
               <p className={styles.checkoutReason} id="checkout-reason"><ShieldCheck size={14} aria-hidden="true" />{checkoutReason}</p>
               <button className={styles.primaryButton} disabled={!checkoutEnabled} aria-describedby="checkout-reason" onClick={() => { setReceipt(sampleReceipt(basketId, basket.lines)); setView("receipt"); setNotice(""); }}>
-                {isSubmitting ? <LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />}{isSubmitting ? "กำลังส่งคำขอ…" : "Mock checkout"}<ArrowRight size={17} aria-hidden="true" />
+                {isSubmitting ? <LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />}{isSubmitting ? "กำลังส่งคำขอ…" : "ชำระเงิน"}<ArrowRight size={17} aria-hidden="true" />
               </button><p className={styles.mockLabel}>ทดลองหน้าจอเท่านั้น · ไม่มีการเรียกเก็บเงินจริง</p>
             </div>}
           <div className={styles.cartFooter}><Wifi size={14} aria-hidden="true" /> Phase 3 · Sample data</div>

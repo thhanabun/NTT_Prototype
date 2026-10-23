@@ -35,25 +35,25 @@ export function StatQuery() {
   }
 
   return <section className={styles.panel} aria-labelledby="stat-query-heading">
-    <div className={styles.heading}><div><p>STORE ANALYTICS</p><h2 id="stat-query-heading">Stat Query Chat</h2></div><BarChart3 size={24} aria-hidden="true" /></div>
-    <p className={styles.description}>ถามยอดขายรายวันหรือสินค้าขายดี ให้ Laya เลือก query และกราฟจากคำสั่ง · ยอดขายนับเฉพาะ checkout สำเร็จ</p>
+    <div className={styles.heading}><div><p>STORE ANALYTICS</p><h2 id="stat-query-heading">ถามข้อมูลร้าน</h2></div><BarChart3 size={24} aria-hidden="true" /></div>
+
     <div className={styles.examples} aria-label="ตัวอย่างคำถาม">{examples.map(example => <button key={example} disabled={pending} type="button" onClick={() => setMessage(example)}>{example}</button>)}</div>
-    <label className={styles.source}>แหล่งข้อมูล<select aria-label="แหล่งข้อมูลสถิติ" value={source} disabled={pending} onChange={event => setSource(event.target.value as "orders" | "demo")}><option value="orders">Orders ในฐานข้อมูล (Mock checkout)</option><option value="demo">ชุดข้อมูลสาธิต 7 วัน (แยกจาก Orders)</option></select></label>
+    <label className={styles.source}>แหล่งข้อมูล<select aria-label="แหล่งข้อมูลสถิติ" value={source} disabled={pending} onChange={event => setSource(event.target.value as "orders" | "demo")}><option value="orders">รายการชำระเงินจำลอง</option><option value="demo">ข้อมูลตัวอย่าง · 7 วัน</option></select></label>
     <div ref={history} className={styles.history} role="log" aria-label="ประวัติ Stat Query" aria-live="polite" aria-busy={pending}>
-      {!entries.length && <p className={styles.empty}>ลองถาม “ยอดขายรายวัน 7 วัน เป็นกราฟแท่ง”<br />หรือถามต่อ “เปลี่ยนเป็นกราฟเส้น” · ค่าเริ่มต้นย้อนหลัง 7 วัน ตามเวลาไทย</p>}
+      {!entries.length && <p className={styles.empty}>อยากรู้อะไรเกี่ยวกับร้านวันนี้?</p>}
       {entries.map((entry, index) => <article className={styles.entry} key={index}>
         <p className={styles.prompt}><strong>คุณ</strong>{entry.message}</p>
         {entry.response && <StatsResult response={entry.response} />}
         {entry.error && <p className={styles.error} role="alert">{entry.error}</p>}
-        {!entry.response && !entry.error && pending && <p className={styles.loading} role="status"><LoaderCircle size={16} aria-hidden="true" /> Laya กำลังเลือก query และสรุปข้อมูล…</p>}
+        {!entry.response && !entry.error && pending && <p className={styles.loading} role="status"><LoaderCircle size={16} aria-hidden="true" /> กำลังสรุปข้อมูล…</p>}
       </article>)}
     </div>
     <form className={styles.form} onSubmit={event => { event.preventDefault(); void submit(); }}>
       <label htmlFor="stat-query-message">คำถามสถิติ</label>
-      <div><textarea id="stat-query-message" maxLength={1000} rows={2} value={message} disabled={pending} onChange={event => setMessage(event.target.value)} placeholder="เช่น Query ยอดขายรายวัน 1 สัปดาห์ แล้ว plot เป็น bar graph" />
+      <div><textarea id="stat-query-message" maxLength={1000} rows={2} value={message} disabled={pending} onChange={event => setMessage(event.target.value)} placeholder="เช่น ยอดขาย 7 วันล่าสุด เป็นกราฟแท่ง" />
         <button type="submit" disabled={pending || !message.trim()}><Send size={16} aria-hidden="true" />{pending ? "กำลัง Query…" : "ส่งคำถาม"}</button></div>
     </form>
-    <p className={styles.note}>รองรับ bar / line / ตาราง · Top 1–50 · ย้อนหลัง 1–366 วัน หรือวันที่ YYYY-MM-DD ถึง YYYY-MM-DD · ข้อมูลสาธิตไม่ถูกบันทึกเป็นยอดขายจริง</p>
+    <details className={styles.trace}><summary>รูปแบบคำถามที่รองรับ</summary><p>กราฟแท่ง / กราฟเส้น / ตาราง · Top 1–50 · ย้อนหลัง 1–366 วัน หรือระบุวันที่ YYYY-MM-DD ถึง YYYY-MM-DD</p></details>
   </section>;
 }
 
@@ -63,7 +63,7 @@ function StatsResult({ response }: { response: StatsResponse }) {
   const title = daily ? "ยอดขายรายวัน" : `สินค้า Top ${plan.limit}`;
   const unit = plan.metric === "revenue" ? "บาท" : "ชิ้น";
   return <div className={styles.answer}>
-    <div className={styles.resultHeading}><h3>{title}</h3><span>{response.source === "DEMO" ? "DEMO · ข้อมูลสาธิต" : "DB · Mock checkout"}</span></div>
+    <div className={styles.resultHeading}><h3>{title}</h3><span>{response.source === "DEMO" ? "ข้อมูลตัวอย่าง" : "การชำระเงินจำลอง"}</span></div>
     <p>{plan.startDate} ถึง {plan.endDate} · เวลาไทย · {plan.metric === "revenue" ? "ยอดเงิน" : "จำนวนชิ้น"} · {plan.chart}</p>
     <p className={styles.summary}>รวมช่วงเวลา ฿{number(result.totals.revenue)} · {number(result.totals.quantity)} ชิ้น · {number(result.totals.orderCount)} Orders</p>
     {result.empty ? <p className={styles.empty}>ไม่มี order ที่ checkout สำเร็จในช่วงนี้ ลองเลือกชุดข้อมูลสาธิตหรือเปลี่ยนช่วงเวลา</p> : <>
@@ -84,10 +84,10 @@ function SalesChart({ response, title, unit }: { response: StatsResponse; title:
   return <figure className={styles.chart}>
     <svg viewBox="0 0 740 270" role="img" aria-label={`${title} ${response.plan.chart === "bar" ? "bar graph" : "line graph"} หน่วย${unit}`}>
       {[0, 0.5, 1].map(ratio => <g key={ratio}><line x1={plot.left} x2={plot.left + plot.width} y1={y(max * ratio)} y2={y(max * ratio)} stroke="#dce8ec" /><text x={plot.left - 8} y={y(max * ratio) + 4} textAnchor="end" fontSize={11} fill="#68818d">{number(max * ratio)}</text></g>)}
-      {response.plan.chart === "line" && <polyline points={rows.map((row, index) => `${x(index)},${y(row.value)}`).join(" ")} fill="none" stroke="#087889" strokeWidth={3} />}
+      {response.plan.chart === "line" && <polyline points={rows.map((row, index) => `${x(index)},${y(row.value)}`).join(" ")} fill="none" stroke="#006d5b" strokeWidth={3} />}
       {rows.map((row, index) => <g key={row.key}>
         <title>{row.label}: {number(row.value)} {unit}</title>
-        {response.plan.chart === "bar" ? <rect x={x(index) - plot.width / rows.length * 0.32} y={y(row.value)} width={plot.width / rows.length * 0.64} height={plot.top + plot.height - y(row.value)} rx={2} fill="#2492a2" /> : <circle cx={x(index)} cy={y(row.value)} r={3} fill="#087889" />}
+        {response.plan.chart === "bar" ? <rect x={x(index) - plot.width / rows.length * 0.32} y={y(row.value)} width={plot.width / rows.length * 0.64} height={plot.top + plot.height - y(row.value)} rx={2} fill="#318969" /> : <circle cx={x(index)} cy={y(row.value)} r={3} fill="#006d5b" />}
         {index % Math.ceil(rows.length / 8) === 0 && <text x={x(index)} y={239} textAnchor="middle" fontSize={11} fill="#476d7a">{response.plan.tool === "query_daily_sales" ? row.label.slice(5) : row.label.slice(0, 14)}</text>}
       </g>)}
     </svg><figcaption>{title} ({unit}) · อ่านค่าทุกรายการได้จากตาราง</figcaption>

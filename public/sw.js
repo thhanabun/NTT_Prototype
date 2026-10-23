@@ -1,4 +1,4 @@
-const CACHE = "basketly-shell-v2";
+const CACHE = "fast-shell-v3";
 const APP_FILES = ["/", "/styles.css", "/extras.css", "/app.js", "/manifest.webmanifest", "/basket.svg"];
 
 self.addEventListener("install", (event) => {

@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createStore } from "./domain.mjs";
+import { DynamoDbRecordsRepository } from "./cloud/records-repository.mjs";
 
 const STATE_KEY = "SMART_BASKET#STATE";
 const MAX_WRITE_ATTEMPTS = 4;
@@ -191,6 +192,7 @@ export class DynamoDbRepository {
 }
 
 export function createRepository({ backend, statePath, tableName }) {
+  if (backend === "dynamodb-records") return new DynamoDbRecordsRepository({ tableName });
   if (backend === "dynamodb") return new DynamoDbRepository({ tableName });
   if (backend && backend !== "local") throw new Error(`Unknown STORE_BACKEND: ${backend}`);
   return new LocalJsonRepository(statePath);

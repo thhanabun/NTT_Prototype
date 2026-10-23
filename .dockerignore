@@ -1,0 +1,14 @@
+.git
+.worktrees
+**/node_modules
+**/.next
+**/.venv*
+data
+tmp
+**/secrets.h
+**/.env*
+**/certs
+**/*.key
+**/*.pem
+**/*.log
+web/.next-cloud

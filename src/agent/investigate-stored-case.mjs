@@ -7,11 +7,12 @@ export async function investigateStoredCase(repository, caseId, {
   decision,
   onStarted = () => {},
   planner,
+  toolRunner,
 } = {}) {
   const name = provider.toUpperCase();
   if (name === "MOCK") return repository.mutate((store) => investigateCase(store, caseId));
   if (typeof decision !== "function") throw new Error("A real decision provider is required");
-  if (planner) return runAgentInvestigation(repository, caseId, { provider: name, planner, decision, onStarted });
+  if (planner) return runAgentInvestigation(repository, caseId, { provider: name, planner, decision, onStarted, toolRunner });
 
   const { result: investigation, store } = await repository.mutate((draft) =>
     startCaseInvestigation(draft, caseId, { provider: name }));

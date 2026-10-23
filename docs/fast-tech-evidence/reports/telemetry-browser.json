@@ -1,0 +1,20 @@
+{
+  "checks": [
+    "MQTT telemetry persists and updates actual Admin via native SSE; heartbeat alone cannot mutate cart/FSM",
+    "MQTT PICK / duplicate / PUT_BACK traverses FSM, database and Shopper realtime with correct totals",
+    "Missing basket tag creates staff case visible in Admin and blocks Shopper checkout without charging",
+    "Silent device goes OFFLINE without refresh and recovers on telemetry; unresolved transaction remains unchanged",
+    "Persisted event/telemetry verified; responsive hardware card at 320/390/768/1440; no browser runtime errors"
+  ],
+  "errors": [],
+  "simulated": [
+    "ESP32 signals",
+    "staff login"
+  ],
+  "transport": "production MQTT forwarder / HTTP / native SSE / actual browser",
+  "notExercised": [
+    "physical hardware",
+    "real model inference",
+    "AWS"
+  ]
+}

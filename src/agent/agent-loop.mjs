@@ -37,7 +37,7 @@ async function withinDeadline(signal, operation) {
 }
 
 export async function runAgentInvestigation(repository, caseId, {
-  provider, planner, decision, onStarted = () => {}, maxSteps = 8, timeoutMs = 25000,
+  provider, planner, decision, onStarted = () => {}, maxSteps = 8, timeoutMs = 25000, toolRunner = runAgentTool,
 }) {
   if (typeof planner !== "function" || typeof decision !== "function" || !Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 8 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 25000) throw new Error("Invalid Agent investigation configuration");
   const begun = await repository.mutate(draft => startCaseInvestigation(draft, caseId, { provider, collectEvidence: false }));
@@ -101,7 +101,7 @@ export async function runAgentInvestigation(repository, caseId, {
       }
       const input = action.tool === "get_cart_history" ? {} : { eventId: item.eventId, ...(action.scriptId ? { scriptId: action.scriptId } : {}) };
       let result;
-      try { result = await withinDeadline(signal, async () => runAgentTool(structuredClone(await repository.read()), action.tool, input, { signal })); }
+      try { result = await withinDeadline(signal, async () => toolRunner(structuredClone(await repository.read()), action.tool, input, { signal })); }
       catch (error) {
         await persistStep({ number, phase: "OBSERVE", action: action.id, summary: error.message, toolCall: { name: action.tool, status: "ERROR", calledAt: new Date().toISOString(), input, result: { error: error.message }, summary: error.message } });
         throw error;

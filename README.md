@@ -1,6 +1,10 @@
-# Basketly — Hybrid Smart-Basket Prototype
+# FAST — Hybrid Smart-Basket Prototype
 
 A two-basket, two-lane retail demo. A shelf event updates a shopper cart only when the deterministic policy can identify an active basket with clear evidence. Ambiguous or missing evidence stays pending and requires customer or staff confirmation. The amount shown at checkout includes confirmed items only.
+
+## Prepared cloud deployment
+
+The [cloud deployment kit](infra/cloud/README.md) adds production Next.js/Cognito, API Gateway HTTP/WebSocket, split DynamoDB records, IoT ingestion/ACK, Bedrock AgentCore + shared Laya/YOLO tools, Step Functions HITL callbacks, audit/archive and operational resources. Start with `npm run cloud:prepare`; this packages source and makes no AWS calls. `npm --prefix web run test:cloud` exercises production web behavior with explicitly isolated AWS/model fixtures. Actual account deployment and cloud acceptance remain separate actions.
 
 The [primary IoT roadmap](docs/iot-roadmap.md) sets the hardware: ESP32-WROOM-32, KW11-N/KW12 roller microswitches and iBeacon Bluetooth IP67 tags. The `codex/fsm-iotcore` branch sends shelf events through AWS IoT Core to a local bridge and the existing deterministic cart FSM.
 
@@ -130,9 +134,9 @@ The same API and FSM can use DynamoDB for persistence. This prototype stores the
 
 The tests use Node's built-in test runner. For physical acceptance, repeat PICK/PUT_BACK for Coke and Water, inject sensor bounce and duplicate MQTT deliveries, move both tags near one another, remove one tag, then verify that no unresolved line is chargeable and event-to-screen latency stays under 1.5 seconds.
 
-## Next cloud implementation checkpoint
+## Cloud deployment checkpoint
 
-Provision the DynamoDB table and scoped application access using [the DynamoDB guide](infra/dynamodb/README.md), then provision the IoT Thing, least-privilege policies and separate X.509 certificates using [the AWS IoT guide](infra/aws-iot/README.md). Lambda handler packaging, Bedrock Agent setup and Step Functions task-token callbacks still need AWS resource configuration; see [the Lambda guide](infra/lambda/README.md). Compile and flash the firmware for a physical end-to-end run.
+Use the [cloud deployment kit](infra/cloud/README.md) for the integrated AWS stack, model images, scoped application access, task-token callbacks and deployment scripts. The [DynamoDB](infra/dynamodb/README.md), [AWS IoT](infra/aws-iot/README.md) and [Lambda](infra/lambda/README.md) guides describe the earlier individual adapters. Account/model permissions and actual cloud acceptance still need verification before switching the ESP to its AWS firmware.
 
 
 Hardware PR integration review and actual verification results: [hardware protocol review](docs/hardware-protocol-review.md). The old smart_shelf.ino entry point is replaced by separate local/AWS sketches; esp32.ino delegates to the local implementation. Configure the current secrets.example.h before building.

@@ -29,7 +29,7 @@ try {
   };
   const event = (eventId, rssi, eventType = 'PICK', laneId = 'LANE-1') => post('/api/events', { eventId, laneId, eventType, rssi });
   const refresh = async () => {
-    await page.getByRole('button', { name: 'อัปเดต dashboard', exact: true }).click();
+    await page.getByRole('button', { name: 'อัปเดตข้อมูล', exact: true }).click();
     await page.waitForFunction(() => !document.querySelector('[role="status"][class*="loading"]'));
   };
   const detail = () => page.getByRole('region', { name: /^CASE-/ });

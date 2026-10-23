@@ -1,0 +1,1079 @@
+{
+  "startedAt": "2026-10-21T19:17:05.808Z",
+  "runDirectory": "C:\\Users\\thana\\OneDrive\\Documents\\ChatGPT\\NTTDATA Hack\\.worktrees\\fsm-iotcore\\data\\full-flow-HYhbnG",
+  "health": {
+    "status": "ok",
+    "loaded": [
+      "typed-decisions"
+    ],
+    "revisions": {
+      "typed-decisions": "7b928d828b7b0e022f929d9bd2e44165aa270148"
+    },
+    "device": "cpu",
+    "device_is_preference": false,
+    "checkpoint_devices": {
+      "typed-decisions": "cpu"
+    },
+    "cpu_fallbacks": {
+      "typed-decisions": {
+        "count": 0,
+        "last_reason": null
+      }
+    }
+  },
+  "boundary": {
+    "simulated": [
+      "ESP32 switch/BLE payloads",
+      "customer/staff button decisions",
+      "model 503/timeout and response-delay fault injection"
+    ],
+    "real": [
+      "MQTT 3.1.1 over loopback TCP",
+      "hardware PR local broker + shared HTTP forwarder",
+      "HTTP compute/FSM",
+      "Laya inference",
+      "JSON persistence",
+      "SSE clients",
+      "Lambda handler code invoked locally"
+    ],
+    "notExercised": [
+      "AWS IoT Core TLS/certificates/policies",
+      "AWS Lambda runtime",
+      "Step Functions execution/callback transport",
+      "Bedrock orchestration",
+      "live DynamoDB",
+      "physical hardware",
+      "browser rendering"
+    ]
+  },
+  "checks": [
+    {
+      "name": "Real MQTT broker, production bridge, HTTP app, two SSE subscribers and sessions ready",
+      "passed": true
+    },
+    {
+      "name": "30 PICK/PUT_BACK cycles plus 30 duplicate retries: both baskets/products, zero negative or duplicate charges, no model calls",
+      "passed": true,
+      "cycles": 30,
+      "mqttSignals": 90
+    },
+    {
+      "name": "Ambiguous near-A: real model/tools, no charge before HITL, checkout blocked, duplicate ignored, both realtime streams, one human resolution",
+      "passed": true,
+      "caseId": "CASE-001",
+      "candidate": "A",
+      "confidence": 0.5169,
+      "nextAction": "STAFF_HITL",
+      "resolution": {
+        "actor": "STAFF",
+        "decision": "APPROVE",
+        "basketId": "A"
+      }
+    },
+    {
+      "name": "Ambiguous near-B: real model/tools, no charge before HITL, checkout blocked, duplicate ignored, both realtime streams, one human resolution",
+      "passed": true,
+      "caseId": "CASE-002",
+      "candidate": "A",
+      "confidence": 0.4495,
+      "nextAction": "STAFF_HITL",
+      "resolution": {
+        "actor": "STAFF",
+        "decision": "APPROVE",
+        "basketId": "B"
+      }
+    },
+    {
+      "name": "Ambiguous tie: real model/tools, no charge before HITL, checkout blocked, duplicate ignored, both realtime streams, one human resolution",
+      "passed": true,
+      "caseId": "CASE-003",
+      "candidate": "B",
+      "confidence": 0.3858,
+      "nextAction": "STAFF_HITL",
+      "resolution": {
+        "actor": "STAFF",
+        "decision": "REJECT"
+      }
+    },
+    {
+      "name": "Ambiguous PUT_BACK: real model, quantity removed only after staff validation",
+      "passed": true
+    },
+    {
+      "name": "missing BLE: deterministic staff routing, no inference, no cart mutation",
+      "passed": true
+    },
+    {
+      "name": "delayed signal: deterministic staff routing, no inference, no cart mutation",
+      "passed": true
+    },
+    {
+      "name": "empty-cart PUT_BACK: deterministic staff routing, no inference, no cart mutation",
+      "passed": true
+    },
+    {
+      "name": "Model HTTP 503: persisted FAILED audit, staff fallback, no substituted mock or charge",
+      "passed": true
+    },
+    {
+      "name": "Slow real model + 3-second device retry: one inference, ACK after persistence, premature staff/checkout blocked, delayed response cannot double-charge",
+      "passed": true
+    },
+    {
+      "name": "Actual 30-second model timeout: ACK only after ingestion, failed agent/staff audit, retry accepted without another model call or charge",
+      "passed": true,
+      "elapsedMs": 30130
+    },
+    {
+      "name": "Malformed JSON and SKU/lane mismatch: no application ACK and no DB mutation",
+      "passed": true
+    },
+    {
+      "name": "Device disconnect/reconnect and application retry: ACK restored without double charge",
+      "passed": true
+    },
+    {
+      "name": "App restart: sessions/cart/cases/audit survive disk reload; SSE reconnect gets persisted snapshot",
+      "passed": true
+    },
+    {
+      "name": "Mock checkout records correct confirmed total and closes session; subsequent signal requires staff",
+      "passed": true
+    },
+    {
+      "name": "Durable audit contains device/FSM, actual model/tools, failed model, human decisions, validator, cart, duplicates and checkout",
+      "passed": true
+    },
+    {
+      "name": "Local Lambda chain: FSM → actual Laya case manager → four read-only tools → staff → validator → audit writer → disk reload",
+      "passed": true,
+      "validation": {
+        "caseId": "CASE-001",
+        "valid": true,
+        "status": "CLOSED",
+        "message": "Human decision is closed and recorded."
+      },
+      "tools": [
+        "get_shelf_event",
+        "get_basket_evidence",
+        "get_cart_history",
+        "get_basket_decision"
+      ]
+    },
+    {
+      "name": "Structured compute/agent/HITL/error logs written and realtime stream counts captured",
+      "passed": true
+    }
+  ],
+  "signalLatencies": [
+    {
+      "eventId": "full-1",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 97,
+      "firstStateNotificationMs": 54
+    },
+    {
+      "eventId": "full-1",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 37,
+      "firstStateNotificationMs": 12
+    },
+    {
+      "eventId": "full-2",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 48,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-3",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-3",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 34,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-4",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 48,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-5",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 36,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-5",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 33,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-6",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 39,
+      "firstStateNotificationMs": 16
+    },
+    {
+      "eventId": "full-7",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 7
+    },
+    {
+      "eventId": "full-7",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 44,
+      "firstStateNotificationMs": 15
+    },
+    {
+      "eventId": "full-8",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 61,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-9",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 39,
+      "firstStateNotificationMs": 9
+    },
+    {
+      "eventId": "full-9",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 43,
+      "firstStateNotificationMs": 15
+    },
+    {
+      "eventId": "full-10",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 39,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-11",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 35,
+      "firstStateNotificationMs": 16
+    },
+    {
+      "eventId": "full-11",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 43,
+      "firstStateNotificationMs": 16
+    },
+    {
+      "eventId": "full-12",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 40,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-13",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 40,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-13",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 42,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-14",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 33,
+      "firstStateNotificationMs": 12
+    },
+    {
+      "eventId": "full-15",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 42,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-15",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 43,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-16",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 55,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-17",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 45,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-17",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 40,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-18",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 32,
+      "firstStateNotificationMs": 9
+    },
+    {
+      "eventId": "full-19",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 43,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-19",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-20",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 35,
+      "firstStateNotificationMs": 12
+    },
+    {
+      "eventId": "full-21",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 40,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-21",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 38,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-22",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 37,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-23",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 42,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-23",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 40,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-24",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 37,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-25",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 27,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-25",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 53,
+      "firstStateNotificationMs": 9
+    },
+    {
+      "eventId": "full-26",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 40,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-27",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 33,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-27",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-28",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 32,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-29",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 38,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-29",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 46,
+      "firstStateNotificationMs": 8
+    },
+    {
+      "eventId": "full-30",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 32,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-31",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 63,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-31",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 15
+    },
+    {
+      "eventId": "full-32",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 32,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-33",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 40,
+      "firstStateNotificationMs": 15
+    },
+    {
+      "eventId": "full-33",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 33,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-34",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 33,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-35",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 35,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-35",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 31,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-36",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 41,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-37",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 39,
+      "firstStateNotificationMs": 9
+    },
+    {
+      "eventId": "full-37",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 38,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-38",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 43,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-39",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 39,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-39",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 45,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-40",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 35,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-41",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 38,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-41",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 47,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-42",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 24,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-43",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 53,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-43",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 41,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-44",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 63,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-45",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 64,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-45",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 34,
+      "firstStateNotificationMs": 8
+    },
+    {
+      "eventId": "full-46",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 39,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-47",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 64,
+      "firstStateNotificationMs": 21
+    },
+    {
+      "eventId": "full-47",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 32,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-48",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 64,
+      "firstStateNotificationMs": 22
+    },
+    {
+      "eventId": "full-49",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 41,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-49",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 49,
+      "firstStateNotificationMs": 11
+    },
+    {
+      "eventId": "full-50",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 33,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-51",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 40,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-51",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 42,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-52",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 37,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-53",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 47,
+      "firstStateNotificationMs": 16
+    },
+    {
+      "eventId": "full-53",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 66,
+      "firstStateNotificationMs": 26
+    },
+    {
+      "eventId": "full-54",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 67,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-55",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 33,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-55",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 34,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-56",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 45,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-57",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 31,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-57",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 40,
+      "firstStateNotificationMs": 12
+    },
+    {
+      "eventId": "full-58",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 29,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-59",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 42,
+      "firstStateNotificationMs": 12
+    },
+    {
+      "eventId": "full-59",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 54,
+      "firstStateNotificationMs": 7
+    },
+    {
+      "eventId": "full-60",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 41,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-61",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 37,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-62",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 1806,
+      "firstStateNotificationMs": 30
+    },
+    {
+      "eventId": "full-62",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 38,
+      "firstStateNotificationMs": 9
+    },
+    {
+      "eventId": "full-63",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 1734,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-63",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 54,
+      "firstStateNotificationMs": 13
+    },
+    {
+      "eventId": "full-64",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 1708,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-64",
+      "eventType": "PICK",
+      "qos": 1,
+      "ackMs": 31,
+      "firstStateNotificationMs": 20
+    },
+    {
+      "eventId": "full-65",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 1757,
+      "firstStateNotificationMs": 18
+    },
+    {
+      "eventId": "full-66",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 56,
+      "firstStateNotificationMs": 22
+    },
+    {
+      "eventId": "full-67",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 47,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-68",
+      "eventType": "PUT_BACK",
+      "qos": 0,
+      "ackMs": 56,
+      "firstStateNotificationMs": 19
+    },
+    {
+      "eventId": "full-69",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 73,
+      "firstStateNotificationMs": 30
+    },
+    {
+      "eventId": "full-70",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 32,
+      "firstStateNotificationMs": 16
+    },
+    {
+      "eventId": "full-71",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 46,
+      "firstStateNotificationMs": 10
+    },
+    {
+      "eventId": "full-73",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 42,
+      "firstStateNotificationMs": 17
+    },
+    {
+      "eventId": "full-73",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 31,
+      "firstStateNotificationMs": 14
+    },
+    {
+      "eventId": "full-74",
+      "eventType": "PICK",
+      "qos": 0,
+      "ackMs": 54,
+      "firstStateNotificationMs": 18
+    }
+  ],
+  "modelCalls": [
+    {
+      "mode": "real",
+      "status": 200,
+      "durationMs": 1708,
+      "answer": {
+        "type": "choice",
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5169,
+          "B": 0.2542,
+          "NONE": 0.229
+        },
+        "confidence": 0.0654,
+        "answer_confidence": 0.5169,
+        "action": {
+          "act_probability": 1
+        },
+        "x_jev_confidence": 0.2753
+      },
+      "usage": {
+        "input_tokens": 238,
+        "output_tokens": 0,
+        "state_tokens": 105,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      }
+    },
+    {
+      "mode": "real",
+      "status": 200,
+      "durationMs": 1662,
+      "answer": {
+        "type": "choice",
+        "choice": "A",
+        "probabilities": {
+          "A": 0.4495,
+          "B": 0.324,
+          "NONE": 0.2265
+        },
+        "confidence": 0.0343,
+        "answer_confidence": 0.4495,
+        "action": {
+          "act_probability": 1
+        },
+        "x_jev_confidence": 0.1743
+      },
+      "usage": {
+        "input_tokens": 238,
+        "output_tokens": 0,
+        "state_tokens": 105,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      }
+    },
+    {
+      "mode": "real",
+      "status": 200,
+      "durationMs": 1658,
+      "answer": {
+        "type": "choice",
+        "choice": "B",
+        "probabilities": {
+          "A": 0.3849,
+          "B": 0.3858,
+          "NONE": 0.2292
+        },
+        "confidence": 0.0237,
+        "answer_confidence": 0.3858,
+        "action": {
+          "act_probability": 1
+        },
+        "x_jev_confidence": 0.0788
+      },
+      "usage": {
+        "input_tokens": 237,
+        "output_tokens": 0,
+        "state_tokens": 104,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      }
+    },
+    {
+      "mode": "real",
+      "status": 200,
+      "durationMs": 1709,
+      "answer": {
+        "type": "choice",
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5289,
+          "B": 0.2757,
+          "NONE": 0.1955
+        },
+        "confidence": 0.0796,
+        "answer_confidence": 0.5289,
+        "action": {
+          "act_probability": 1
+        },
+        "x_jev_confidence": 0.2933
+      },
+      "usage": {
+        "input_tokens": 239,
+        "output_tokens": 0,
+        "state_tokens": 106,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      }
+    },
+    {
+      "mode": "injected-outage",
+      "status": 503
+    },
+    {
+      "mode": "real",
+      "status": 200,
+      "durationMs": 1694,
+      "answer": {
+        "type": "choice",
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5308,
+          "B": 0.2801,
+          "NONE": 0.1891
+        },
+        "confidence": 0.0828,
+        "answer_confidence": 0.5308,
+        "action": {
+          "act_probability": 1
+        },
+        "x_jev_confidence": 0.2962
+      },
+      "usage": {
+        "input_tokens": 238,
+        "output_tokens": 0,
+        "state_tokens": 105,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      }
+    },
+    {
+      "mode": "injected-timeout",
+      "status": "no response before client deadline"
+    }
+  ],
+  "realtimeFrames": {
+    "shopper": 128,
+    "staff": 128,
+    "reconnected-client": 4
+  },
+  "mqttApplicationAcks": 109,
+  "customerBranch": "not reached by real Laya scores; covered separately by deterministic policy tests, not claimed as real-model coverage",
+  "integrationPassed": true,
+  "modelDecisionQualityEstablished": false,
+  "completedAt": "2026-10-21T19:18:02.863Z"
+}

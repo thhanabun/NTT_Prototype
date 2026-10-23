@@ -57,7 +57,7 @@ try {
     for (const path of ['/admin', '/admin/login']) {
       await page.goto(frontend + path);
       await page.getByRole('heading', { name: 'Admin login ยังไม่เปิดใช้งาน' }).waitFor();
-      assert.equal(await page.getByRole('button', { name: 'เข้าสู่ระบบ (Mock)', exact: true }).count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).count(), 0);
     }
     noAdminRequests();
     console.log('Auth disabled-mode checks passed: Admin unavailable despite a forged mock session, no state/API/SSE access.');
@@ -73,7 +73,7 @@ try {
       if (width === 390 || width === 1440) await page.screenshot({ path: join(artifacts, `login-${width}.png`), fullPage: true });
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    const submit = () => page.getByRole('button', { name: 'เข้าสู่ระบบ (Mock)', exact: true });
+    const submit = () => page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true });
     await submit().click();
     assert.equal(await page.getByLabel('Email', { exact: true }).getAttribute('aria-invalid'), 'true');
     assert.equal(await page.getByLabel('Password', { exact: true }).getAttribute('aria-invalid'), 'true');
@@ -95,14 +95,14 @@ try {
     await page.getByLabel('Email', { exact: true }).fill('ADMIN@BASKETLY.TEST');
     await page.getByLabel('Password', { exact: true }).fill('BasketlyDemo123!');
     await page.getByLabel('Password', { exact: true }).press('Enter');
-    await page.getByRole('button', { name: 'Logout', exact: true }).waitFor();
-    await page.getByRole('status').filter({ hasText: 'Realtime connected' }).waitFor();
+    await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).waitFor();
+    await page.getByRole('status').filter({ hasText: 'เชื่อมต่อแล้ว' }).waitFor();
     await waitForSubscribers(1);
     const storage = await page.evaluate(() => ({ session: { ...sessionStorage }, local: { ...localStorage } }));
     assert.ok(!JSON.stringify(storage).includes('BasketlyDemo123!'), 'Never persist passwords');
     assert.equal(mutations, 0, 'Mock login performs no HTTP POST');
     await page.reload();
-    await page.getByRole('button', { name: 'Logout', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).waitFor();
     await waitForSubscribers(1);
     await page.screenshot({ path: join(artifacts, 'admin-mock-session-390.png'), fullPage: true });
 
@@ -111,20 +111,20 @@ try {
     await other.goto(frontend + '/admin');
     await other.getByRole('heading', { name: 'เข้าสู่ระบบ Admin', exact: true }).waitFor();
     await other.close();
-    await page.getByRole('button', { name: 'Logout', exact: true }).click();
+    await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).click();
     await page.waitForURL('**/admin/login');
     await page.getByRole('heading', { name: 'เข้าสู่ระบบ Admin', exact: true }).waitFor();
     await waitForSubscribers(0);
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), sessionKey), null);
     await page.goBack();
     await page.waitForURL('**/shopper/preview');
-    assert.equal(await page.getByRole('button', { name: 'Logout', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).count(), 0);
     await page.getByRole('link', { name: 'Admin', exact: true }).click();
     await page.getByRole('heading', { name: 'เข้าสู่ระบบ Admin', exact: true }).waitFor();
     await waitForSubscribers(0);
 
     await loginAdmin(page);
-    await page.getByText('Mock session controls', { exact: true }).click();
+    await page.getByText('เครื่องมือทดสอบ', { exact: true }).click();
     await page.getByRole('button', { name: 'จำลอง session หมดอายุ', exact: true }).click();
     await page.getByRole('status').filter({ hasText: 'Mock session หมดอายุ' }).waitFor();
     await waitForSubscribers(0);
@@ -134,7 +134,7 @@ try {
     await loginAdmin(page);
     await page.evaluate(key => sessionStorage.setItem(key, JSON.stringify({ email: 'admin@basketly.test', expiresAt: Date.now() + 2500 })), sessionKey);
     await page.reload();
-    await page.getByRole('button', { name: 'Logout', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).waitFor();
     await page.getByRole('status').filter({ hasText: 'Mock session หมดอายุ' }).waitFor();
     await waitForSubscribers(0);
 
@@ -151,14 +151,14 @@ try {
     await blocked.goto(frontend + '/admin/login');
     await blocked.getByLabel('Email', { exact: true }).fill('admin@basketly.test');
     await blocked.getByLabel('Password', { exact: true }).fill('BasketlyDemo123!');
-    await blocked.getByRole('button', { name: 'เข้าสู่ระบบ (Mock)', exact: true }).click();
+    await blocked.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
     await blocked.getByRole('alert').filter({ hasText: 'ไม่สามารถบันทึก session' }).waitFor();
     assert.deepEqual({ reads, streams }, beforeCorrupt, 'Unavailable storage must not grant access');
     await blocked.close();
 
     await page.getByRole('link', { name: 'ไป Shopper App →', exact: true }).click();
     await page.waitForURL('**/shopper');
-    await page.getByRole('status').filter({ hasText: 'Realtime connected' }).waitFor();
+    await page.getByRole('status').filter({ hasText: 'เชื่อมต่อแล้ว' }).waitFor();
     assert.equal(await page.getByRole('heading', { name: 'เข้าสู่ระบบ Admin', exact: true }).count(), 0, 'Shopper remains guest-accessible');
     await page.close();
     await waitForSubscribers(0);

@@ -1,0 +1,47 @@
+{
+  "verifiedAt": "2026-10-22T10:26:45.466Z",
+  "chip": "ESP32-D0WD-V3 rev3.1",
+  "serialPort": "COM3",
+  "uploadBaud": 115200,
+  "firmwareSha256": "a5b5bcdc8dd15aea9bd3bccfc77661838164f387f516a8d36313f48c86332bc0",
+  "core": "esp32:esp32@3.3.12",
+  "libraries": {
+    "PubSubClient": "2.8.0",
+    "NimBLE-Arduino": "2.5.1"
+  },
+  "mqttBroker": "10.54.208.237:1883",
+  "dbTelemetryCount": 68,
+  "latestTelemetry": {
+    "shelfId": "SHELF-01",
+    "receivedAt": "2026-10-22T10:26:45.113Z",
+    "capturedAt": "2026-10-22T10:26:45.113Z",
+    "timeBasis": "SERVER_RECEIPT",
+    "source": "DEVICE",
+    "rssi": {
+      "A": -85,
+      "B": null,
+      "HV01": -80
+    },
+    "lanes": [
+      {
+        "laneId": "LANE-1",
+        "present": false
+      },
+      {
+        "laneId": "LANE-2",
+        "present": false
+      }
+    ],
+    "uptimeMs": 142420,
+    "queueDepth": 0,
+    "droppedEvents": 0
+  },
+  "originalDataPreserved": {
+    "orders": 6,
+    "cases": 5,
+    "cartsUnchanged": true
+  },
+  "physicalPickPutBackTested": false,
+  "originalFlashBackup": "Attempt at 460800 failed; no complete original flash backup",
+  "dataPath": "C:\\Users\\thana\\OneDrive\\Documents\\ChatGPT\\NTTDATA Hack\\.worktrees\\fsm-iotcore\\data\\demo-state.json"
+}

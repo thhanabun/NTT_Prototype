@@ -1,0 +1,73 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "WebRepository": {
+      "Type": "AWS::ECR::Repository",
+      "Properties": {
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true
+        },
+        "ImageTagMutability": "IMMUTABLE",
+        "EncryptionConfiguration": {
+          "EncryptionType": "AES256"
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"untagged\",\"countType\":\"sinceImagePushed\",\"countUnit\":\"days\",\"countNumber\":7},\"action\":{\"type\":\"expire\"}}]}"
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "AgentRepository": {
+      "Type": "AWS::ECR::Repository",
+      "Properties": {
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true
+        },
+        "ImageTagMutability": "IMMUTABLE",
+        "EncryptionConfiguration": {
+          "EncryptionType": "AES256"
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"untagged\",\"countType\":\"sinceImagePushed\",\"countUnit\":\"days\",\"countNumber\":7},\"action\":{\"type\":\"expire\"}}]}"
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    }
+  },
+  "Outputs": {
+    "WebRepositoryUri": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WebRepository",
+          "RepositoryUri"
+        ]
+      }
+    },
+    "WebRepositoryArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WebRepository",
+          "Arn"
+        ]
+      }
+    },
+    "AgentRepositoryUri": {
+      "Value": {
+        "Fn::GetAtt": [
+          "AgentRepository",
+          "RepositoryUri"
+        ]
+      }
+    },
+    "AgentRepositoryArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "AgentRepository",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

@@ -52,8 +52,8 @@ try {
   for (const page of [shopper, admin]) page.on('pageerror', error => report.errors.push(error.message));
   await shopper.goto(frontend + '/shopper?basket=A');
   await admin.goto(frontend + '/admin'); await loginAdmin(admin);
-  for (const page of [shopper, admin]) await page.getByRole('status').filter({ hasText: 'Realtime connected' }).waitFor();
-  await shopper.getByRole('button', { name: /เริ่ม shopping session/ }).click();
+  for (const page of [shopper, admin]) await page.getByRole('status').filter({ hasText: 'เชื่อมต่อแล้ว' }).waitFor();
+  await shopper.getByRole('button', { name: /เริ่มช้อป/ }).click();
   const text = (id, expected) => admin.waitForFunction(({ id, expected }) => document.querySelector(`[data-testid="${id}"]`)?.textContent === expected, { id, expected });
   const total = value => shopper.waitForFunction(value => document.querySelector('[class*="totalRow"] strong')?.textContent === `฿${value}`, value);
   await text('device-status', 'UNKNOWN');
@@ -87,7 +87,7 @@ try {
   await event('telemetry-unknown', 'PICK', { A: -51, B: null });
   const unresolved = (await state()).cases[0];
   assert.equal(unresolved.type, 'ZONE_UNKNOWN'); assert.equal(unresolved.status, 'OPEN_STAFF');
-  await total(0); assert.ok(await shopper.getByRole('button', { name: 'Mock checkout', exact: true }).isDisabled());
+  await total(0); assert.ok(await shopper.getByRole('button', { name: 'ชำระเงิน', exact: true }).isDisabled());
   await admin.getByRole('button', { name: new RegExp(unresolved.caseId) }).waitFor();
   passed('Missing basket tag creates staff case visible in Admin and blocks Shopper checkout without charging');
   await text('device-status', 'OFFLINE'); await text('device-rssi-A', '—'); await text('device-lane-LANE-1', 'UNKNOWN');

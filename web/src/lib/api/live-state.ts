@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { getState } from "./client";
 import type { ApiState } from "./types";
+import { createRealtimeTicket } from "./client";
 
 export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "manual";
 interface LiveSnapshot {
@@ -18,7 +19,11 @@ const initial: LiveSnapshot = { state:null, loading:true, stale:true, error:"", 
 let snapshot = initial;
 const listeners = new Set<() => void>();
 const delays = [1500, 3000, 6000, 12000, 30000];
-let source: EventSource | null = null;
+let source: EventSource | WebSocket | null = null;
+let generation = 0;
+let deviceExpiry: ReturnType<typeof setTimeout> | undefined;
+let invalidation: ReturnType<typeof setTimeout> | undefined;
+let renewal: ReturnType<typeof setTimeout> | undefined;
 let retry: ReturnType<typeof setTimeout> | undefined;
 let cleanup: ReturnType<typeof setTimeout> | undefined;
 let controller: AbortController | null = null;
@@ -39,8 +44,14 @@ function update(changes: Partial<LiveSnapshot>) {
 }
 function accept(value: ApiState) {
   update({ state:validate(value), loading:false, stale:false, error:"", updatedAt:new Date().toISOString() });
+  clearTimeout(deviceExpiry);
+  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true" && value.shelf.device?.status === "ONLINE" && value.shelf.device.lastSeenAt) {
+    deviceExpiry = setTimeout(() => { if (active) void readState(false); }, Math.max(100, Date.parse(value.shelf.device.lastSeenAt) + value.shelf.device.timeoutMs + 100 - Date.now()));
+  }
 }
 function disconnect() {
+  generation++;
+  clearTimeout(renewal);
   source?.close();
   source = null;
   clearTimeout(retry);
@@ -60,6 +71,7 @@ function retryConnection(message: string) {
 function connect() {
   disconnect();
   if (!active) return;
+  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true") { void connectCloud(generation); return; }
   if (typeof EventSource === "undefined") {
     update({connection:"manual"});
     return;
@@ -83,6 +95,37 @@ function connect() {
     };
   } catch {
     retryConnection("เปิดการเชื่อมต่อ realtime ไม่สำเร็จ");
+  }
+}
+
+async function connectCloud(expectedGeneration: number) {
+  try {
+    const [configuration, ticket] = await Promise.all([
+      fetch("/api/config", { cache: "no-store", signal: AbortSignal.timeout(12000) }).then(response => { if (!response.ok) throw new Error("Realtime configuration unavailable"); return response.json(); }),
+      createRealtimeTicket(),
+    ]);
+    if (!active || expectedGeneration !== generation) return;
+    const url = new URL(configuration.websocketUrl);
+    if (url.protocol !== "wss:") throw new Error("Secure realtime endpoint required");
+    url.searchParams.set("ticket", ticket.ticket);
+    const stream = new WebSocket(url);
+    source = stream;
+    stream.onopen = () => {
+      if (source !== stream || !active) return;
+      update({ connection: "live", retryAttempt: 0 }); void readState(false);
+      if (ticket.connectionExpiresAt) renewal = setTimeout(() => { if (source === stream && active) connect(); }, Math.max(1000, ticket.connectionExpiresAt * 1000 - Date.now() - 30000));
+    };
+    stream.onmessage = event => {
+      if (source !== stream || !active) return;
+      try {
+        if (JSON.parse(event.data).type !== "STATE_CHANGED") throw new Error("Invalid notification");
+        clearTimeout(invalidation);
+        invalidation = setTimeout(() => { if (source === stream && active) void readState(false); }, 50);
+      } catch { retryConnection("อ่านข้อมูล realtime ไม่สำเร็จ"); }
+    };
+    stream.onclose = stream.onerror = () => { if (source === stream) retryConnection("การเชื่อมต่อ realtime ขาดหาย กำลังลองใหม่"); };
+  } catch {
+    if (active && expectedGeneration === generation) retryConnection("เชื่อมต่อ cloud realtime ไม่สำเร็จ");
   }
 }
 
@@ -121,6 +164,8 @@ export async function refreshLiveState(): Promise<boolean> {
 }
 function stop() {
   active = false;
+  clearTimeout(deviceExpiry);
+  clearTimeout(invalidation);
   requestNumber += 1;
   controller?.abort();
   controller = null;

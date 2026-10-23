@@ -1,0 +1,272 @@
+{
+  "generatedOn": "2026-10-23",
+  "sourceRequest": "C:/Users/thana/Downloads/FAST_Tech_Data_Request.md",
+  "sourceCommit": "26d39292e543c1a8bf44331385c7077f25859ea6",
+  "questionCount": 157,
+  "sections": [
+    {
+      "number": 0,
+      "questionCount": 10
+    },
+    {
+      "number": 1,
+      "questionCount": 14
+    },
+    {
+      "number": 2,
+      "questionCount": 11
+    },
+    {
+      "number": 3,
+      "questionCount": 10
+    },
+    {
+      "number": 4,
+      "questionCount": 8
+    },
+    {
+      "number": 5,
+      "questionCount": 8
+    },
+    {
+      "number": 6,
+      "questionCount": 21
+    },
+    {
+      "number": 7,
+      "questionCount": 14
+    },
+    {
+      "number": 8,
+      "questionCount": 12
+    },
+    {
+      "number": 9,
+      "questionCount": 9
+    },
+    {
+      "number": 10,
+      "questionCount": 9
+    },
+    {
+      "number": 11,
+      "questionCount": 11
+    },
+    {
+      "number": 12,
+      "questionCount": 12
+    },
+    {
+      "number": 13,
+      "questionCount": 8
+    }
+  ],
+  "reports": {
+    "local-mqtt-full-flow": ".worktrees/fsm-iotcore/data/full-flow-HYhbnG/report.json",
+    "local-iot-bridge-full-flow": ".worktrees/fsm-iotcore/data/full-flow-CGuNYt/report.json",
+    "agentic-browser-system": "data/web-system-1792652900313/report.json",
+    "vision-autonomous-mqtt": "data/vision-mqtt-smoke/report.json",
+    "vision-verification": "data/vision-verification-1792661098263/report.json",
+    "esp-connectivity": "data/hardware-integration-1792664136237/esp-connectivity-report.json",
+    "esp-flash-verification": "data/hardware-integration-1792664136237/verification.json",
+    "live-esp-event-web": "data/live-event-web-1792667989562/report.json",
+    "live-esp-telemetry-web": "data/live-hardware-web-1792668735334/report.json",
+    "telemetry-browser": "data/web-telemetry-1792685906467/report.json",
+    "stats-browser-real-laya": "data/stats-web-1792685920788/report.json",
+    "cloud-browser-fixtures": "data/cloud-browser-1792686913994/report.json",
+    "cloud-arm64-images": "data/cloud-images-Lm7uGX/report.json",
+    "cloud-web-image-final": "data/cloud-web-image-final.json"
+  },
+  "screenshots": [
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/admin-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/admin-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/admin-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/admin-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/admin-actions-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/admin-actions-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/admin-actions-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/admin-actions-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/admin-mock-session-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/admin-mock-session-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/cart-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/cart-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/cart-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/cart-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/confirmation-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/confirmation-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/confirmation-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/confirmation-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/connection-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/connection-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/connection-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/connection-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/disconnected-admin-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/disconnected-admin-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/disconnected-shopper-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/disconnected-shopper-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/error-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/error-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/error-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/error-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/live-admin-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/live-admin-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/live-shopper-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/live-shopper-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/login-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/login-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/login-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/login-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/login-expired-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/login-expired-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/receipt-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/receipt-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/receipt-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/receipt-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/scanner-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/scanner-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/scanner-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/scanner-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/staff-review-1440.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/staff-review-1440.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/local-ui/staff-review-390.png",
+      "source": ".worktrees/fsm-iotcore/data/web-ui-checks/staff-review-390.png",
+      "provenance": "Local browser UI; mock login และ confirmation fixtures; ไม่ใช่ AWS Console"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/live-device/live-hardware-desktop.png",
+      "source": "data/live-hardware-web-1792668735334/live-hardware-desktop.png",
+      "provenance": "ESP32 จริง → local MQTT/API → Admin; read-only check"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/live-device/live-hardware-mobile.png",
+      "source": "data/live-hardware-web-1792668735334/live-hardware-mobile.png",
+      "provenance": "ESP32 จริง → local MQTT/API → Admin; read-only check"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/agentic-system/admin-audit.png",
+      "source": "data/web-system-1792652900313/admin-audit.png",
+      "provenance": "Local Chromium + MQTT mock signals + real Laya"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/agentic-system/shopper-b.png",
+      "source": "data/web-system-1792652900313/shopper-b.png",
+      "provenance": "Local Chromium + MQTT mock signals + real Laya"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/agentic-system/shopper-receipt.png",
+      "source": "data/web-system-1792652900313/shopper-receipt.png",
+      "provenance": "Local Chromium + MQTT mock signals + real Laya"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/stat-query/daily-desktop.png",
+      "source": "data/stats-web-1792685920788/daily-desktop.png",
+      "provenance": "Real local Laya; mock checkout orders หรือ DEMO ตามป้ายใน UI"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/stat-query/stat-panel-1440.png",
+      "source": "data/stats-web-1792685920788/stat-panel-1440.png",
+      "provenance": "Real local Laya; mock checkout orders หรือ DEMO ตามป้ายใน UI"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/stat-query/stat-panel-390.png",
+      "source": "data/stats-web-1792685920788/stat-panel-390.png",
+      "provenance": "Real local Laya; mock checkout orders หรือ DEMO ตามป้ายใน UI"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/stat-query/top-products-1440.png",
+      "source": "data/stats-web-1792685920788/top-products-1440.png",
+      "provenance": "Real local Laya; mock checkout orders หรือ DEMO ตามป้ายใน UI"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/stat-query/top-products-390.png",
+      "source": "data/stats-web-1792685920788/top-products-390.png",
+      "provenance": "Real local Laya; mock checkout orders หรือ DEMO ตามป้ายใน UI"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/cloud-fixture/cloud-admin.png",
+      "source": "data/cloud-browser-1792686913994/cloud-admin.png",
+      "provenance": "Production Next build แต่ AWS/Cognito/model services เป็น fixtures"
+    },
+    {
+      "target": "docs/fast-tech-evidence/screenshots/cloud-fixture/cloud-shopper.png",
+      "source": "data/cloud-browser-1792686913994/cloud-shopper.png",
+      "provenance": "Production Next build แต่ AWS/Cognito/model services เป็น fixtures"
+    }
+  ]
+}

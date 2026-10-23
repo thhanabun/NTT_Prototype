@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const apiOrigin = (process.env.LOCAL_API_ORIGIN ?? "http://127.0.0.1:3000").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  output: "standalone",
   allowedDevOrigins: ["127.0.0.1"],
   cacheComponents: true,
   partialPrefetching: true,

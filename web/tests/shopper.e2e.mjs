@@ -29,7 +29,7 @@ await page.route('**/api/**',async route=>{
 });
 const post=async(path,data={})=>{const r=await page.request.post(api+path,{data});assert.ok(r.ok(),await r.text());return r.json();};
 const refresh=async()=>{await page.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).click();await page.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).waitFor();await page.waitForFunction(()=>!document.querySelector('section[aria-busy="true"]'));};
-const cart=()=>page.getByRole('region',{name:/ตะกร้าสินค้า/});
+const cart=()=>page.getByRole('region',{name:/รายการของคุณ/});
 const total=async value=>{await page.waitForFunction(value=>document.querySelector('[class*="totalRow"] strong')?.textContent===value,value);};
 const responsive=async label=>{
  for(const [width,height] of [[320,740],[375,812],[390,844],[768,1024],[1024,768],[1440,900],[844,390]]) {
@@ -46,12 +46,12 @@ const responsive=async label=>{
 };
  await post('/api/reset');
  await page.goto(`${process.env.SHOPPER_TEST_ORIGIN ?? 'http://localhost:3001'}/shopper`);
- await page.getByRole('button',{name:/เริ่ม shopping session/}).waitFor();
+ await page.getByRole('button',{name:/เริ่มช้อป/}).waitFor();
  await page.waitForFunction(()=>!document.querySelector('section[aria-busy="true"]'));
  await responsive('connection');
  await page.getByRole('radio',{name:/Basket B/}).check();
- await page.getByRole('button',{name:/เริ่ม shopping session/}).click();
- await page.getByText('Active',{exact:true}).waitFor();
+ await page.getByRole('button',{name:/เริ่มช้อป/}).click();
+ await page.getByText('เชื่อมแล้ว',{exact:true}).waitFor();
  const snapshot=await page.request.get(api+'/api/state').then(r=>r.json());
  assert.equal(snapshot.baskets[1].session.status,'ACTIVE');
  await post('/api/events',{eventId:'test-step1',laneId:'LANE-2',eventType:'PICK',rssi:{A:-73,B:-48}});
@@ -60,7 +60,7 @@ const responsive=async label=>{
  await page.reload();await total('฿15');
  assert.equal(await page.getByRole('radio',{name:/Basket B/}).isChecked(),true);
  const event=async(id,rssi={A:-73,B:-48},eventType='PICK',laneId='LANE-1')=>post('/api/events',{eventId:id,laneId,eventType,rssi});
- const check=()=>page.getByRole('button',{name:'Mock checkout',exact:true});
+ const check=()=>page.getByRole('button',{name:'ชำระเงิน',exact:true});
  await event('step2-clear');await refresh();await total('฿40');
  await responsive('cart');
  await event('step2-clear');await refresh();await total('฿40');
@@ -90,15 +90,15 @@ const responsive=async label=>{
  state=await page.request.get(api+'/api/state').then(r=>r.json());assert.equal(state.baskets[1].session,null);assert.equal(state.baskets[1].lines.length,0);
  await page.reload();await page.getByRole('heading',{name:'ขอบคุณที่ช้อปกับเรา'}).waitFor();
  await page.getByRole('button',{name:'เตรียมช้อปครั้งใหม่',exact:true}).click();
- await page.getByRole('button',{name:/เริ่ม shopping session/}).click();await page.getByText('Active',{exact:true}).waitFor();
- await page.getByRole('button',{name:'สแกน QR',exact:true}).click();
+ await page.getByRole('button',{name:/เริ่มช้อป/}).click();await page.getByText('เชื่อมแล้ว',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'สแกนตะกร้า',exact:true}).click();
  await page.getByRole('dialog').waitFor();
  await page.getByRole('button',{name:'ใช้ Basket A',exact:true}).click();
  await page.getByRole('dialog').waitFor({state:'hidden'});
- await page.getByText('Active',{exact:true}).waitFor();
+ await page.getByText('เชื่อมแล้ว',{exact:true}).waitFor();
  state=await page.request.get(api+'/api/state').then(r=>r.json());assert.equal(state.baskets[0].session.status,'ACTIVE');
  await page.reload();assert.ok(page.url().includes('basket=A'));
- await page.getByRole('button',{name:'สแกน QR',exact:true}).waitFor();
+ await page.getByRole('button',{name:'สแกนตะกร้า',exact:true}).waitFor();
  await page.waitForFunction(()=>!document.querySelector('section[aria-busy="true"]'));
  await page.evaluate(()=>{
   window.__qr='';window.__stopCount=0;window.__deny=false;
@@ -112,7 +112,7 @@ const responsive=async label=>{
    return stream;
   };
  });
- await page.getByRole('button',{name:'สแกน QR',exact:true}).click();
+ await page.getByRole('button',{name:'สแกนตะกร้า',exact:true}).click();
  await page.getByRole('status').filter({hasText:'วาง QR'}).waitFor();
  await page.evaluate(()=>{window.__qr='https://example.com/?basket=C';});
  await page.getByRole('status').filter({hasText:'QR ไม่ถูกต้อง'}).waitFor();
@@ -122,12 +122,12 @@ const responsive=async label=>{
  assert.equal(await page.getByRole('radio',{name:/Basket B/}).isChecked(),true);
  assert.ok(await page.evaluate(()=>window.__stopCount)>0,'camera tracks stopped after QR success');
  await page.evaluate(()=>{window.__qr='';window.__deny=true;});
- await page.getByRole('button',{name:'สแกน QR',exact:true}).click();
+ await page.getByRole('button',{name:'สแกนตะกร้า',exact:true}).click();
  await page.getByRole('status').filter({hasText:'ไม่ได้รับอนุญาต'}).waitFor();
  await responsive('scanner');
  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
  await page.evaluate(()=>{window.__deny=false;});
- await page.getByRole('button',{name:'สแกน QR',exact:true}).click();await page.getByRole('status').filter({hasText:'วาง QR'}).waitFor();
+ await page.getByRole('button',{name:'สแกนตะกร้า',exact:true}).click();await page.getByRole('status').filter({hasText:'วาง QR'}).waitFor();
  const stopBefore=await page.evaluate(()=>window.__stopCount);
  await page.getByRole('button',{name:'ปิดกล้อง',exact:true}).click();
  assert.ok(await page.evaluate(()=>window.__stopCount)>stopBefore,'camera tracks stopped after close');
@@ -149,7 +149,7 @@ const responsive=async label=>{
  assert.equal(await cart().locator('[class*="receiptTotal"] dd').innerText(),'฿50');
  await page.getByRole('alert').filter({hasText:'Test backend temporarily unavailable'}).waitFor();
  await responsive('error');
- assert.equal(await page.getByRole('button',{name:/เริ่ม shopping session/}).isDisabled(),true);
+ assert.equal(await page.getByRole('button',{name:/เริ่มช้อป/}).isDisabled(),true);
  faults.load=false;await refresh();
  faults.malformed=true;await page.reload();await page.getByRole('alert').filter({hasText:'invalid JSON'}).waitFor();
  assert.equal(await check().isDisabled(),true);

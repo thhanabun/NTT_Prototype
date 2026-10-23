@@ -1,0 +1,1254 @@
+{
+  "output": "Scenario vision; start Basket A/B sessions in Shopper first. Event: mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b\nApplication ACK received. Inspect Agentic investigation, tool results and cart in Staff/Shopper.\n",
+  "case": {
+    "caseId": "CASE-001",
+    "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+    "type": "AMBIGUOUS_PICK",
+    "eventType": "PICK",
+    "sku": "COKE",
+    "status": "OPEN_STAFF",
+    "candidate": "A",
+    "confidence": 0.3876,
+    "nextAction": "STAFF_HITL",
+    "proposedAction": "ADD_ITEM",
+    "evidence": {
+      "rssi": {
+        "A": -55,
+        "B": -57
+      },
+      "marginDb": 2,
+      "zone": "AMBIGUOUS",
+      "activeSessions": {
+        "A": true,
+        "B": true
+      },
+      "cartQuantity": 0
+    },
+    "toolCalls": [
+      {
+        "name": "inspect_vision_evidence",
+        "status": "OK",
+        "calledAt": "2026-10-22T09:26:56.533Z",
+        "input": {
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+        },
+        "result": {
+          "status": "AVAILABLE",
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+          "frames": [
+            {
+              "frameId": "demo-people",
+              "source": "MOCK",
+              "cameraId": "MOCK-YOLO",
+              "linkedAt": "2026-10-22T09:26:53.925Z",
+              "aligned": false,
+              "model": "yolo11n",
+              "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+              "frameSha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+              "imageSize": {
+                "width": 1280,
+                "height": 720
+              },
+              "inferenceMs": 99.46,
+              "detections": [
+                {
+                  "classId": 0,
+                  "label": "person",
+                  "confidence": 0.84046,
+                  "box": [
+                    748.51,
+                    41.81,
+                    1148.07,
+                    711.11
+                  ]
+                },
+                {
+                  "classId": 0,
+                  "label": "person",
+                  "confidence": 0.77933,
+                  "box": [
+                    148.56,
+                    203.08,
+                    1125.28,
+                    714.99
+                  ]
+                },
+                {
+                  "classId": 27,
+                  "label": "tie",
+                  "confidence": 0.45202,
+                  "box": [
+                    361.39,
+                    437.73,
+                    524.66,
+                    717.32
+                  ]
+                }
+              ]
+            }
+          ],
+          "limitation": "Object detections are supporting evidence only; they do not identify SKU, Basket A/B ownership, or PICK/PUT_BACK. Detection confidence is not basket confidence."
+        },
+        "summary": "{\"status\":\"AVAILABLE\",\"ownership\":\"UNKNOWN\",\"action\":\"UNKNOWN\",\"frames\":[{\"source\":\"MOCK\",\"model\":\"yolo11n\",\"objects\":[\"person\",\"person\",\"tie\"]}]}"
+      },
+      {
+        "name": "get_shelf_event",
+        "status": "OK",
+        "calledAt": "2026-10-22T09:26:59.642Z",
+        "input": {
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+        },
+        "result": {
+          "found": true,
+          "event": {
+            "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+            "shelfId": "SHELF-01",
+            "laneId": "LANE-1",
+            "sku": "COKE",
+            "eventType": "PICK",
+            "timestamp": "2026-10-22T09:26:53.906Z",
+            "timeBasis": "SOURCE_TIMESTAMP",
+            "receivedAt": "2026-10-22T09:26:53.925Z",
+            "delayed": false,
+            "rssi": {
+              "A": -55,
+              "B": -57
+            }
+          }
+        },
+        "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+      },
+      {
+        "name": "get_cart_history",
+        "status": "OK",
+        "calledAt": "2026-10-22T09:27:02.776Z",
+        "input": {},
+        "result": {
+          "baskets": [
+            {
+              "basketId": "A",
+              "activeSession": {
+                "sessionId": "SES-4557F465",
+                "basketId": "A",
+                "status": "ACTIVE",
+                "startedAt": "2026-10-22T09:26:49.411Z"
+              },
+              "cart": [],
+              "recentOrders": [],
+              "recentResolutions": []
+            },
+            {
+              "basketId": "B",
+              "activeSession": {
+                "sessionId": "SES-658E3CFD",
+                "basketId": "B",
+                "status": "ACTIVE",
+                "startedAt": "2026-10-22T09:26:49.434Z"
+              },
+              "cart": [],
+              "recentOrders": [],
+              "recentResolutions": []
+            }
+          ]
+        },
+        "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+      },
+      {
+        "name": "get_basket_evidence",
+        "status": "OK",
+        "calledAt": "2026-10-22T09:27:06.206Z",
+        "input": {
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+        },
+        "result": {
+          "found": true,
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+          "shelfId": "SHELF-01",
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "eventType": "PICK",
+          "delayed": false,
+          "rssi": {
+            "A": -55,
+            "B": -57
+          },
+          "marginDb": 2,
+          "candidate": "A",
+          "activeSessions": {
+            "A": true,
+            "B": true
+          },
+          "zone": "AMBIGUOUS"
+        },
+        "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}"
+      },
+      {
+        "name": "get_signal_window",
+        "status": "OK",
+        "calledAt": "2026-10-22T09:27:09.929Z",
+        "input": {
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+        },
+        "result": {
+          "status": "AVAILABLE",
+          "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+          "windowMs": 3000,
+          "timeBasis": "SERVER_RECEIPT",
+          "samples": [
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:56.437Z",
+              "capturedAt": "2026-10-22T09:26:56.434Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": false
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 5000,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:55.941Z",
+              "capturedAt": "2026-10-22T09:26:55.928Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": false
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 4500,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:55.433Z",
+              "capturedAt": "2026-10-22T09:26:55.420Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": false
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 4000,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:54.929Z",
+              "capturedAt": "2026-10-22T09:26:54.916Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": false
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 3500,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:54.419Z",
+              "capturedAt": "2026-10-22T09:26:54.412Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": false
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 3000,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:53.416Z",
+              "capturedAt": "2026-10-22T09:26:53.398Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": true
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 2500,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:52.896Z",
+              "capturedAt": "2026-10-22T09:26:52.886Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": true
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 2000,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:52.375Z",
+              "capturedAt": "2026-10-22T09:26:52.370Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": true
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 1500,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:51.874Z",
+              "capturedAt": "2026-10-22T09:26:51.865Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": true
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 1000,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            },
+            {
+              "shelfId": "SHELF-01",
+              "receivedAt": "2026-10-22T09:26:51.405Z",
+              "capturedAt": "2026-10-22T09:26:51.354Z",
+              "timeBasis": "SOURCE_TIMESTAMP",
+              "source": "MOCK",
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "lanes": [
+                {
+                  "laneId": "LANE-1",
+                  "present": true
+                },
+                {
+                  "laneId": "LANE-2",
+                  "present": true
+                }
+              ],
+              "uptimeMs": 500,
+              "queueDepth": 0,
+              "droppedEvents": 0
+            }
+          ]
+        },
+        "summary": "{\"status\":\"AVAILABLE\",\"sampleCount\":10,\"rssi\":[{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57}],\"timeBasis\":\"SERVER_RECEIPT\"}"
+      }
+    ],
+    "reason": "The recommendation does not meet the customer-confirmation confidence policy; staff review is required.",
+    "createdAt": "2026-10-22T09:26:53.925Z",
+    "updatedAt": "2026-10-22T09:27:17.747Z",
+    "timeline": [
+      {
+        "at": "2026-10-22T09:26:53.925Z",
+        "action": "CASE_CREATED",
+        "nextAction": "INVESTIGATE",
+        "reason": "RSSI difference is below the clear-zone threshold; the case manager will inspect supporting evidence."
+      },
+      {
+        "at": "2026-10-22T09:26:53.928Z",
+        "action": "AGENT_STARTED",
+        "provider": "LAYA"
+      },
+      {
+        "at": "2026-10-22T09:26:56.415Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "inspect_vision_evidence",
+        "reason": "Selected inspect_vision_evidence"
+      },
+      {
+        "at": "2026-10-22T09:26:56.533Z",
+        "action": "AGENT_TOOL_COMPLETED",
+        "actionId": "inspect_vision_evidence",
+        "reason": "{\"status\":\"AVAILABLE\",\"ownership\":\"UNKNOWN\",\"action\":\"UNKNOWN\",\"frames\":[{\"source\":\"MOCK\",\"model\":\"yolo11n\",\"objects\":[\"person\",\"person\",\"tie\"]}]}"
+      },
+      {
+        "at": "2026-10-22T09:26:59.621Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "get_shelf_event",
+        "reason": "Selected get_shelf_event"
+      },
+      {
+        "at": "2026-10-22T09:26:59.642Z",
+        "action": "AGENT_TOOL_COMPLETED",
+        "actionId": "get_shelf_event",
+        "reason": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+      },
+      {
+        "at": "2026-10-22T09:27:02.773Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "get_cart_history",
+        "reason": "Selected get_cart_history"
+      },
+      {
+        "at": "2026-10-22T09:27:02.777Z",
+        "action": "AGENT_TOOL_COMPLETED",
+        "actionId": "get_cart_history",
+        "reason": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+      },
+      {
+        "at": "2026-10-22T09:27:06.203Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "get_basket_evidence",
+        "reason": "Selected get_basket_evidence"
+      },
+      {
+        "at": "2026-10-22T09:27:06.207Z",
+        "action": "AGENT_TOOL_COMPLETED",
+        "actionId": "get_basket_evidence",
+        "reason": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}"
+      },
+      {
+        "at": "2026-10-22T09:27:09.926Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "get_signal_window",
+        "reason": "Selected get_signal_window"
+      },
+      {
+        "at": "2026-10-22T09:27:09.930Z",
+        "action": "AGENT_TOOL_COMPLETED",
+        "actionId": "get_signal_window",
+        "reason": "{\"status\":\"AVAILABLE\",\"sampleCount\":10,\"rssi\":[{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57}],\"timeBasis\":\"SERVER_RECEIPT\"}"
+      },
+      {
+        "at": "2026-10-22T09:27:14.352Z",
+        "action": "AGENT_ACTION_SELECTED",
+        "actionId": "DECIDE",
+        "reason": "Selected DECIDE"
+      },
+      {
+        "at": "2026-10-22T09:27:17.747Z",
+        "action": "AGENT_RECOMMENDATION",
+        "candidate": "A",
+        "confidence": 0.3876,
+        "nextAction": "STAFF_HITL",
+        "provider": "LAYA",
+        "model": "laya-rl-agent"
+      }
+    ],
+    "agent": {
+      "provider": "LAYA",
+      "status": "COMPLETED",
+      "startedAt": "2026-10-22T09:26:53.928Z",
+      "investigationId": "745acf4d-6f84-4598-8b32-2c8ff0ce172e",
+      "mode": "AGENTIC",
+      "steps": [
+        {
+          "number": 1,
+          "phase": "SELECT",
+          "action": "inspect_vision_evidence",
+          "source": "MODEL",
+          "summary": "Selected inspect_vision_evidence",
+          "model": "laya-rl-agent",
+          "confidence": 0.163,
+          "probabilities": {
+            "get_shelf_event": 0.1532,
+            "get_basket_evidence": 0.1334,
+            "get_cart_history": 0.1414,
+            "get_signal_window": 0.0704,
+            "get_device_health": 0.0581,
+            "get_lane_state": 0.0973,
+            "get_event_neighbors": 0.1012,
+            "get_camera_evidence": 0.082,
+            "inspect_vision_evidence": 0.163
+          },
+          "availableActions": [
+            "get_shelf_event",
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "inspect_vision_evidence"
+          ]
+        },
+        {
+          "number": 1,
+          "phase": "OBSERVE",
+          "action": "inspect_vision_evidence",
+          "summary": "{\"status\":\"AVAILABLE\",\"ownership\":\"UNKNOWN\",\"action\":\"UNKNOWN\",\"frames\":[{\"source\":\"MOCK\",\"model\":\"yolo11n\",\"objects\":[\"person\",\"person\",\"tie\"]}]}",
+          "toolCall": {
+            "name": "inspect_vision_evidence",
+            "status": "OK",
+            "calledAt": "2026-10-22T09:26:56.533Z",
+            "input": {
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+            },
+            "result": {
+              "status": "AVAILABLE",
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+              "frames": [
+                {
+                  "frameId": "demo-people",
+                  "source": "MOCK",
+                  "cameraId": "MOCK-YOLO",
+                  "linkedAt": "2026-10-22T09:26:53.925Z",
+                  "aligned": false,
+                  "model": "yolo11n",
+                  "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+                  "frameSha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+                  "imageSize": {
+                    "width": 1280,
+                    "height": 720
+                  },
+                  "inferenceMs": 99.46,
+                  "detections": [
+                    {
+                      "classId": 0,
+                      "label": "person",
+                      "confidence": 0.84046,
+                      "box": [
+                        748.51,
+                        41.81,
+                        1148.07,
+                        711.11
+                      ]
+                    },
+                    {
+                      "classId": 0,
+                      "label": "person",
+                      "confidence": 0.77933,
+                      "box": [
+                        148.56,
+                        203.08,
+                        1125.28,
+                        714.99
+                      ]
+                    },
+                    {
+                      "classId": 27,
+                      "label": "tie",
+                      "confidence": 0.45202,
+                      "box": [
+                        361.39,
+                        437.73,
+                        524.66,
+                        717.32
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "limitation": "Object detections are supporting evidence only; they do not identify SKU, Basket A/B ownership, or PICK/PUT_BACK. Detection confidence is not basket confidence."
+            },
+            "summary": "{\"status\":\"AVAILABLE\",\"ownership\":\"UNKNOWN\",\"action\":\"UNKNOWN\",\"frames\":[{\"source\":\"MOCK\",\"model\":\"yolo11n\",\"objects\":[\"person\",\"person\",\"tie\"]}]}"
+          }
+        },
+        {
+          "number": 2,
+          "phase": "SELECT",
+          "action": "get_shelf_event",
+          "source": "MODEL",
+          "summary": "Selected get_shelf_event",
+          "model": "laya-rl-agent",
+          "confidence": 0.1854,
+          "probabilities": {
+            "get_shelf_event": 0.1854,
+            "get_basket_evidence": 0.1098,
+            "get_cart_history": 0.1218,
+            "get_signal_window": 0.0616,
+            "get_device_health": 0.0764,
+            "get_lane_state": 0.1562,
+            "get_event_neighbors": 0.1356,
+            "get_camera_evidence": 0.1051,
+            "STOP_STAFF": 0.0481
+          },
+          "availableActions": [
+            "get_shelf_event",
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 2,
+          "phase": "OBSERVE",
+          "action": "get_shelf_event",
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}",
+          "toolCall": {
+            "name": "get_shelf_event",
+            "status": "OK",
+            "calledAt": "2026-10-22T09:26:59.642Z",
+            "input": {
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+            },
+            "result": {
+              "found": true,
+              "event": {
+                "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+                "shelfId": "SHELF-01",
+                "laneId": "LANE-1",
+                "sku": "COKE",
+                "eventType": "PICK",
+                "timestamp": "2026-10-22T09:26:53.906Z",
+                "timeBasis": "SOURCE_TIMESTAMP",
+                "receivedAt": "2026-10-22T09:26:53.925Z",
+                "delayed": false,
+                "rssi": {
+                  "A": -55,
+                  "B": -57
+                }
+              }
+            },
+            "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+          }
+        },
+        {
+          "number": 3,
+          "phase": "SELECT",
+          "action": "get_cart_history",
+          "source": "MODEL",
+          "summary": "Selected get_cart_history",
+          "model": "laya-rl-agent",
+          "confidence": 0.2126,
+          "probabilities": {
+            "get_basket_evidence": 0.1554,
+            "get_cart_history": 0.2126,
+            "get_signal_window": 0.0857,
+            "get_device_health": 0.102,
+            "get_lane_state": 0.1556,
+            "get_event_neighbors": 0.1366,
+            "get_camera_evidence": 0.0983,
+            "STOP_STAFF": 0.0537
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 3,
+          "phase": "OBSERVE",
+          "action": "get_cart_history",
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]",
+          "toolCall": {
+            "name": "get_cart_history",
+            "status": "OK",
+            "calledAt": "2026-10-22T09:27:02.776Z",
+            "input": {},
+            "result": {
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": {
+                    "sessionId": "SES-4557F465",
+                    "basketId": "A",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T09:26:49.411Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": {
+                    "sessionId": "SES-658E3CFD",
+                    "basketId": "B",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T09:26:49.434Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                }
+              ]
+            },
+            "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+          }
+        },
+        {
+          "number": 4,
+          "phase": "SELECT",
+          "action": "get_basket_evidence",
+          "source": "MODEL",
+          "summary": "Selected get_basket_evidence",
+          "model": "laya-rl-agent",
+          "confidence": 0.2314,
+          "probabilities": {
+            "get_basket_evidence": 0.2314,
+            "get_signal_window": 0.0746,
+            "get_device_health": 0.1034,
+            "get_lane_state": 0.132,
+            "get_event_neighbors": 0.1273,
+            "get_camera_evidence": 0.0889,
+            "analyze_cart_consistency": 0.1949,
+            "STOP_STAFF": 0.0474
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 4,
+          "phase": "OBSERVE",
+          "action": "get_basket_evidence",
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}",
+          "toolCall": {
+            "name": "get_basket_evidence",
+            "status": "OK",
+            "calledAt": "2026-10-22T09:27:06.206Z",
+            "input": {
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+            },
+            "result": {
+              "found": true,
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+              "shelfId": "SHELF-01",
+              "laneId": "LANE-1",
+              "sku": "COKE",
+              "eventType": "PICK",
+              "delayed": false,
+              "rssi": {
+                "A": -55,
+                "B": -57
+              },
+              "marginDb": 2,
+              "candidate": "A",
+              "activeSessions": {
+                "A": true,
+                "B": true
+              },
+              "zone": "AMBIGUOUS"
+            },
+            "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}"
+          }
+        },
+        {
+          "number": 5,
+          "phase": "SELECT",
+          "action": "get_signal_window",
+          "source": "MODEL",
+          "summary": "Selected get_signal_window",
+          "model": "laya-rl-agent",
+          "confidence": 0.1871,
+          "probabilities": {
+            "get_signal_window": 0.1871,
+            "get_device_health": 0.1207,
+            "get_lane_state": 0.1181,
+            "get_event_neighbors": 0.09,
+            "get_camera_evidence": 0.1053,
+            "analyze_cart_consistency": 0.1774,
+            "DECIDE": 0.1579,
+            "STOP_STAFF": 0.0435
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 5,
+          "phase": "OBSERVE",
+          "action": "get_signal_window",
+          "summary": "{\"status\":\"AVAILABLE\",\"sampleCount\":10,\"rssi\":[{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57}],\"timeBasis\":\"SERVER_RECEIPT\"}",
+          "toolCall": {
+            "name": "get_signal_window",
+            "status": "OK",
+            "calledAt": "2026-10-22T09:27:09.929Z",
+            "input": {
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b"
+            },
+            "result": {
+              "status": "AVAILABLE",
+              "eventId": "mock-evidence-fc60b399-a415-4f33-983d-6c93aefe8c2b",
+              "windowMs": 3000,
+              "timeBasis": "SERVER_RECEIPT",
+              "samples": [
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:56.437Z",
+                  "capturedAt": "2026-10-22T09:26:56.434Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": false
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 5000,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:55.941Z",
+                  "capturedAt": "2026-10-22T09:26:55.928Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": false
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 4500,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:55.433Z",
+                  "capturedAt": "2026-10-22T09:26:55.420Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": false
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 4000,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:54.929Z",
+                  "capturedAt": "2026-10-22T09:26:54.916Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": false
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 3500,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:54.419Z",
+                  "capturedAt": "2026-10-22T09:26:54.412Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": false
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 3000,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:53.416Z",
+                  "capturedAt": "2026-10-22T09:26:53.398Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": true
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 2500,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:52.896Z",
+                  "capturedAt": "2026-10-22T09:26:52.886Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": true
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 2000,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:52.375Z",
+                  "capturedAt": "2026-10-22T09:26:52.370Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": true
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 1500,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:51.874Z",
+                  "capturedAt": "2026-10-22T09:26:51.865Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": true
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 1000,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                },
+                {
+                  "shelfId": "SHELF-01",
+                  "receivedAt": "2026-10-22T09:26:51.405Z",
+                  "capturedAt": "2026-10-22T09:26:51.354Z",
+                  "timeBasis": "SOURCE_TIMESTAMP",
+                  "source": "MOCK",
+                  "rssi": {
+                    "A": -55,
+                    "B": -57,
+                    "HV01": -63
+                  },
+                  "lanes": [
+                    {
+                      "laneId": "LANE-1",
+                      "present": true
+                    },
+                    {
+                      "laneId": "LANE-2",
+                      "present": true
+                    }
+                  ],
+                  "uptimeMs": 500,
+                  "queueDepth": 0,
+                  "droppedEvents": 0
+                }
+              ]
+            },
+            "summary": "{\"status\":\"AVAILABLE\",\"sampleCount\":10,\"rssi\":[{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57},{\"A\":-55,\"B\":-57}],\"timeBasis\":\"SERVER_RECEIPT\"}"
+          }
+        },
+        {
+          "number": 6,
+          "phase": "SELECT",
+          "action": "DECIDE",
+          "source": "MODEL",
+          "summary": "Selected DECIDE",
+          "model": "laya-rl-agent",
+          "confidence": 0.1653,
+          "probabilities": {
+            "get_device_health": 0.1221,
+            "get_lane_state": 0.1292,
+            "get_event_neighbors": 0.1304,
+            "get_camera_evidence": 0.0983,
+            "analyze_rssi_stability": 0.146,
+            "analyze_cart_consistency": 0.1644,
+            "DECIDE": 0.1653,
+            "STOP_STAFF": 0.0443
+          },
+          "availableActions": [
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_rssi_stability",
+            "analyze_cart_consistency",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        }
+      ],
+      "completedAt": "2026-10-22T09:27:17.747Z",
+      "toolCallCount": 5,
+      "output": {
+        "candidate": "A",
+        "confidence": 0.3876,
+        "nextAction": "STAFF_HITL",
+        "proposedAction": "ADD_ITEM",
+        "model": "laya-rl-agent",
+        "probabilities": {
+          "A": 0.3876,
+          "B": 0.2581,
+          "NONE": 0.3543
+        },
+        "confidenceSource": "selected_option_probability",
+        "requestDurationMs": 3390,
+        "routing": {
+          "model": "typed-decisions",
+          "repo": "convaiinnovations/laya/typed-decisions",
+          "reason": "explicit model='typed-decisions'",
+          "detection": null,
+          "workflow": null
+        },
+        "usage": {
+          "input_tokens": 485,
+          "output_tokens": 0,
+          "state_tokens": 352,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "evidenceIssues": []
+      }
+    }
+  },
+  "afterHuman": [
+    {
+      "basketId": "A",
+      "session": {
+        "sessionId": "SES-4557F465",
+        "basketId": "A",
+        "status": "ACTIVE",
+        "startedAt": "2026-10-22T09:26:49.411Z"
+      },
+      "lines": [
+        {
+          "sku": "COKE",
+          "name": "Coca-Cola",
+          "price": 25,
+          "quantity": 1,
+          "subtotal": 25
+        }
+      ],
+      "total": 25,
+      "payable": true,
+      "unresolvedCaseCount": 0
+    },
+    {
+      "basketId": "B",
+      "session": {
+        "sessionId": "SES-658E3CFD",
+        "basketId": "B",
+        "status": "ACTIVE",
+        "startedAt": "2026-10-22T09:26:49.434Z"
+      },
+      "lines": [],
+      "total": 0,
+      "payable": true,
+      "unresolvedCaseCount": 0
+    }
+  ]
+}

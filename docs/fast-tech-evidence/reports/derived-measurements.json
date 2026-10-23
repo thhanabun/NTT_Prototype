@@ -1,0 +1,249 @@
+{
+  "hardwareBroker": {
+    "source": ".worktrees/fsm-iotcore/data/full-flow-HYhbnG/report.json",
+    "subset": "signalLatencies.slice(0,90): 30 scripted clear PICK/PUT_BACK cycles plus 30 duplicate deliveries",
+    "ackMs": {
+      "n": 90,
+      "average": 42.522222222222226,
+      "min": 24,
+      "max": 97
+    },
+    "firstStateNotificationMs": {
+      "n": 90,
+      "average": 15.855555555555556,
+      "min": 7,
+      "max": 54
+    },
+    "modelCalls": [
+      {
+        "durationMs": 1708,
+        "usage": {
+          "input_tokens": 238,
+          "output_tokens": 0,
+          "state_tokens": 105,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5169,
+          "B": 0.2542,
+          "NONE": 0.229
+        }
+      },
+      {
+        "durationMs": 1662,
+        "usage": {
+          "input_tokens": 238,
+          "output_tokens": 0,
+          "state_tokens": 105,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.4495,
+          "B": 0.324,
+          "NONE": 0.2265
+        }
+      },
+      {
+        "durationMs": 1658,
+        "usage": {
+          "input_tokens": 237,
+          "output_tokens": 0,
+          "state_tokens": 104,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "B",
+        "probabilities": {
+          "A": 0.3849,
+          "B": 0.3858,
+          "NONE": 0.2292
+        }
+      },
+      {
+        "durationMs": 1709,
+        "usage": {
+          "input_tokens": 239,
+          "output_tokens": 0,
+          "state_tokens": 106,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5289,
+          "B": 0.2757,
+          "NONE": 0.1955
+        }
+      },
+      {
+        "durationMs": 1694,
+        "usage": {
+          "input_tokens": 238,
+          "output_tokens": 0,
+          "state_tokens": 105,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5308,
+          "B": 0.2801,
+          "NONE": 0.1891
+        }
+      }
+    ]
+  },
+  "iotBridge": {
+    "source": ".worktrees/fsm-iotcore/data/full-flow-CGuNYt/report.json",
+    "subset": "signalLatencies.slice(0,90): 30 scripted clear PICK/PUT_BACK cycles plus 30 duplicate deliveries",
+    "ackMs": {
+      "n": 90,
+      "average": 48.611111111111114,
+      "min": 28,
+      "max": 73
+    },
+    "firstStateNotificationMs": {
+      "n": 90,
+      "average": 16.655555555555555,
+      "min": 6,
+      "max": 25
+    },
+    "modelCalls": [
+      {
+        "durationMs": 1564,
+        "usage": {
+          "input_tokens": 231,
+          "output_tokens": 0,
+          "state_tokens": 98,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.511,
+          "B": 0.2286,
+          "NONE": 0.2604
+        }
+      },
+      {
+        "durationMs": 1575,
+        "usage": {
+          "input_tokens": 231,
+          "output_tokens": 0,
+          "state_tokens": 98,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.4584,
+          "B": 0.3262,
+          "NONE": 0.2154
+        }
+      },
+      {
+        "durationMs": 1523,
+        "usage": {
+          "input_tokens": 230,
+          "output_tokens": 0,
+          "state_tokens": 97,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.3932,
+          "B": 0.3753,
+          "NONE": 0.2315
+        }
+      },
+      {
+        "durationMs": 1540,
+        "usage": {
+          "input_tokens": 232,
+          "output_tokens": 0,
+          "state_tokens": 99,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5278,
+          "B": 0.2731,
+          "NONE": 0.1991
+        }
+      },
+      {
+        "durationMs": 1543,
+        "usage": {
+          "input_tokens": 231,
+          "output_tokens": 0,
+          "state_tokens": 98,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "choice": "A",
+        "probabilities": {
+          "A": 0.5197,
+          "B": 0.2759,
+          "NONE": 0.2044
+        }
+      }
+    ]
+  },
+  "visionAgent": {
+    "source": "data/vision-mqtt-smoke/report.json",
+    "elapsedMs": 23819,
+    "finalDecisionCall": {
+      "candidate": "A",
+      "confidence": 0.3876,
+      "nextAction": "STAFF_HITL",
+      "proposedAction": "ADD_ITEM",
+      "model": "laya-rl-agent",
+      "probabilities": {
+        "A": 0.3876,
+        "B": 0.2581,
+        "NONE": 0.3543
+      },
+      "confidenceSource": "selected_option_probability",
+      "requestDurationMs": 3390,
+      "routing": {
+        "model": "typed-decisions",
+        "repo": "convaiinnovations/laya/typed-decisions",
+        "reason": "explicit model='typed-decisions'",
+        "detection": null,
+        "workflow": null
+      },
+      "usage": {
+        "input_tokens": 485,
+        "output_tokens": 0,
+        "state_tokens": 352,
+        "state_tokens_dropped": 0,
+        "truncated": false,
+        "truncated_questions": []
+      },
+      "evidenceIssues": []
+    },
+    "visionMs": 99.46
+  },
+  "statQueryMs": {
+    "n": 5,
+    "average": 8477.2,
+    "min": 5610,
+    "max": 13535
+  }
+}

@@ -16,7 +16,7 @@ type DetectorConstructor = {
 
 export function BasketScanner({ onClose, onPair }: {
   onClose: () => void;
-  onPair: (id: BasketId) => void;
+  onPair: (id: BasketId, pairingCode?: string) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -41,12 +41,17 @@ export function BasketScanner({ onClose, onPair }: {
           for (const code of codes) {
             const id = parseBasketQr(code.rawValue);
             if (id) {
+              let pairingCode: string | undefined;
+              if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true") {
+                try { pairingCode = new URL(code.rawValue, window.location.origin).searchParams.get("code") || undefined; } catch { /* Reject malformed cloud QR below. */ }
+                if (!pairingCode || !/^[A-Za-z0-9_-]{43}$/.test(pairingCode)) { setMessage("QR นี้ไม่มีรหัสจับคู่ตะกร้า กรุณาสแกน QR ที่ติดบนตะกร้า"); continue; }
+              }
               cancelled = true;
               stopCamera();
-              pair.current(id);
+              pair.current(id, pairingCode);
               return;
             }
-            setMessage("QR ไม่ถูกต้อง ต้องมี ?basket=A หรือ ?basket=B ลองสแกนใหม่หรือเลือกตะกร้าด้านล่าง");
+            setMessage("QR ไม่ถูกต้อง ลองสแกน QR บนตะกร้าอีกครั้ง");
           }
         }
         if (!cancelled) timer = setTimeout(() => void scan(detector), 350);
@@ -59,7 +64,7 @@ export function BasketScanner({ onClose, onPair }: {
     async function startCamera() {
       const Constructor = (window as Window & { BarcodeDetector?: DetectorConstructor }).BarcodeDetector;
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        throw new Error("กล้องต้องใช้ HTTPS หรือ localhost กรุณาเลือกตะกร้าด้านล่าง");
+        throw new Error("เปิดกล้องไม่ได้ กรุณาเปิดผ่านลิงก์ HTTPS หรือเลือกตะกร้าด้านล่าง");
       }
       if (!Constructor || (Constructor.getSupportedFormats && !(await Constructor.getSupportedFormats()).includes("qr_code"))) {
         throw new Error("Browser นี้ไม่รองรับการอ่าน QR กรุณาเลือก Basket A หรือ B ด้านล่าง");
@@ -95,10 +100,10 @@ export function BasketScanner({ onClose, onPair }: {
   return (
     <dialog ref={dialog} className={styles.scannerDialog} aria-labelledby="scanner-title" onCancel={onClose}>
       <div className={styles.scannerHeader}><span className={styles.iconTile}><QrCode size={23} aria-hidden="true" /></span><button className={styles.scannerClose} aria-label="ปิดกล้อง" onClick={onClose}><X size={21} aria-hidden="true" /></button></div>
-      <p className={styles.eyebrow}>BASKET PAIRING</p><h2 id="scanner-title">สแกน QR บนตะกร้า</h2><p className={styles.muted}>อ่านเฉพาะ Basket ID ไม่เปิดลิงก์จาก QR</p>
+      <p className={styles.eyebrow}>BASKET PAIRING</p><h2 id="scanner-title">สแกน QR บนตะกร้า</h2>
       <div className={styles.scannerVideo}><video ref={video} autoPlay muted playsInline aria-label="ภาพจากกล้องสำหรับอ่าน QR" /><div aria-hidden="true" /></div>
       <p className={styles.infoNotice} role="status">{message}</p>
-      <p className={styles.muted}>เลือกด้วยตนเองได้เสมอ</p><div className={styles.confirmActions}>{(["A", "B"] as const).map((id) => <button key={id} className={styles.outlineButton} onClick={() => onPair(id)}>ใช้ Basket {id}</button>)}</div>
+      <p className={styles.muted}>หรือเลือกตะกร้า</p><div className={styles.confirmActions}>{(["A", "B"] as const).map((id) => <button key={id} className={styles.outlineButton} onClick={() => onPair(id)}>ใช้ Basket {id}</button>)}</div>
     </dialog>
   );
 }

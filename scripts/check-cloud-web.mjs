@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import { readFile, writeFile } from "node:fs/promises";
+const outputs = JSON.parse(await readFile("data/cloud-outputs.json", "utf8"));
+const origin = outputs.WebUrl;
+assert.ok(new URL(origin).protocol === "https:", "Cloud web must use HTTPS");
+const checks = [];
+async function get(path) { return fetch(origin + path, { redirect: "manual", signal: AbortSignal.timeout(30000) }); }
+const stateResponse = await get("/api/state"); assert.ok(stateResponse.ok);
+const state = await stateResponse.json();
+assert.ok(Array.isArray(state.products));
+assert.ok(state.baskets.every(item => !item.session && item.lines.length === 0 && item.total === 0));
+assert.equal(state.auditLog.length, 0); assert.equal(state.cases.length, 0);
+checks.push("Anonymous snapshot cannot disclose carts, sessions, cases or audit");
+const config = await get("/api/config").then(response => response.json()); assert.equal(new URL(config.websocketUrl).protocol, "wss:"); checks.push("HTTPS production API routing and WSS configuration");
+const auth = await get("/api/auth/session"); assert.ok([401, 403].includes(auth.status)); checks.push("Staff identity endpoint rejects anonymous access");
+const login = await get("/api/auth/login"); assert.ok([302, 307].includes(login.status));
+const authorize = new URL(login.headers.get("location")); assert.equal(authorize.protocol, "https:"); assert.equal(authorize.searchParams.get("code_challenge_method"), "S256"); checks.push("Hosted login redirects with PKCE");
+const csrf = await fetch(origin + "/api/checkout", { method: "POST", headers: { origin: "https://invalid.example", "content-type": "application/json" }, body: '{"basketId":"A"}', signal: AbortSignal.timeout(30000) }); assert.equal(csrf.status, 403); checks.push("Cross-origin mutations rejected");
+await writeFile("data/cloud-web-check.json", JSON.stringify({ origin, at: new Date().toISOString(), checks, limitations: ["No staff login, device signal, Bedrock inference or Step Functions execution triggered by this check"] }, null, 2));
+console.log(checks.map(item => "PASS " + item).join("\n"));

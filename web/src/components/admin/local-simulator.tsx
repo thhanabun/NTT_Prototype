@@ -50,8 +50,8 @@ export function LocalSimulator({ disabled, shelfId, run }: {
   return (
     <details className={`${styles.card} ${styles.simulator}`}>
       <summary><FlaskConical size={18} aria-hidden="true" /> Local simulator <span>จำลอง event สำหรับทดสอบ</span></summary>
-      <p className={styles.muted}>ปุ่มเหล่านี้ส่ง event เข้า backend ในเครื่องจริง ใช้แทน ESP32 ระหว่างพัฒนา ไม่ใช่ปุ่มเพิ่มสินค้าใน Shopper</p>
-      <p className={styles.footnote}>เริ่ม session ของ Basket ที่ต้องการใน Shopper ก่อนทดสอบ หากไม่มี session จะเกิดเคสให้พนักงานตรวจสอบ</p>
+      <p className={styles.muted}>ส่งสัญญาณจำลองแทน ESP32</p>
+      <p className={styles.footnote}>เชื่อมตะกร้าใน Shopper ก่อนเริ่มทดสอบ</p>
       <label className={styles.lanePicker}>Shelf lane<select value={lane} disabled={disabled} onChange={(event)=>setLane(event.target.value)}><option value="LANE-1">Lane 01 · Coke</option><option value="LANE-2">Lane 02 · Water</option></select></label>
       <div className={styles.simulatorGrid}>{scenarios.map(item=><div key={item.id}><div><h3>{item.label}</h3><p>{item.description}</p></div><button className={styles.outlineButton} disabled={disabled || (item.id==="duplicate" && !hasLast)} onClick={()=>send(item.id)}><Send size={13} aria-hidden="true" /> {item.label}</button></div>)}</div>
     </details>

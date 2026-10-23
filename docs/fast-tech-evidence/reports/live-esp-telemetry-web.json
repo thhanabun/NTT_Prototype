@@ -1,0 +1,74 @@
+{
+  "checks": [
+    "Actual ESP telemetry appears ONLINE and advances in Admin without refresh through same-origin Next.js proxy/native SSE",
+    "Actual ESP shelf event is visible in recent activity",
+    "Read-only inspection: no events, staff approvals, checkout, reset or telemetry injected"
+  ],
+  "errors": [],
+  "mutations": [],
+  "source": "actual connected ESP32; existing MQTT/API/Next.js processes; no API interception",
+  "device": {
+    "status": "ONLINE",
+    "lastSeenAt": "2026-10-22T11:32:20.405Z",
+    "source": "DEVICE",
+    "timeoutMs": 5000,
+    "rssi": {
+      "A": -76,
+      "B": null,
+      "HV01": null
+    },
+    "lanes": [
+      {
+        "laneId": "LANE-1",
+        "present": false
+      },
+      {
+        "laneId": "LANE-2",
+        "present": false
+      }
+    ],
+    "uptimeMs": 4077505,
+    "queueDepth": 0,
+    "droppedEvents": 0
+  },
+  "ui": {
+    "before": "2026-10-22T11:32:17.446Z",
+    "after": "2026-10-22T11:32:20.405Z",
+    "uptimeBefore": "4074 s",
+    "uptimeAfter": "4077 s",
+    "A": "-76 dBm",
+    "B": "—",
+    "lane1": "EMPTY",
+    "lane2": "EMPTY",
+    "streams": 1
+  },
+  "physicalEvent": {
+    "eventId": "esp32-59ea2f64-0034",
+    "shelfId": "SHELF-01",
+    "laneId": "LANE-1",
+    "sku": "COKE",
+    "eventType": "PICK",
+    "timestamp": "2026-10-22T11:07:05.950Z",
+    "timeBasis": "SERVER_RECEIPT",
+    "receivedAt": "2026-10-22T11:07:05.950Z",
+    "delayed": false,
+    "rssi": {
+      "A": -68,
+      "B": null,
+      "HV01": null
+    }
+  },
+  "fsmState": "WAITING_STAFF",
+  "baskets": [
+    {
+      "basketId": "A",
+      "total": 0,
+      "unresolvedCaseCount": 34
+    },
+    {
+      "basketId": "B",
+      "total": 0,
+      "unresolvedCaseCount": 34
+    }
+  ]
+}

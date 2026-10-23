@@ -14,17 +14,32 @@
     "bridge:iot": "node scripts/iot-bridge.mjs",
     "test": "node --test",
     "broker": "node tools/mqtt-broker/broker.mjs",
-    "mock:evidence": "node scripts/mock-evidence.mjs"
+    "mock:evidence": "node scripts/mock-evidence.mjs",
+    "cloud:prepare": "node scripts/prepare-cloud.mjs",
+    "cloud:test": "node --test tests/cloud.test.mjs",
+    "cloud:images": "node scripts/check-cloud-images.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.1155.0",
+    "@aws-sdk/client-bedrock-agentcore": "^3.1155.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1155.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.1155.0",
     "@aws-sdk/client-dynamodb": "^3.1154.0",
+    "@aws-sdk/client-iot-data-plane": "^3.1155.0",
+    "@aws-sdk/client-lambda": "^3.1155.0",
+    "@aws-sdk/client-s3": "^3.1155.0",
+    "@aws-sdk/client-secrets-manager": "^3.1155.0",
+    "@aws-sdk/client-sfn": "^3.1155.0",
     "@aws-sdk/lib-dynamodb": "^3.1154.0",
+    "aws-jwt-verify": "^5.2.1",
     "mqtt": "^5.16.1"
   },
   "devDependencies": {
-    "aedes": "1.2.0"
+    "aedes": "1.2.0",
+    "qrcode": "^1.5.4",
+    "ws": "^8.22.0"
   }
 }

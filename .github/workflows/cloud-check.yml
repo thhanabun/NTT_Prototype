@@ -1,0 +1,33 @@
+name: Cloud preparation checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm --prefix web ci
+      - run: npm test
+      - run: npm run cloud:prepare
+      - run: pip install cfn-lint==1.58.0
+      - run: cfn-lint infra/cloud/template.json infra/cloud/bootstrap.json
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm --prefix web run test:cloud
+      - run: npm --prefix web run typecheck
+      - run: npm --prefix web run lint

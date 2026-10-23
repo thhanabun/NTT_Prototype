@@ -1,0 +1,471 @@
+{
+  "results": [
+    {
+      "queryId": "STAT-2c67910a-0ac5-46e6-b57a-a7975f0cf55e",
+      "generatedAt": "2026-10-22T16:18:43.694Z",
+      "source": "MOCK_CHECKOUT_ORDERS",
+      "plan": {
+        "tool": "query_daily_sales",
+        "metric": "revenue",
+        "chart": "bar",
+        "startDate": "2026-10-16",
+        "endDate": "2026-10-22",
+        "limit": 10,
+        "timeZone": "Asia/Bangkok"
+      },
+      "model": {
+        "name": "laya-rl-agent",
+        "requestDurationMs": 13535,
+        "selections": {
+          "tool": {
+            "choice": "query_daily_sales",
+            "confidence": 0.5283,
+            "probabilities": {
+              "query_daily_sales": 0.5283,
+              "query_top_products": 0.2637,
+              "UNSUPPORTED": 0.2081
+            }
+          },
+          "metric": {
+            "choice": "revenue",
+            "confidence": 0.7049,
+            "probabilities": {
+              "revenue": 0.7049,
+              "quantity": 0.2951
+            }
+          },
+          "chart": {
+            "choice": "bar",
+            "confidence": 0.6702,
+            "probabilities": {
+              "bar": 0.6702,
+              "line": 0.2068,
+              "table": 0.1231
+            }
+          }
+        }
+      },
+      "result": {
+        "rows": [
+          {
+            "key": "2026-10-16",
+            "label": "2026-10-16",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-17",
+            "label": "2026-10-17",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-18",
+            "label": "2026-10-18",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-19",
+            "label": "2026-10-19",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-20",
+            "label": "2026-10-20",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-21",
+            "label": "2026-10-21",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2026-10-22",
+            "label": "2026-10-22",
+            "quantity": 22,
+            "orderCount": 15,
+            "revenue": 480,
+            "value": 480
+          }
+        ],
+        "totals": {
+          "revenue": 480,
+          "quantity": 22,
+          "orderCount": 15
+        },
+        "availableGroups": 7,
+        "unit": "THB",
+        "empty": false
+      }
+    },
+    {
+      "queryId": "STAT-119634b2-de07-41d5-840d-a71d148f8cd4",
+      "generatedAt": "2026-10-22T16:18:58.080Z",
+      "source": "DEMO",
+      "plan": {
+        "tool": "query_top_products",
+        "metric": "revenue",
+        "chart": "bar",
+        "startDate": "2026-10-16",
+        "endDate": "2026-10-22",
+        "limit": 10,
+        "timeZone": "Asia/Bangkok"
+      },
+      "model": {
+        "name": "laya-rl-agent",
+        "requestDurationMs": 11713,
+        "selections": {
+          "tool": {
+            "choice": "query_top_products",
+            "confidence": 0.5422,
+            "probabilities": {
+              "query_daily_sales": 0.2579,
+              "query_top_products": 0.5422,
+              "UNSUPPORTED": 0.1999
+            }
+          },
+          "metric": {
+            "choice": "revenue",
+            "confidence": 0.6154,
+            "probabilities": {
+              "revenue": 0.6154,
+              "quantity": 0.3846
+            }
+          },
+          "chart": {
+            "choice": "bar",
+            "confidence": 0.6152,
+            "probabilities": {
+              "bar": 0.6152,
+              "line": 0.2233,
+              "table": 0.1614
+            }
+          }
+        }
+      },
+      "result": {
+        "rows": [
+          {
+            "key": "COKE",
+            "label": "Coke",
+            "quantity": 35,
+            "orderCount": 7,
+            "revenue": 875,
+            "value": 875
+          },
+          {
+            "key": "WATER",
+            "label": "Water",
+            "quantity": 42,
+            "orderCount": 7,
+            "revenue": 630,
+            "value": 630
+          }
+        ],
+        "totals": {
+          "revenue": 1505,
+          "quantity": 77,
+          "orderCount": 7
+        },
+        "availableGroups": 2,
+        "unit": "THB",
+        "empty": false
+      }
+    },
+    {
+      "queryId": "STAT-4321405c-5174-4db0-a135-722754de5845",
+      "generatedAt": "2026-10-22T16:19:11.308Z",
+      "source": "DEMO",
+      "plan": {
+        "tool": "query_top_products",
+        "metric": "quantity",
+        "chart": "table",
+        "startDate": "2026-09-23",
+        "endDate": "2026-10-22",
+        "limit": 10,
+        "timeZone": "Asia/Bangkok"
+      },
+      "model": {
+        "name": "laya-rl-agent",
+        "requestDurationMs": 5864,
+        "selections": {
+          "tool": {
+            "choice": "query_top_products",
+            "confidence": 0.5803,
+            "probabilities": {
+              "query_daily_sales": 0.2244,
+              "query_top_products": 0.5803,
+              "UNSUPPORTED": 0.1953
+            }
+          },
+          "metric": {
+            "choice": "quantity",
+            "confidence": 0.7809,
+            "probabilities": {
+              "revenue": 0.2191,
+              "quantity": 0.7809
+            }
+          },
+          "chart": {
+            "choice": "table",
+            "confidence": 0.448,
+            "probabilities": {
+              "bar": 0.246,
+              "line": 0.306,
+              "table": 0.448
+            }
+          }
+        }
+      },
+      "result": {
+        "rows": [
+          {
+            "key": "WATER",
+            "label": "Water",
+            "quantity": 42,
+            "orderCount": 7,
+            "revenue": 630,
+            "value": 42
+          },
+          {
+            "key": "COKE",
+            "label": "Coke",
+            "quantity": 35,
+            "orderCount": 7,
+            "revenue": 875,
+            "value": 35
+          }
+        ],
+        "totals": {
+          "revenue": 1505,
+          "quantity": 77,
+          "orderCount": 7
+        },
+        "availableGroups": 2,
+        "unit": "units",
+        "empty": false
+      }
+    },
+    {
+      "queryId": "STAT-69c2f0ee-1668-4003-9d7d-4849d14b9d6b",
+      "generatedAt": "2026-10-22T16:19:17.332Z",
+      "source": "DEMO",
+      "plan": {
+        "tool": "query_top_products",
+        "metric": "quantity",
+        "chart": "line",
+        "startDate": "2026-09-23",
+        "endDate": "2026-10-22",
+        "limit": 10,
+        "timeZone": "Asia/Bangkok"
+      },
+      "model": {
+        "name": "laya-rl-agent",
+        "requestDurationMs": 5664,
+        "selections": {
+          "tool": {
+            "choice": "query_top_products",
+            "confidence": 0.5253,
+            "probabilities": {
+              "query_daily_sales": 0.2239,
+              "query_top_products": 0.5253,
+              "UNSUPPORTED": 0.2508
+            }
+          },
+          "metric": {
+            "choice": "quantity",
+            "confidence": 0.885,
+            "probabilities": {
+              "revenue": 0.115,
+              "quantity": 0.885
+            }
+          },
+          "chart": {
+            "choice": "line",
+            "confidence": 0.7358,
+            "probabilities": {
+              "bar": 0.1456,
+              "line": 0.7358,
+              "table": 0.1186
+            }
+          }
+        }
+      },
+      "result": {
+        "rows": [
+          {
+            "key": "WATER",
+            "label": "Water",
+            "quantity": 42,
+            "orderCount": 7,
+            "revenue": 630,
+            "value": 42
+          },
+          {
+            "key": "COKE",
+            "label": "Coke",
+            "quantity": 35,
+            "orderCount": 7,
+            "revenue": 875,
+            "value": 35
+          }
+        ],
+        "totals": {
+          "revenue": 1505,
+          "quantity": 77,
+          "orderCount": 7
+        },
+        "availableGroups": 2,
+        "unit": "units",
+        "empty": false
+      }
+    },
+    {
+      "queryId": "STAT-735e39e5-c257-47c7-812a-bde70837194c",
+      "generatedAt": "2026-10-22T16:19:23.198Z",
+      "source": "MOCK_CHECKOUT_ORDERS",
+      "plan": {
+        "tool": "query_daily_sales",
+        "metric": "revenue",
+        "chart": "table",
+        "startDate": "2020-01-01",
+        "endDate": "2020-01-07",
+        "limit": 10,
+        "timeZone": "Asia/Bangkok"
+      },
+      "model": {
+        "name": "laya-rl-agent",
+        "requestDurationMs": 5610,
+        "selections": {
+          "tool": {
+            "choice": "query_daily_sales",
+            "confidence": 0.5432,
+            "probabilities": {
+              "query_daily_sales": 0.5432,
+              "query_top_products": 0.2602,
+              "UNSUPPORTED": 0.1967
+            }
+          },
+          "metric": {
+            "choice": "revenue",
+            "confidence": 0.6924,
+            "probabilities": {
+              "revenue": 0.6924,
+              "quantity": 0.3076
+            }
+          },
+          "chart": {
+            "choice": "table",
+            "confidence": 0.5145,
+            "probabilities": {
+              "bar": 0.239,
+              "line": 0.2465,
+              "table": 0.5145
+            }
+          }
+        }
+      },
+      "result": {
+        "rows": [
+          {
+            "key": "2020-01-01",
+            "label": "2020-01-01",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-02",
+            "label": "2020-01-02",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-03",
+            "label": "2020-01-03",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-04",
+            "label": "2020-01-04",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-05",
+            "label": "2020-01-05",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-06",
+            "label": "2020-01-06",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          },
+          {
+            "key": "2020-01-07",
+            "label": "2020-01-07",
+            "quantity": 0,
+            "orderCount": 0,
+            "revenue": 0,
+            "value": 0
+          }
+        ],
+        "totals": {
+          "revenue": 0,
+          "quantity": 0,
+          "orderCount": 0
+        },
+        "availableGroups": 7,
+        "unit": "THB",
+        "empty": true
+      }
+    }
+  ],
+  "errors": [],
+  "requests": 6,
+  "checks": [
+    "real Laya choices",
+    "15 DB orders beyond snapshot limit",
+    "unpaid cart excluded",
+    "daily bar chart",
+    "Top 10 revenue bar",
+    "Top 10 units table",
+    "line follow-up",
+    "source labels",
+    "empty state",
+    "query failure recovery",
+    "double-submit guard",
+    "mobile/desktop overflow",
+    "audit"
+  ]
+}

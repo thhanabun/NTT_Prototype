@@ -1,0 +1,2278 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Basketly cloud prototype: IoT, split state, API, realtime, Cognito, HITL and Bedrock AgentCore",
+  "Parameters": {
+    "WebImageUri": {
+      "Type": "String"
+    },
+    "AgentImageUri": {
+      "Type": "String"
+    },
+    "WebRepositoryArn": {
+      "Type": "String"
+    },
+    "AgentRepositoryArn": {
+      "Type": "String"
+    },
+    "AgentRuntimeName": {
+      "Type": "String",
+      "Default": "basketly_prototype",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_]{0,47}"
+    },
+    "WebOrigin": {
+      "Type": "String",
+      "Default": "http://localhost:3001",
+      "AllowedPattern": "https://[^/]+|http://localhost:3001"
+    },
+    "IoTDataEndpoint": {
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9.-]+\\.iot\\.[a-z0-9-]+\\.amazonaws\\.com"
+    },
+    "ShelfId": {
+      "Type": "String",
+      "Default": "SHELF-01",
+      "AllowedPattern": "[A-Z0-9-]+"
+    },
+    "BedrockModelId": {
+      "Type": "String",
+      "Description": "A tool-use-capable Converse model/inference profile available in the deployment account/region"
+    },
+    "BedrockInvokeResources": {
+      "Type": "CommaDelimitedList",
+      "Description": "Exact Bedrock model/profile ARNs needed by the selected model"
+    },
+    "BudgetEmail": {
+      "Type": "String",
+      "AllowedPattern": "[^@ ]+@[^@ ]+\\.[^@ ]+"
+    },
+    "MonthlyBudgetUsd": {
+      "Type": "Number",
+      "Default": 50,
+      "MinValue": 1
+    }
+  },
+  "Globals": {
+    "Function": {
+      "CodeUri": "../../data/cloud-package/",
+      "Runtime": "nodejs22.x",
+      "Timeout": 29,
+      "MemorySize": 512,
+      "Architectures": [
+        "x86_64"
+      ],
+      "Environment": {
+        "Variables": {
+          "STATE_TABLE": {
+            "Ref": "StateTable"
+          },
+          "CONTROL_TABLE": {
+            "Ref": "ControlTable"
+          },
+          "SESSION_SECRET_ARN": {
+            "Ref": "SessionSecret"
+          },
+          "USER_POOL_ID": {
+            "Ref": "UserPool"
+          },
+          "USER_POOL_CLIENT_ID": {
+            "Ref": "UserPoolClient"
+          },
+          "SHELF_ID": {
+            "Ref": "ShelfId"
+          }
+        }
+      }
+    }
+  },
+  "Resources": {
+    "StateTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "stateKey",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "stateKey",
+            "KeyType": "HASH"
+          }
+        ],
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "ControlTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      }
+    },
+    "SessionSecret": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "GenerateSecretString": {
+          "PasswordLength": 64,
+          "ExcludePunctuation": true
+        },
+        "Description": "Basket session signatures and QR pairing HMAC; never send this secret to the browser"
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "UserPool": {
+      "Type": "AWS::Cognito::UserPool",
+      "Properties": {
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true
+        },
+        "UsernameAttributes": [
+          "email"
+        ],
+        "AutoVerifiedAttributes": [
+          "email"
+        ],
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 12,
+            "RequireLowercase": true,
+            "RequireUppercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true
+          }
+        }
+      }
+    },
+    "StaffGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "UserPoolId": {
+          "Ref": "UserPool"
+        },
+        "GroupName": "STAFF",
+        "Description": "Staff dashboard and human approval access"
+      }
+    },
+    "UserPoolClient": {
+      "Type": "AWS::Cognito::UserPoolClient",
+      "Properties": {
+        "UserPoolId": {
+          "Ref": "UserPool"
+        },
+        "GenerateSecret": false,
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthFlows": [
+          "code"
+        ],
+        "AllowedOAuthScopes": [
+          "openid",
+          "email"
+        ],
+        "SupportedIdentityProviders": [
+          "COGNITO"
+        ],
+        "CallbackURLs": [
+          {
+            "Fn::Sub": "${WebOrigin}/api/auth/callback"
+          }
+        ],
+        "LogoutURLs": [
+          {
+            "Fn::Sub": "${WebOrigin}/admin/login"
+          }
+        ],
+        "PreventUserExistenceErrors": "ENABLED",
+        "EnableTokenRevocation": true,
+        "AccessTokenValidity": 60,
+        "TokenValidityUnits": {
+          "AccessToken": "minutes"
+        }
+      }
+    },
+    "UserPoolDomain": {
+      "Type": "AWS::Cognito::UserPoolDomain",
+      "Properties": {
+        "UserPoolId": {
+          "Ref": "UserPool"
+        },
+        "Domain": {
+          "Fn::Sub": "${AWS::StackName}-${AWS::AccountId}"
+        }
+      }
+    },
+    "HttpApi": {
+      "Type": "AWS::Serverless::HttpApi",
+      "Properties": {
+        "StageName": "$default",
+        "DefaultRouteSettings": {
+          "ThrottlingBurstLimit": 30,
+          "ThrottlingRateLimit": 15
+        }
+      }
+    },
+    "WebSocketApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-realtime"
+        },
+        "ProtocolType": "WEBSOCKET",
+        "RouteSelectionExpression": "$request.body.action"
+      }
+    },
+    "WebSocketIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketFunction.Arn}/invocations"
+        }
+      }
+    },
+    "WebSocketStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "StageName": "live",
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "ThrottlingBurstLimit": 30,
+          "ThrottlingRateLimit": 15
+        }
+      }
+    },
+    "WebSocketPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "WebSocketFunction"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*"
+        }
+      }
+    },
+    "ApiFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.api",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "bedrock-agentcore:InvokeAgentRuntime",
+                "Resource": [
+                  {
+                    "Fn::GetAtt": [
+                      "AgentRuntime",
+                      "AgentRuntimeArn"
+                    ]
+                  },
+                  {
+                    "Fn::Sub": "${AgentRuntime.AgentRuntimeArn}/runtime-endpoint/*"
+                  }
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": "secretsmanager:GetSecretValue",
+                "Resource": {
+                  "Ref": "SessionSecret"
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:SendTaskSuccess",
+                "Resource": "*"
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "AGENT_RUNTIME_ARN": {
+              "Fn::GetAtt": [
+                "AgentRuntime",
+                "AgentRuntimeArn"
+              ]
+            }
+          }
+        },
+        "Events": {
+          "Api": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "Path": "/api/{proxy+}",
+              "Method": "ANY"
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ApiFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ApiFunctionLog"
+          }
+        }
+      }
+    },
+    "IngestFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.ingest",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:StartExecution",
+                "Resource": {
+                  "Ref": "CaseWorkflow"
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "iot:Publish",
+                "Resource": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/acks"
+                }
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "WORKFLOW_ARN": {
+              "Ref": "CaseWorkflow"
+            },
+            "IOT_DATA_ENDPOINT": {
+              "Ref": "IoTDataEndpoint"
+            }
+          }
+        },
+        "EventInvokeConfig": {
+          "MaximumRetryAttempts": 2,
+          "DestinationConfig": {
+            "OnFailure": {
+              "Type": "SQS",
+              "Destination": {
+                "Fn::GetAtt": [
+                  "FailureQueue",
+                  "Arn"
+                ]
+              }
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-IngestFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "IngestFunctionLog"
+          }
+        }
+      }
+    },
+    "InvestigateFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.investigate",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "bedrock-agentcore:InvokeAgentRuntime",
+                "Resource": [
+                  {
+                    "Fn::GetAtt": [
+                      "AgentRuntime",
+                      "AgentRuntimeArn"
+                    ]
+                  },
+                  {
+                    "Fn::Sub": "${AgentRuntime.AgentRuntimeArn}/runtime-endpoint/*"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Timeout": 300,
+        "Environment": {
+          "Variables": {
+            "AGENT_RUNTIME_ARN": {
+              "Fn::GetAtt": [
+                "AgentRuntime",
+                "AgentRuntimeArn"
+              ]
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-InvestigateFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "InvestigateFunctionLog"
+          }
+        }
+      }
+    },
+    "HandoffFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.handoff",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:SendTaskSuccess",
+                "Resource": "*"
+              }
+            ]
+          }
+        ],
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-HandoffFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "HandoffFunctionLog"
+          }
+        }
+      }
+    },
+    "ValidateFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.validate",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ValidateFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ValidateFunctionLog"
+          }
+        }
+      }
+    },
+    "ReconcileFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.reconcile",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "dynamodb:Scan",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:StartExecution",
+                "Resource": {
+                  "Ref": "CaseWorkflow"
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:SendTaskSuccess",
+                "Resource": "*"
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "WORKFLOW_ARN": {
+              "Ref": "CaseWorkflow"
+            }
+          }
+        },
+        "Events": {
+          "Reconcile": {
+            "Type": "Schedule",
+            "Properties": {
+              "Schedule": "rate(1 minute)",
+              "Enabled": true
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ReconcileFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ReconcileFunctionLog"
+          }
+        }
+      }
+    },
+    "WebSocketFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.websocket",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:PutItem",
+                  "dynamodb:DeleteItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-WebSocketFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WebSocketFunctionLog"
+          }
+        }
+      }
+    },
+    "ChangesFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.changes",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "dynamodb:Scan",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "dynamodb:DeleteItem",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ControlTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "execute-api:ManageConnections",
+                "Resource": {
+                  "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/live/POST/@connections/*"
+                }
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "WS_MANAGEMENT_ENDPOINT": {
+              "Fn::Sub": "https://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"
+            }
+          }
+        },
+        "Events": {
+          "Changes": {
+            "Type": "DynamoDB",
+            "Properties": {
+              "Stream": {
+                "Fn::GetAtt": [
+                  "StateTable",
+                  "StreamArn"
+                ]
+              },
+              "StartingPosition": "LATEST",
+              "BatchSize": 10,
+              "MaximumRetryAttempts": 3,
+              "BisectBatchOnFunctionError": true,
+              "DestinationConfig": {
+                "OnFailure": {
+                  "Type": "SQS",
+                  "Destination": {
+                    "Fn::GetAtt": [
+                      "FailureQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              },
+              "FilterCriteria": {
+                "Filters": [
+                  {
+                    "Pattern": "{\"eventName\":[\"INSERT\",\"MODIFY\"],\"dynamodb\":{\"Keys\":{\"stateKey\":{\"S\":[\"STATE#META\"]}}}}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ChangesFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ChangesFunctionLog"
+          }
+        }
+      }
+    },
+    "ToolsFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/agent-runtime.toolsHandler",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:BatchGetItem"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "StateTable",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "Timeout": 10,
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ToolsFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ToolsFunctionLog"
+          }
+        }
+      }
+    },
+    "ArchiveBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "DemoRetention",
+              "Status": "Enabled",
+              "ExpirationInDays": 90,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 90
+              }
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "ArchiveFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.archive",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:PutObject",
+                "Resource": {
+                  "Fn::Sub": "${ArchiveBucket.Arn}/business/*"
+                }
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "ARCHIVE_BUCKET": {
+              "Ref": "ArchiveBucket"
+            }
+          }
+        },
+        "Events": {
+          "Archive": {
+            "Type": "DynamoDB",
+            "Properties": {
+              "Stream": {
+                "Fn::GetAtt": [
+                  "StateTable",
+                  "StreamArn"
+                ]
+              },
+              "StartingPosition": "TRIM_HORIZON",
+              "BatchSize": 25,
+              "MaximumRetryAttempts": 3,
+              "BisectBatchOnFunctionError": true,
+              "DestinationConfig": {
+                "OnFailure": {
+                  "Type": "SQS",
+                  "Destination": {
+                    "Fn::GetAtt": [
+                      "FailureQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              },
+              "FilterCriteria": {
+                "Filters": [
+                  {
+                    "Pattern": "{\"eventName\":[\"INSERT\",\"MODIFY\"],\"dynamodb\":{\"Keys\":{\"stateKey\":{\"S\":[{\"prefix\":\"STATE#auditLog#\"},{\"prefix\":\"STATE#events#\"},{\"prefix\":\"STATE#cases#\"},{\"prefix\":\"STATE#orders#\"}]}}}}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-ArchiveFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ArchiveFunctionLog"
+          }
+        }
+      }
+    },
+    "TrailBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ArchiveBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:GetBucketAcl",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ArchiveBucket",
+                  "Arn"
+                ]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${AWS::StackName}"
+                  }
+                }
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${ArchiveBucket.Arn}/AWSLogs/${AWS::AccountId}/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "s3:x-amz-acl": "bucket-owner-full-control",
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${AWS::StackName}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Trail": {
+      "Type": "AWS::CloudTrail::Trail",
+      "Properties": {
+        "TrailName": {
+          "Ref": "AWS::StackName"
+        },
+        "S3BucketName": {
+          "Ref": "ArchiveBucket"
+        },
+        "IsLogging": true,
+        "EnableLogFileValidation": true,
+        "IsMultiRegionTrail": false,
+        "IncludeGlobalServiceEvents": true,
+        "EventSelectors": [
+          {
+            "IncludeManagementEvents": true,
+            "ReadWriteType": "All"
+          }
+        ]
+      },
+      "DependsOn": "TrailBucketPolicy"
+    },
+    "AgentRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "bedrock-agentcore.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AgentRuntime",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:DeleteItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "StateTable",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "lambda:InvokeFunction",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ToolsFunction",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "bedrock:InvokeModel",
+                  "Resource": {
+                    "Ref": "BedrockInvokeResources"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer"
+                  ],
+                  "Resource": {
+                    "Ref": "AgentRepositoryArn"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "ecr:GetAuthorizationToken",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "AgentRuntime": {
+      "Type": "AWS::BedrockAgentCore::Runtime",
+      "Properties": {
+        "AgentRuntimeName": {
+          "Ref": "AgentRuntimeName"
+        },
+        "AgentRuntimeArtifact": {
+          "ContainerConfiguration": {
+            "ContainerUri": {
+              "Ref": "AgentImageUri"
+            }
+          }
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "AgentRole",
+            "Arn"
+          ]
+        },
+        "NetworkConfiguration": {
+          "NetworkMode": "PUBLIC"
+        },
+        "ProtocolConfiguration": "HTTP",
+        "EnvironmentVariables": {
+          "STATE_TABLE": {
+            "Ref": "StateTable"
+          },
+          "TOOLS_FUNCTION_ARN": {
+            "Fn::GetAtt": [
+              "ToolsFunction",
+              "Arn"
+            ]
+          },
+          "BEDROCK_MODEL_ID": {
+            "Ref": "BedrockModelId"
+          },
+          "AWS_REGION": {
+            "Ref": "AWS::Region"
+          }
+        }
+      }
+    },
+    "CaseWorkflow": {
+      "Type": "AWS::Serverless::StateMachine",
+      "Properties": {
+        "Type": "STANDARD",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "lambda:InvokeFunction",
+                "Resource": [
+                  {
+                    "Fn::GetAtt": [
+                      "InvestigateFunction",
+                      "Arn"
+                    ]
+                  },
+                  {
+                    "Fn::GetAtt": [
+                      "HandoffFunction",
+                      "Arn"
+                    ]
+                  },
+                  {
+                    "Fn::GetAtt": [
+                      "ValidateFunction",
+                      "Arn"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Definition": {
+          "StartAt": "Investigate",
+          "TimeoutSeconds": 90000,
+          "States": {
+            "Investigate": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "InvestigateFunction",
+                    "Arn"
+                  ]
+                },
+                "Payload": {
+                  "caseId.$": "$.caseId",
+                  "investigate.$": "$.investigate"
+                }
+              },
+              "ResultPath": "$.task",
+              "Next": "Route",
+              "ResultSelector": {
+                "nextAction.$": "$.Payload.nextAction"
+              },
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.failure",
+                  "Next": "StaffApproval"
+                }
+              ]
+            },
+            "Route": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.task.nextAction",
+                  "StringEquals": "CUSTOMER_CONFIRM",
+                  "Next": "CustomerConfirmation"
+                }
+              ],
+              "Default": "StaffApproval"
+            },
+            "CustomerConfirmation": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              "TimeoutSeconds": 120,
+              "Parameters": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "HandoffFunction",
+                    "Arn"
+                  ]
+                },
+                "Payload": {
+                  "caseId.$": "$.caseId",
+                  "taskToken.$": "$$.Task.Token",
+                  "stage": "CUSTOMER"
+                }
+              },
+              "ResultPath": "$.humanDecision",
+              "Next": "AfterCustomer",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.customerFailure",
+                  "Next": "StaffApproval"
+                }
+              ]
+            },
+            "AfterCustomer": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.humanDecision.nextAction",
+                  "StringEquals": "CLOSE",
+                  "Next": "Validate"
+                }
+              ],
+              "Default": "StaffApproval"
+            },
+            "StaffApproval": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              "TimeoutSeconds": 86400,
+              "Parameters": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "HandoffFunction",
+                    "Arn"
+                  ]
+                },
+                "Payload": {
+                  "caseId.$": "$.caseId",
+                  "taskToken.$": "$$.Task.Token",
+                  "stage": "STAFF"
+                }
+              },
+              "ResultPath": "$.humanDecision",
+              "Next": "Validate"
+            },
+            "Validate": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "ValidateFunction",
+                    "Arn"
+                  ]
+                },
+                "Payload": {
+                  "caseId.$": "$.caseId"
+                }
+              },
+              "ResultPath": "$.task",
+              "Next": "Done",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ]
+            },
+            "Done": {
+              "Type": "Succeed"
+            }
+          }
+        }
+      }
+    },
+    "FailureQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "SqsManagedSseEnabled": true
+      }
+    },
+    "FailureAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Cloud ingestion/realtime failure queue requires review",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "FailureQueue",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "AlarmTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "Subscription": [
+          {
+            "Protocol": "email",
+            "Endpoint": {
+              "Ref": "BudgetEmail"
+            }
+          }
+        ]
+      }
+    },
+    "Budget": {
+      "Type": "AWS::Budgets::Budget",
+      "Properties": {
+        "Budget": {
+          "BudgetName": {
+            "Fn::Sub": "${AWS::StackName}-monthly"
+          },
+          "BudgetType": "COST",
+          "TimeUnit": "MONTHLY",
+          "BudgetLimit": {
+            "Amount": {
+              "Ref": "MonthlyBudgetUsd"
+            },
+            "Unit": "USD"
+          }
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "NotificationType": "ACTUAL",
+              "ComparisonOperator": "GREATER_THAN",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE"
+            },
+            "Subscribers": [
+              {
+                "SubscriptionType": "EMAIL",
+                "Address": {
+                  "Ref": "BudgetEmail"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "ShelfThing": {
+      "Type": "AWS::IoT::Thing",
+      "Properties": {
+        "ThingName": {
+          "Ref": "ShelfId"
+        }
+      }
+    },
+    "DevicePolicy": {
+      "Type": "AWS::IoT::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "iot:Connect",
+              "Resource": {
+                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:client/${ShelfId}"
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": "iot:Publish",
+              "Resource": [
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/events"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/telemetry"
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": "iot:Subscribe",
+              "Resource": {
+                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smartbasket/shelf/${ShelfId}/acks"
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": "iot:Receive",
+              "Resource": {
+                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/acks"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "IoTErrorRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "iot.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "FailureQueue",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "FailureQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ShelfRule": {
+      "Type": "AWS::IoT::TopicRule",
+      "Properties": {
+        "TopicRulePayload": {
+          "AwsIotSqlVersion": "2016-03-23",
+          "Sql": {
+            "Fn::Sub": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId FROM 'smartbasket/shelf/${ShelfId}/+' WHERE topic(4) = 'events' OR topic(4) = 'telemetry'"
+          },
+          "RuleDisabled": false,
+          "Actions": [
+            {
+              "Lambda": {
+                "FunctionArn": {
+                  "Fn::GetAtt": [
+                    "IngestFunction",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "ErrorAction": {
+            "Sqs": {
+              "QueueUrl": {
+                "Ref": "FailureQueue"
+              },
+              "RoleArn": {
+                "Fn::GetAtt": [
+                  "IoTErrorRole",
+                  "Arn"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "IoTInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "IngestFunction"
+        },
+        "Principal": "iot.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "ShelfRule",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "WebPullRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "build.apprunner.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "PullWebImage",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:DescribeImages"
+                  ],
+                  "Resource": {
+                    "Ref": "WebRepositoryArn"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "ecr:GetAuthorizationToken",
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "WebScaling": {
+      "Type": "AWS::AppRunner::AutoScalingConfiguration",
+      "Properties": {
+        "MinSize": 1,
+        "MaxSize": 1,
+        "MaxConcurrency": 50
+      }
+    },
+    "WebService": {
+      "Type": "AWS::AppRunner::Service",
+      "Properties": {
+        "AutoScalingConfigurationArn": {
+          "Fn::GetAtt": [
+            "WebScaling",
+            "AutoScalingConfigurationArn"
+          ]
+        },
+        "SourceConfiguration": {
+          "AutoDeploymentsEnabled": false,
+          "AuthenticationConfiguration": {
+            "AccessRoleArn": {
+              "Fn::GetAtt": [
+                "WebPullRole",
+                "Arn"
+              ]
+            }
+          },
+          "ImageRepository": {
+            "ImageIdentifier": {
+              "Ref": "WebImageUri"
+            },
+            "ImageRepositoryType": "ECR",
+            "ImageConfiguration": {
+              "Port": "3001",
+              "RuntimeEnvironmentVariables": [
+                {
+                  "Name": "NEXT_PUBLIC_CLOUD_MODE",
+                  "Value": "true"
+                },
+                {
+                  "Name": "CLOUD_API_ORIGIN",
+                  "Value": {
+                    "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+                  }
+                },
+                {
+                  "Name": "CLOUD_WEBSOCKET_URL",
+                  "Value": {
+                    "Fn::Sub": "wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"
+                  }
+                },
+                {
+                  "Name": "WEB_ORIGIN",
+                  "Value": {
+                    "Ref": "WebOrigin"
+                  }
+                },
+                {
+                  "Name": "COGNITO_CLIENT_ID",
+                  "Value": {
+                    "Ref": "UserPoolClient"
+                  }
+                },
+                {
+                  "Name": "COGNITO_DOMAIN",
+                  "Value": {
+                    "Fn::Sub": "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "InstanceConfiguration": {
+          "Cpu": "1024",
+          "Memory": "2048"
+        },
+        "HealthCheckConfiguration": {
+          "Protocol": "HTTP",
+          "Path": "/",
+          "Interval": 10
+        }
+      }
+    },
+    "RetentionFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "src/cloud/handlers.retention",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "logs:DescribeLogGroups",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": "logs:PutRetentionPolicy",
+                "Resource": [
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/${AgentRuntime.AgentRuntimeId}*"
+                  },
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apprunner/*"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "AGENT_RUNTIME_ID": {
+              "Fn::GetAtt": [
+                "AgentRuntime",
+                "AgentRuntimeId"
+              ]
+            },
+            "WEB_SERVICE_ARN": {
+              "Fn::GetAtt": [
+                "WebService",
+                "ServiceArn"
+              ]
+            }
+          }
+        },
+        "Events": {
+          "Retention": {
+            "Type": "Schedule",
+            "Properties": {
+              "Schedule": "rate(1 day)",
+              "Enabled": true
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-RetentionFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RetentionFunctionLog"
+          }
+        }
+      }
+    },
+    "WebSocketConnect": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "RouteKey": "$connect",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "WebSocketIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketDisconnect": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "RouteKey": "$disconnect",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "WebSocketIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketDefault": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "RouteKey": "$default",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "WebSocketIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "ApiFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ApiFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ApiFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ApiFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "IngestFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-IngestFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "IngestFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "IngestFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "InvestigateFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-InvestigateFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "InvestigateFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "InvestigateFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "HandoffFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-HandoffFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "HandoffFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "HandoffFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "ValidateFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ValidateFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ValidateFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ValidateFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "ReconcileFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ReconcileFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ReconcileFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ReconcileFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "WebSocketFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-WebSocketFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "WebSocketFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "WebSocketFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "ChangesFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ChangesFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ChangesFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ChangesFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "ToolsFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ToolsFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ToolsFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ToolsFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "ArchiveFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-ArchiveFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ArchiveFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ArchiveFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "RetentionFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-RetentionFunction"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "RetentionFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RetentionFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "WebUrl": {
+      "Value": {
+        "Fn::Sub": "https://${WebService.ServiceUrl}"
+      }
+    },
+    "ApiUrl": {
+      "Value": {
+        "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+      }
+    },
+    "WebSocketUrl": {
+      "Value": {
+        "Fn::Sub": "wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"
+      }
+    },
+    "UserPoolId": {
+      "Value": {
+        "Ref": "UserPool"
+      }
+    },
+    "UserPoolClientId": {
+      "Value": {
+        "Ref": "UserPoolClient"
+      }
+    },
+    "StateTable": {
+      "Value": {
+        "Ref": "StateTable"
+      }
+    },
+    "SessionSecretArn": {
+      "Value": {
+        "Ref": "SessionSecret"
+      }
+    },
+    "DevicePolicyName": {
+      "Value": {
+        "Ref": "DevicePolicy"
+      }
+    },
+    "ThingName": {
+      "Value": {
+        "Ref": "ShelfThing"
+      }
+    },
+    "AgentRuntimeArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "AgentRuntime",
+          "AgentRuntimeArn"
+        ]
+      }
+    },
+    "WorkflowArn": {
+      "Value": {
+        "Ref": "CaseWorkflow"
+      }
+    }
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "health": {
+    "model": "yolo11n",
+    "device": "cpu",
+    "ready": true,
+    "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+    "frames": [
+      "demo-people"
+    ]
+  },
+  "runs": [
+    {
+      "mode": "FIXTURE_PLANNER_REAL_YOLO_REAL_DECISION",
+      "actions": [
+        "inspect_vision_evidence",
+        "get_shelf_event",
+        "get_basket_evidence",
+        "get_cart_history",
+        "DECIDE"
+      ],
+      "agentStatus": "COMPLETED",
+      "reason": "The recommendation does not meet the customer-confirmation confidence policy; staff review is required.",
+      "candidate": "A",
+      "basketConfidence": 0.46,
+      "visionCalledByPlanner": true,
+      "vision": {
+        "status": "AVAILABLE",
+        "eventId": "vision-FIXTURE_PLANNER_REAL_YOLO_REAL_DECISION",
+        "frames": [
+          {
+            "frameId": "demo-people",
+            "source": "MOCK",
+            "cameraId": "MOCK-YOLO",
+            "linkedAt": "2026-10-22T09:24:58.365Z",
+            "aligned": false,
+            "model": "yolo11n",
+            "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+            "frameSha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+            "imageSize": {
+              "width": 1280,
+              "height": 720
+            },
+            "inferenceMs": 123.65,
+            "detections": [
+              {
+                "classId": 0,
+                "label": "person",
+                "confidence": 0.84046,
+                "box": [
+                  748.51,
+                  41.81,
+                  1148.07,
+                  711.11
+                ]
+              },
+              {
+                "classId": 0,
+                "label": "person",
+                "confidence": 0.77933,
+                "box": [
+                  148.56,
+                  203.08,
+                  1125.28,
+                  714.99
+                ]
+              },
+              {
+                "classId": 27,
+                "label": "tie",
+                "confidence": 0.45202,
+                "box": [
+                  361.39,
+                  437.73,
+                  524.66,
+                  717.32
+                ]
+              }
+            ]
+          }
+        ],
+        "limitation": "Object detections are supporting evidence only; they do not identify SKU, Basket A/B ownership, or PICK/PUT_BACK. Detection confidence is not basket confidence."
+      },
+      "cartBeforeHuman": {
+        "A": {},
+        "B": {}
+      },
+      "checkout": 25,
+      "auditToolCompletions": 4
+    },
+    {
+      "mode": "REAL_PLANNER_REAL_YOLO_AVAILABLE",
+      "actions": [
+        "inspect_vision_evidence",
+        "get_shelf_event",
+        "get_cart_history",
+        "get_basket_evidence",
+        "get_signal_window",
+        "analyze_rssi_stability"
+      ],
+      "agentStatus": "FAILED",
+      "reason": "Agent investigation failed: Agent investigation deadline exceeded",
+      "candidate": null,
+      "basketConfidence": 0,
+      "visionCalledByPlanner": true,
+      "vision": {
+        "status": "AVAILABLE",
+        "eventId": "vision-REAL_PLANNER_REAL_YOLO_AVAILABLE",
+        "frames": [
+          {
+            "frameId": "demo-people",
+            "source": "MOCK",
+            "cameraId": "MOCK-YOLO",
+            "linkedAt": "2026-10-22T09:25:02.280Z",
+            "aligned": false,
+            "model": "yolo11n",
+            "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+            "frameSha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+            "imageSize": {
+              "width": 1280,
+              "height": 720
+            },
+            "inferenceMs": 136.75,
+            "detections": [
+              {
+                "classId": 0,
+                "label": "person",
+                "confidence": 0.84046,
+                "box": [
+                  748.51,
+                  41.81,
+                  1148.07,
+                  711.11
+                ]
+              },
+              {
+                "classId": 0,
+                "label": "person",
+                "confidence": 0.77933,
+                "box": [
+                  148.56,
+                  203.08,
+                  1125.28,
+                  714.99
+                ]
+              },
+              {
+                "classId": 27,
+                "label": "tie",
+                "confidence": 0.45202,
+                "box": [
+                  361.39,
+                  437.73,
+                  524.66,
+                  717.32
+                ]
+              }
+            ]
+          }
+        ],
+        "limitation": "Object detections are supporting evidence only; they do not identify SKU, Basket A/B ownership, or PICK/PUT_BACK. Detection confidence is not basket confidence."
+      },
+      "cartBeforeHuman": {
+        "A": {},
+        "B": {}
+      },
+      "checkout": 25,
+      "auditToolCompletions": 6
+    }
+  ]
+}

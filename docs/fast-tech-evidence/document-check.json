@@ -1,0 +1,12 @@
+{
+  "questionCount": 157,
+  "answered": 157,
+  "missingQuestions": [],
+  "missingLinks": [],
+  "missingAnchors": [],
+  "evidenceReports": 16,
+  "screenshots": 38,
+  "codeFenceBalanced": true,
+  "implementationTestsRerun": false,
+  "awsAccessed": false
+}

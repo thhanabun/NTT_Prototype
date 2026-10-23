@@ -1,0 +1,139 @@
+{
+  "at": "2026-10-22T16:30:49.928Z",
+  "awsDeployed": false,
+  "cloudServices": "not invoked",
+  "hardware": "not connected",
+  "checks": [
+    {
+      "name": "basketly-cloud-web:check architecture and non-root user",
+      "result": {
+        "id": "sha256:4cab4158ee847f8ca7ca151de67869b084820143a02b676560ee2efe775d2159",
+        "architecture": "amd64",
+        "user": "web"
+      }
+    },
+    {
+      "name": "basketly-cloud-agent:check architecture and non-root user",
+      "result": {
+        "id": "sha256:b9e4e4be16c1b6912c818e32b33480c2623ad2bfc7aaed896f43345389fd7d1a",
+        "architecture": "arm64",
+        "user": "agent"
+      }
+    },
+    {
+      "name": "production web startup, runtime config, PKCE cookie and CSRF",
+      "result": {
+        "status": "OK"
+      }
+    },
+    {
+      "name": "AgentCore HTTP readiness after real Laya and YOLO preload",
+      "result": {
+        "status": "Healthy"
+      }
+    },
+    {
+      "name": "real YOLO11n CPU inference on registered MOCK image",
+      "result": {
+        "health": {
+          "model": "yolo11n",
+          "device": "cpu",
+          "ready": true,
+          "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+          "frames": [
+            "demo-people"
+          ]
+        },
+        "inference": {
+          "status": "AVAILABLE",
+          "model": "yolo11n",
+          "weightsSha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+          "frameId": "demo-people",
+          "source": "MOCK",
+          "frameSha256": "16d73869e3267a7d4ed00de8e860833bd1657c1b252e94c0c348277adc7b6edb",
+          "imageSize": {
+            "width": 1280,
+            "height": 720
+          },
+          "inferenceMs": 7211.14,
+          "detections": [
+            {
+              "classId": 0,
+              "label": "person",
+              "confidence": 0.84292,
+              "box": [
+                748.47,
+                41.8,
+                1148.05,
+                711.04
+              ]
+            },
+            {
+              "classId": 0,
+              "label": "person",
+              "confidence": 0.77101,
+              "box": [
+                148.72,
+                203.34,
+                1126.2,
+                714.96
+              ]
+            },
+            {
+              "classId": 27,
+              "label": "tie",
+              "confidence": 0.4568,
+              "box": [
+                361.52,
+                437.78,
+                524.58,
+                717.29
+              ]
+            }
+          ],
+          "limitation": "Generic COCO object detection on a MOCK still image; no SKU, basket ownership, PICK/PUT_BACK or temporal proof."
+        }
+      }
+    },
+    {
+      "name": "real Laya CPU typed inference on MOCK RSSI (warmup before timed application call)",
+      "result": {
+        "model": "laya-rl-agent",
+        "answers": {
+          "basket": {
+            "type": "choice",
+            "choice": "A",
+            "probabilities": {
+              "A": 0.4118,
+              "B": 0.3624,
+              "NONE": 0.2258
+            },
+            "confidence": 0.0268,
+            "answer_confidence": 0.4118,
+            "action": {
+              "act_probability": 1
+            },
+            "x_jev_confidence": 0.1177
+          }
+        },
+        "usage": {
+          "input_tokens": 57,
+          "output_tokens": 0,
+          "state_tokens": 16,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        },
+        "routing": {
+          "model": "typed-decisions",
+          "repo": "convaiinnovations/laya/typed-decisions",
+          "reason": "explicit model='typed-decisions'",
+          "detection": null,
+          "workflow": null
+        }
+      }
+    }
+  ],
+  "passed": false,
+  "error": "{\"error\":\"Agent runtime unavailable; staff review required\"}\n\n503 !== 200\n"
+}

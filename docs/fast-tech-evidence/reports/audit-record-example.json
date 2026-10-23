@@ -1,0 +1,13 @@
+{
+  "auditId": "AUD-B9FDAA30-0C2",
+  "at": "2026-10-21T19:17:27.559Z",
+  "action": "AGENT_TOOL_COMPLETED",
+  "actor": "LAYA_AGENT",
+  "details": {
+    "caseId": "CASE-010",
+    "eventId": "full-71",
+    "tool": "get_cart_history",
+    "status": "OK",
+    "summary": "Basket A: 1 SKU(s); Basket B: 1 SKU(s)"
+  }
+}

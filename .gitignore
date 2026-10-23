@@ -1,6 +1,8 @@
 node_modules/
 .venv-laya/
 .venv-vision/
+.venv-cloud/
+web/.next-cloud/
 __pycache__/
 .env
 .env.*

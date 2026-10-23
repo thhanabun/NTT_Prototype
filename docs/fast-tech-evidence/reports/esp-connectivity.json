@@ -1,0 +1,224 @@
+{
+  "startedAt": "2026-10-22T10:23:39.076Z",
+  "messages": 6,
+  "telemetry": [
+    {
+      "at": "2026-10-22T10:24:33.753Z",
+      "shelfId": "SHELF-01",
+      "status": "ONLINE",
+      "bootId": "59ea2f64"
+    },
+    {
+      "at": "2026-10-22T10:24:33.754Z",
+      "shelfId": "SHELF-01",
+      "uptimeMs": 11056,
+      "lanes": [
+        {
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "present": false,
+          "raw": 1
+        },
+        {
+          "laneId": "LANE-2",
+          "sku": "WATER",
+          "present": false,
+          "raw": 1
+        }
+      ],
+      "queueDepth": 0,
+      "droppedEvents": 0,
+      "highValueItem": {
+        "tagId": "HV-001",
+        "status": "RECENTLY_SEEN",
+        "rssi": -71,
+        "lastSeenMsAgo": 80
+      },
+      "gndPins": [],
+      "edges": {
+        "coke": 0,
+        "water": 0
+      },
+      "rssi": {
+        "A": -73,
+        "B": null,
+        "HV01": -71
+      }
+    },
+    {
+      "at": "2026-10-22T10:24:34.762Z",
+      "shelfId": "SHELF-01",
+      "uptimeMs": 12057,
+      "lanes": [
+        {
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "present": false,
+          "raw": 1
+        },
+        {
+          "laneId": "LANE-2",
+          "sku": "WATER",
+          "present": false,
+          "raw": 1
+        }
+      ],
+      "queueDepth": 0,
+      "droppedEvents": 0,
+      "highValueItem": {
+        "tagId": "HV-001",
+        "status": "RECENTLY_SEEN",
+        "rssi": -73,
+        "lastSeenMsAgo": 182
+      },
+      "gndPins": [],
+      "edges": {
+        "coke": 0,
+        "water": 0
+      },
+      "rssi": {
+        "A": -73,
+        "B": null,
+        "HV01": -73
+      }
+    },
+    {
+      "at": "2026-10-22T10:24:35.899Z",
+      "shelfId": "SHELF-01",
+      "uptimeMs": 13129,
+      "lanes": [
+        {
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "present": false,
+          "raw": 1
+        },
+        {
+          "laneId": "LANE-2",
+          "sku": "WATER",
+          "present": false,
+          "raw": 1
+        }
+      ],
+      "queueDepth": 0,
+      "droppedEvents": 0,
+      "highValueItem": {
+        "tagId": "HV-001",
+        "status": "RECENTLY_SEEN",
+        "rssi": -76,
+        "lastSeenMsAgo": 654
+      },
+      "gndPins": [],
+      "edges": {
+        "coke": 0,
+        "water": 0
+      },
+      "rssi": {
+        "A": -75,
+        "B": null,
+        "HV01": -76
+      }
+    },
+    {
+      "at": "2026-10-22T10:24:36.789Z",
+      "shelfId": "SHELF-01",
+      "uptimeMs": 14131,
+      "lanes": [
+        {
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "present": false,
+          "raw": 1
+        },
+        {
+          "laneId": "LANE-2",
+          "sku": "WATER",
+          "present": false,
+          "raw": 1
+        }
+      ],
+      "queueDepth": 0,
+      "droppedEvents": 0,
+      "highValueItem": {
+        "tagId": "HV-001",
+        "status": "RECENTLY_SEEN",
+        "rssi": -76,
+        "lastSeenMsAgo": 556
+      },
+      "gndPins": [],
+      "edges": {
+        "coke": 0,
+        "water": 0
+      },
+      "rssi": {
+        "A": -76,
+        "B": null,
+        "HV01": -76
+      }
+    },
+    {
+      "at": "2026-10-22T10:24:37.797Z",
+      "shelfId": "SHELF-01",
+      "uptimeMs": 15132,
+      "lanes": [
+        {
+          "laneId": "LANE-1",
+          "sku": "COKE",
+          "present": false,
+          "raw": 1
+        },
+        {
+          "laneId": "LANE-2",
+          "sku": "WATER",
+          "present": false,
+          "raw": 1
+        }
+      ],
+      "queueDepth": 0,
+      "droppedEvents": 0,
+      "highValueItem": {
+        "tagId": "HV-001",
+        "status": "RECENTLY_SEEN",
+        "rssi": -76,
+        "lastSeenMsAgo": 56
+      },
+      "gndPins": [],
+      "edges": {
+        "coke": 0,
+        "water": 0
+      },
+      "rssi": {
+        "A": -79,
+        "B": null,
+        "HV01": -76
+      }
+    }
+  ],
+  "events": [],
+  "acks": [],
+  "shelf": {
+    "shelfId": "SHELF-01",
+    "status": "ONLINE",
+    "lastSeenAt": "2026-10-22T08:12:57.994Z",
+    "fsmState": "MOCK_CHECKOUT",
+    "rssi": {
+      "A": -55,
+      "B": -57
+    },
+    "lastEventId": "web-demo-25050ebb-c74f-4ec0-910f-5012e19113ce"
+  },
+  "carts": [
+    {
+      "basketId": "A",
+      "total": 0,
+      "session": false
+    },
+    {
+      "basketId": "B",
+      "total": 0,
+      "session": true
+    }
+  ],
+  "persistedTelemetry": [],
+  "finishedAt": "2026-10-22T10:24:38.844Z"
+}

@@ -7,8 +7,8 @@ export function ShelfMonitor({ shelf }: { shelf?: Shelf }) {
   const device = shelf?.device;
   const status = device?.status || "UNKNOWN";
   return <section className={styles.card} aria-labelledby="proximity-heading">
-    <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>LIVE HARDWARE</p><h2 id="proximity-heading">Basket proximity</h2></div><span className={`${styles.badge} ${status === "ONLINE" ? styles.green : styles.amber}`} data-testid="device-status">{status}</span></div>
-    <p className={styles.muted}><Signal size={14} aria-hidden="true" /> RSSI เป็นหลักฐานความใกล้ ไม่ใช่ตัวระบุผู้หยิบ</p>
+    <div className={styles.sectionHeading}><div><h2 id="proximity-heading">สัญญาณชั้นวาง</h2></div><span className={`${styles.badge} ${status === "ONLINE" ? styles.green : styles.amber}`} data-testid="device-status">{status}</span></div>
+    <p className={styles.muted}><Signal size={14} aria-hidden="true" /> ความใกล้ตะกร้า · RSSI</p>
     {(["A", "B", "HV01"] as const).map(id => {
       const reading = device?.rssi[id];
       return <div className={styles.signalRow} key={id}><span>{id === "HV01" ? "HV-001" : `Basket ${id}`}</span><div className={styles.signalTrack}><span style={{ width: reading === null || reading === undefined ? "0%" : `${Math.max(3, Math.min(100, (reading + 100) * 1.5))}%` }} /></div><strong data-testid={`device-rssi-${id}`}>{reading ?? "—"}{reading !== null && reading !== undefined ? " dBm" : ""}</strong></div>;
@@ -18,6 +18,6 @@ export function ShelfMonitor({ shelf }: { shelf?: Shelf }) {
       return <div key={id}><span>{label}</span><strong data-testid={`device-lane-${id}`}>{lane ? lane.present ? "PRESENT" : "EMPTY" : "UNKNOWN"}</strong></div>;
     })}</div>
     <dl className={styles.hardwareMetrics}><div><dt>Uptime</dt><dd data-testid="device-uptime">{device?.uptimeMs !== null && device?.uptimeMs !== undefined ? `${Math.floor(device.uptimeMs / 1000)} s` : "—"}</dd></div><div><dt>Queue</dt><dd>{device?.queueDepth ?? "—"}</dd></div><div><dt>Dropped</dt><dd>{device?.droppedEvents ?? "—"}</dd></div></dl>
-    <p className={styles.footnote}>Telemetry: <time data-testid="device-last-seen" dateTime={device?.lastSeenAt || undefined}>{formatTime(device?.lastSeenAt)}</time><br />{status === "UNKNOWN" ? "ยังไม่พบ DEVICE telemetry · event และ mock signal ไม่ใช่ heartbeat" : status === "OFFLINE" ? "ไม่ได้รับ heartbeat เกิน 5 วินาที จึงซ่อนค่าที่เก่า" : "DEVICE telemetry → Compute → state → realtime"}<br />Last shelf event: {formatTime(shelf?.lastSeenAt)} · FSM: {shelf?.fsmState || "—"}</p>
+    <p className={styles.footnote}>สัญญาณล่าสุด: <time data-testid="device-last-seen" dateTime={device?.lastSeenAt || undefined}>{formatTime(device?.lastSeenAt)}</time><br />{status === "UNKNOWN" ? "ยังไม่ได้รับสัญญาณอุปกรณ์" : status === "OFFLINE" ? "ขาดการเชื่อมต่อ · ซ่อนค่าที่หมดอายุ" : "เชื่อมต่อแล้ว"}<br />เหตุการณ์ล่าสุด: {formatTime(shelf?.lastSeenAt)} · FSM: {shelf?.fsmState || "—"}</p>
   </section>;
 }

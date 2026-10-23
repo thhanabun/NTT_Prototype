@@ -31,7 +31,7 @@ export function StaffActions({ item, baskets, disabled, pending, onDecide }: {
       {invalidReason && <p className={styles.validation} id="decision-reason">{invalidReason}</p>}
       {!basket?.session && target && <Link className={styles.shopperLink} href={`/shopper?basket=${target}`} target="_blank" rel="noopener noreferrer">เปิด Shopper ของ Basket {target} →</Link>}
       <div className={styles.actionButtons}><button className={styles.primaryButton} disabled={disabled || Boolean(invalidReason)} aria-describedby={invalidReason ? "decision-reason" : undefined} onClick={() => onDecide("APPROVE", target ?? undefined)}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Approve{target ? ` → ${target}` : ""}</button><button className={styles.rejectButton} disabled={disabled} onClick={() => onDecide("REJECT")}><X size={17} aria-hidden="true" /> Reject</button></div>
-      <p className={styles.footnote}>Backend ตรวจสอบ cart อีกครั้งก่อนเปลี่ยนข้อมูล Reject จะปิดเคสโดยไม่เปลี่ยน cart</p>
+      <p className={styles.footnote}>Reject จะปิดเคสโดยไม่เปลี่ยนรายการสินค้า</p>
     </div>
   );
 }

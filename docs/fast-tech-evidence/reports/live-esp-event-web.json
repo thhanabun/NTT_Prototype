@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "actualESPEvent": {
+    "eventId": "esp32-59ea2f64-0034",
+    "shelfId": "SHELF-01",
+    "laneId": "LANE-1",
+    "sku": "COKE",
+    "eventType": "PICK",
+    "timestamp": "2026-10-22T11:07:05.950Z",
+    "timeBasis": "SERVER_RECEIPT",
+    "receivedAt": "2026-10-22T11:07:05.950Z",
+    "delayed": false,
+    "rssi": {
+      "A": -68,
+      "B": null,
+      "HV01": null
+    }
+  },
+  "fsmState": "WAITING_STAFF",
+  "case": {
+    "caseId": "CASE-039",
+    "type": "ZONE_UNKNOWN",
+    "status": "OPEN_STAFF"
+  },
+  "baskets": [
+    {
+      "basketId": "A",
+      "total": 0
+    },
+    {
+      "basketId": "B",
+      "total": 0
+    }
+  ],
+  "newDeviceStateLoaded": false,
+  "mutations": [],
+  "errors": [],
+  "proxy": "real Next.js same-origin HTTP and native SSE; no interception",
+  "limit": "New telemetry display requires restart of existing plain npm start API process"
+}

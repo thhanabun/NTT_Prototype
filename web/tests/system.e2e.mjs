@@ -60,8 +60,8 @@ try {
   const a=await context.newPage(), b=await context.newPage(), admin=await context.newPage();
   await a.goto(origin+'/shopper?basket=A'); await b.goto(origin+'/shopper?basket=B');
   await admin.goto(origin+'/admin'); await loginAdmin(admin);
-  for(const page of [a,b,admin])await page.getByRole('status').filter({hasText:'Realtime connected'}).waitFor();
-  for(const page of [a,b])await page.getByRole('button',{name:/เริ่ม shopping session/}).click();
+  for(const page of [a,b,admin])await page.getByRole('status').filter({hasText:'เชื่อมต่อแล้ว'}).waitFor();
+  for(const page of [a,b])await page.getByRole('button',{name:/เริ่มช้อป/}).click();
   await waitFor(async()=>(await state()).baskets.every(x=>x.session),'both sessions');
   passed('Next.js same-origin proxy and three native SSE tabs; sessions started through Shopper');
   device=await mqtt.connectAsync('mqtt://127.0.0.1:'+mqttPort,{clientId:'mock-ESP32-WROOM',reconnectPeriod:500});
@@ -95,7 +95,7 @@ try {
   assert.equal(current.cases.length,0,'Clear events bypass Agent');
   assert.ok(current.baskets.every(x=>x.lines.length===0));
   passed('30 complete MQTT cycles across A/B and Coke/Water; 60 transitions + 30 duplicates, no Agent and no wrong cart');
-  const checkout=page=>page.getByRole('button',{name:/Mock checkout/});
+  const checkout=page=>page.getByRole('button',{name:/ชำระเงิน/});
   for(const [index,rssi] of [{A:-55,B:-57},{A:-57,B:-55},{A:-56,B:-56}].entries()) {
     if(agentic)for(let sample=0;sample<4;sample++) {
       const readings=index===1 ? sample%2 ? {A:-48,B:-73}:{A:-73,B:-48} : rssi;
@@ -162,7 +162,7 @@ try {
     await page.screenshot({path:join(directory,page===a?'shopper-receipt.png':page===b?'shopper-b.png':'admin-audit.png'),fullPage:true});
   }
   assert.deepEqual(report.errors,[]); assert.ok(streams>=3);
-  passed('Mock checkout/receipt survives reload, JSON persistence and Admin audit agree, mobile rendering has no runtime error');
+  passed('ชำระเงิน/receipt survives reload, JSON persistence and Admin audit agree, mobile rendering has no runtime error');
   await writeFile(join(directory,'broker.log'),brokerLog.join(''));
   await writeFile(join(directory,'frontend.log'),frontendLog.join(''));
   report.passed=true;

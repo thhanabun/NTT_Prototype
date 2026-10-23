@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "image": "sha256:04f92fea2c5b13a72943fef6eaad5d6410e416986f7a5b04f8569c63f42940b4",
+  "checks": [
+    "startup",
+    "staff login page",
+    "runtime WSS configuration"
+  ],
+  "awsInvoked": false
+}

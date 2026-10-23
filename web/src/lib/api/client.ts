@@ -39,11 +39,17 @@ async function readResponse<T>(response: Response): Promise<T> {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let selectedBasket = "A";
+  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true" && typeof window !== "undefined") {
+    selectedBasket = new URLSearchParams(window.location.search).get("basket") || "";
+    if (!selectedBasket) { try { selectedBasket = localStorage.getItem("basketly-basket") || "A"; } catch { selectedBasket = "A"; } }
+  }
   const response = await fetch(path, {
     ...init,
     cache: "no-store",
     signal: init?.signal ?? AbortSignal.timeout(12_000),
     headers: {
+      ...(process.env.NEXT_PUBLIC_CLOUD_MODE === "true" ? { "x-basket-id": selectedBasket } : {}),
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
       ...init?.headers,
     },
@@ -60,8 +66,19 @@ export function getState(signal?: AbortSignal): Promise<ApiState> {
   return request<ApiState>("/api/state", {signal});
 }
 
+export function createRealtimeTicket(): Promise<{ ticket: string; connectionExpiresAt?: number }> {
+  return post("/api/realtime-ticket", {});
+}
+
+export function releaseBasketSession(basketId: BasketId): Promise<{ ok: true }> {
+  return post("/api/sessions", { basketId, action: "RELEASE" });
+}
+
 export function startSession(basketId: BasketId): Promise<{ session: Session }> {
-  return post("/api/sessions", { basketId });
+  if (process.env.NEXT_PUBLIC_CLOUD_MODE !== "true") return post("/api/sessions", { basketId });
+  let pairingAttempt = crypto.randomUUID();
+  try { const key = "basketly-pairing-" + basketId; pairingAttempt = sessionStorage.getItem(key) || pairingAttempt; sessionStorage.setItem(key, pairingAttempt); } catch { /* QR pairing remains available when session storage is blocked. */ }
+  return post("/api/sessions", { basketId, pairingCode: new URLSearchParams(window.location.search).get("code"), pairingAttempt });
 }
 
 export function confirmCustomerCase(

@@ -53,7 +53,7 @@ try {
     });
     await page.goto(frontend+path);
     if (path === '/admin') await loginAdmin(page);
-    await page.getByRole('status').filter({hasText:'Realtime connected'}).waitFor();
+    await page.getByRole('status').filter({hasText:'เชื่อมต่อแล้ว'}).waitFor();
     return page;
   }
   const total=async(page,value)=>page.waitForFunction(value=>document.querySelector('[class*="totalRow"] strong')?.textContent===value,value);
@@ -73,9 +73,9 @@ try {
   const admin=await open('/admin');
   await responsive(shopperA,'live-shopper');await responsive(admin,'live-admin');
   assert.equal(await subscribers(),3,'One SSE stream per tab, including React Strict Mode');
-  await shopperA.getByRole('button',{name:/เริ่ม shopping session/}).click();
-  await shopperB.getByRole('button',{name:/เริ่ม shopping session/}).click();
-  await shopperA.getByText('Active',{exact:true}).waitFor();await shopperB.getByText('Active',{exact:true}).waitFor();
+  await shopperA.getByRole('button',{name:/เริ่มช้อป/}).click();
+  await shopperB.getByRole('button',{name:/เริ่มช้อป/}).click();
+  await shopperA.getByText('เชื่อมแล้ว',{exact:true}).waitFor();await shopperB.getByText('เชื่อมแล้ว',{exact:true}).waitFor();
   await admin.locator('summary').filter({hasText:'Local simulator'}).click();
   await admin.getByRole('button',{name:'Clear pick → A',exact:true}).click();
   await total(shopperA,'฿25');
@@ -92,18 +92,18 @@ try {
   await shopperA.getByRole('heading',{name:'พนักงานกำลังตรวจสอบ'}).waitFor({state:'hidden'});
   const unknown=await event('live-unknown',{A:null,B:null});
   await shopperA.getByRole('heading',{name:'พนักงานกำลังตรวจสอบ'}).waitFor();
-  assert.equal(await shopperA.getByRole('button',{name:'Mock checkout',exact:true}).isDisabled(),true);
+  assert.equal(await shopperA.getByRole('button',{name:'ชำระเงิน',exact:true}).isDisabled(),true);
   await admin.getByRole('button',{name:new RegExp(unknown.caseId)}).click();
   await admin.getByRole('radio',{name:/Basket B/}).check();
   await admin.getByRole('button',{name:'Approve → B',exact:true}).click();
   await total(shopperB,'฿25');
-  await shopperA.getByRole('button',{name:'Mock checkout',exact:true}).click();
+  await shopperA.getByRole('button',{name:'ชำระเงิน',exact:true}).click();
   await shopperA.getByRole('heading',{name:'ขอบคุณที่ช้อปกับเรา'}).waitFor();
   await event('live-return',{A:-73,B:-48},'PUT_BACK');await total(shopperB,'฿0');
   await event('live-multi-1',{A:-57,B:-55},'PICK','LANE-2');
   await event('live-multi-2',{A:-57,B:-55},'PICK','LANE-2');
   await shopperB.getByRole('button',{name:'ใช่, ฉันหยิบ',exact:true}).click();await total(shopperB,'฿15');
-  assert.equal(await shopperB.getByRole('button',{name:'Mock checkout',exact:true}).isDisabled(),true);
+  assert.equal(await shopperB.getByRole('button',{name:'ชำระเงิน',exact:true}).isDisabled(),true);
   await shopperB.getByRole('button',{name:'ใช่, ฉันหยิบ',exact:true}).click();await total(shopperB,'฿30');
 
   // Deliberately release an older GET after a newer stream update.
@@ -120,11 +120,11 @@ try {
   await api.stop();
   for(const page of [shopperA,shopperB,admin])await page.getByRole('status').filter({hasText:/กำลังเชื่อมต่อใหม่/}).waitFor();
   await total(shopperB,'฿45');
-  assert.equal(await shopperB.getByRole('button',{name:'Mock checkout',exact:true}).isDisabled(),true);
+  assert.equal(await shopperB.getByRole('button',{name:'ชำระเงิน',exact:true}).isDisabled(),true);
   assert.equal(await admin.getByRole('button',{name:'Clear pick → A',exact:true}).isDisabled(),true);
   await responsive(shopperB,'disconnected-shopper');await responsive(admin,'disconnected-admin');
   await api.restart();
-  for(const page of [shopperA,shopperB,admin])await page.getByRole('status').filter({hasText:'Realtime connected'}).waitFor();
+  for(const page of [shopperA,shopperB,admin])await page.getByRole('status').filter({hasText:'เชื่อมต่อแล้ว'}).waitFor();
   await total(shopperB,'฿45');assert.equal(mutations,beforeOutage,'Reconnect must not replay mutations');
   assert.equal(await subscribers(),3);
   await shopperA.close();await admin.close();
@@ -138,10 +138,10 @@ try {
     await shopperB.getByRole('status').filter({hasText:index===4?'Realtime offline':`${index+2}/5`}).waitFor();
   }
   assert.equal(await subscribers(),0,'Retry exhaustion must close the stream');
-  assert.equal(await shopperB.getByRole('button',{name:'Mock checkout',exact:true}).isDisabled(),true);
+  assert.equal(await shopperB.getByRole('button',{name:'ชำระเงิน',exact:true}).isDisabled(),true);
   await context.request.get(api.origin+'/__test/valid');
   await shopperB.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).click();
-  await shopperB.getByRole('status').filter({hasText:'Realtime connected'}).waitFor();
+  await shopperB.getByRole('status').filter({hasText:'เชื่อมต่อแล้ว'}).waitFor();
   await total(shopperB,'฿45');assert.equal(await subscribers(),1);
   await shopperB.getByRole('link',{name:'ดู UI preview ด้วยข้อมูลตัวอย่าง',exact:true}).click();
   await shopperB.getByText('Preview screen states',{exact:false}).waitFor();

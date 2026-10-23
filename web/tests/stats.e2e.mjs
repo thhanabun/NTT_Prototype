@@ -43,8 +43,8 @@ try {
   });
   await page.goto(`${process.env.SHOPPER_TEST_ORIGIN || 'http://localhost:3001'}/admin`);
   await loginAdmin(page);
-  const panel = page.getByRole('region', { name: 'Stat Query Chat', exact: true });
-  await panel.getByRole('heading', { name: 'Stat Query Chat', exact: true }).waitFor();
+  const panel = page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true });
+  await panel.getByRole('heading', { name: 'ถามข้อมูลร้าน', exact: true }).waitFor();
   const latest = () => panel.locator('[class*="answer"]').last();
   async function query(message, doubleClick = false) {
     console.log('QUERY ' + message);
@@ -71,7 +71,7 @@ try {
   await query('สินค้า top 10 ตามยอดเงินย้อนหลัง 7 วัน');
   assert.equal(results.at(-1).result.rows[0].key, 'COKE');
   assert.equal(results.at(-1).result.rows.length, 2);
-  await latest().getByText('DEMO · ข้อมูลสาธิต', { exact: true }).waitFor();
+  await latest().getByText('ข้อมูลตัวอย่าง', { exact: true }).waitFor();
   await latest().getByRole('img', { name: /bar graph/ }).waitFor();
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });

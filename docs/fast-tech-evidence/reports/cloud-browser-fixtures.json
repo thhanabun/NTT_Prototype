@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "Production Cognito code/PKCE BFF contract, HttpOnly secure cookies, staff access and CSRF rejection",
+    "Signed QR basket pairing, scoped cookies and native WSS invalidation update A/B correctly for PICK/duplicate/PUT_BACK",
+    "Production web customer YES, staff rejection and checkout reach actual shared cloud handlers/domain without unconfirmed charges",
+    "Staff can release an empty resolved basket; cloud device expiry refreshes to OFFLINE without manual reload",
+    "Hosted logout clears staff cookie; no browser runtime errors"
+  ],
+  "errors": [],
+  "fixtures": [
+    "Cognito issuer/JWT verification",
+    "AWS persistence/API/Lambda/Step Functions services",
+    "Bedrock and Laya model responses"
+  ],
+  "real": [
+    "production Next build/server",
+    "HTTPS BFF",
+    "OAuth PKCE validation",
+    "HttpOnly cookies",
+    "native secure WebSocket",
+    "domain/cloud handler code"
+  ],
+  "cloudResourcesCreated": false
+}

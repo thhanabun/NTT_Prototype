@@ -1,0 +1,1068 @@
+{
+  "startedAt": "2026-10-22T07:08:20.314Z",
+  "agentMode": "AGENTIC",
+  "health": {
+    "status": "ok",
+    "loaded": [
+      "typed-decisions"
+    ],
+    "revisions": {
+      "typed-decisions": "7b928d828b7b0e022f929d9bd2e44165aa270148"
+    },
+    "device": "cpu",
+    "device_is_preference": false,
+    "checkpoint_devices": {
+      "typed-decisions": "cpu"
+    },
+    "cpu_fallbacks": {
+      "typed-decisions": {
+        "count": 0,
+        "last_reason": null
+      }
+    }
+  },
+  "cycles": 30,
+  "deliveries": 99,
+  "telemetryMessages": 12,
+  "cases": [
+    {
+      "caseId": "CASE-001",
+      "candidate": "A",
+      "confidence": 0.4383,
+      "nextAction": "STAFF_HITL",
+      "model": "laya-rl-agent",
+      "steps": [
+        {
+          "number": 1,
+          "phase": "SELECT",
+          "action": "get_shelf_event",
+          "source": "MODEL",
+          "summary": "Selected get_shelf_event",
+          "model": "laya-rl-agent",
+          "confidence": 0.2368,
+          "probabilities": {
+            "get_shelf_event": 0.2368,
+            "get_basket_evidence": 0.1524,
+            "get_cart_history": 0.1908,
+            "get_signal_window": 0.0472,
+            "get_device_health": 0.054,
+            "get_lane_state": 0.1081,
+            "get_event_neighbors": 0.1419,
+            "get_camera_evidence": 0.0688
+          },
+          "availableActions": [
+            "get_shelf_event",
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence"
+          ]
+        },
+        {
+          "number": 1,
+          "phase": "OBSERVE",
+          "action": "get_shelf_event",
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}",
+          "toolCall": {
+            "name": "get_shelf_event",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:34.902Z",
+            "input": {
+              "eventId": "web-model-0"
+            },
+            "result": {
+              "found": true,
+              "event": {
+                "eventId": "web-model-0",
+                "shelfId": "SHELF-01",
+                "laneId": "LANE-1",
+                "sku": "COKE",
+                "eventType": "PICK",
+                "timestamp": "2026-10-22T07:08:33.245Z",
+                "timeBasis": "SERVER_RECEIPT",
+                "receivedAt": "2026-10-22T07:08:33.245Z",
+                "delayed": false,
+                "rssi": {
+                  "A": -55,
+                  "B": -57,
+                  "HV01": -63
+                }
+              }
+            },
+            "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+          }
+        },
+        {
+          "number": 2,
+          "phase": "SELECT",
+          "action": "get_cart_history",
+          "source": "MODEL",
+          "summary": "Selected get_cart_history",
+          "model": "laya-rl-agent",
+          "confidence": 0.298,
+          "probabilities": {
+            "get_basket_evidence": 0.1844,
+            "get_cart_history": 0.298,
+            "get_signal_window": 0.0697,
+            "get_device_health": 0.0688,
+            "get_lane_state": 0.1299,
+            "get_event_neighbors": 0.1108,
+            "get_camera_evidence": 0.0904,
+            "STOP_STAFF": 0.048
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 2,
+          "phase": "OBSERVE",
+          "action": "get_cart_history",
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]",
+          "toolCall": {
+            "name": "get_cart_history",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:36.673Z",
+            "input": {},
+            "result": {
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": {
+                    "sessionId": "SES-08C43EA3",
+                    "basketId": "A",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:26.918Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": {
+                    "sessionId": "SES-8804442D",
+                    "basketId": "B",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:27.014Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                }
+              ]
+            },
+            "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+          }
+        },
+        {
+          "number": 3,
+          "phase": "SELECT",
+          "action": "get_basket_evidence",
+          "source": "MODEL",
+          "summary": "Selected get_basket_evidence",
+          "model": "laya-rl-agent",
+          "confidence": 0.2674,
+          "probabilities": {
+            "get_basket_evidence": 0.2674,
+            "get_signal_window": 0.063,
+            "get_device_health": 0.0816,
+            "get_lane_state": 0.1092,
+            "get_event_neighbors": 0.1332,
+            "get_camera_evidence": 0.0746,
+            "analyze_cart_consistency": 0.2281,
+            "STOP_STAFF": 0.0428
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 3,
+          "phase": "OBSERVE",
+          "action": "get_basket_evidence",
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57,\"HV01\":-63},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}",
+          "toolCall": {
+            "name": "get_basket_evidence",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:38.674Z",
+            "input": {
+              "eventId": "web-model-0"
+            },
+            "result": {
+              "found": true,
+              "eventId": "web-model-0",
+              "shelfId": "SHELF-01",
+              "laneId": "LANE-1",
+              "sku": "COKE",
+              "eventType": "PICK",
+              "delayed": false,
+              "rssi": {
+                "A": -55,
+                "B": -57,
+                "HV01": -63
+              },
+              "marginDb": 2,
+              "candidate": "A",
+              "activeSessions": {
+                "A": true,
+                "B": true
+              },
+              "zone": "AMBIGUOUS"
+            },
+            "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57,\"HV01\":-63},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}"
+          }
+        },
+        {
+          "number": 4,
+          "phase": "SELECT",
+          "action": "analyze_cart_consistency",
+          "source": "MODEL",
+          "summary": "Selected analyze_cart_consistency",
+          "model": "laya-rl-agent",
+          "confidence": 0.2021,
+          "probabilities": {
+            "get_signal_window": 0.1216,
+            "get_device_health": 0.1188,
+            "get_lane_state": 0.1175,
+            "get_event_neighbors": 0.0957,
+            "get_camera_evidence": 0.1114,
+            "analyze_cart_consistency": 0.2021,
+            "DECIDE": 0.1864,
+            "STOP_STAFF": 0.0464
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 4,
+          "phase": "OBSERVE",
+          "action": "analyze_cart_consistency",
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}",
+          "toolCall": {
+            "name": "run_evidence_analysis",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:41.084Z",
+            "input": {
+              "eventId": "web-model-0",
+              "scriptId": "cart_consistency"
+            },
+            "result": {
+              "scriptId": "cart_consistency",
+              "status": "AVAILABLE",
+              "eventType": "PICK",
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": true,
+                  "quantity": 0
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": true,
+                  "quantity": 0
+                }
+              ],
+              "validTargets": [
+                "A",
+                "B"
+              ]
+            },
+            "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+          }
+        },
+        {
+          "number": 5,
+          "phase": "SELECT",
+          "action": "DECIDE",
+          "source": "MODEL",
+          "summary": "Selected DECIDE",
+          "model": "laya-rl-agent",
+          "confidence": 0.293,
+          "probabilities": {
+            "get_signal_window": 0.0975,
+            "get_device_health": 0.1372,
+            "get_lane_state": 0.1525,
+            "get_event_neighbors": 0.1363,
+            "get_camera_evidence": 0.1179,
+            "DECIDE": 0.293,
+            "STOP_STAFF": 0.0655
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_shelf_event",
+          "input": {
+            "eventId": "web-model-0"
+          },
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+        },
+        {
+          "name": "get_cart_history",
+          "input": {},
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+        },
+        {
+          "name": "get_basket_evidence",
+          "input": {
+            "eventId": "web-model-0"
+          },
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-55,\"B\":-57,\"HV01\":-63},\"candidate\":\"A\",\"active\":{\"A\":true,\"B\":true}}"
+        },
+        {
+          "name": "run_evidence_analysis",
+          "input": {
+            "eventId": "web-model-0",
+            "scriptId": "cart_consistency"
+          },
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+        }
+      ]
+    },
+    {
+      "caseId": "CASE-002",
+      "candidate": "A",
+      "confidence": 0.381,
+      "nextAction": "STAFF_HITL",
+      "model": "laya-rl-agent",
+      "steps": [
+        {
+          "number": 1,
+          "phase": "SELECT",
+          "action": "get_shelf_event",
+          "source": "MODEL",
+          "summary": "Selected get_shelf_event",
+          "model": "laya-rl-agent",
+          "confidence": 0.2368,
+          "probabilities": {
+            "get_shelf_event": 0.2368,
+            "get_basket_evidence": 0.1524,
+            "get_cart_history": 0.1908,
+            "get_signal_window": 0.0472,
+            "get_device_health": 0.054,
+            "get_lane_state": 0.1081,
+            "get_event_neighbors": 0.1419,
+            "get_camera_evidence": 0.0688
+          },
+          "availableActions": [
+            "get_shelf_event",
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence"
+          ]
+        },
+        {
+          "number": 1,
+          "phase": "OBSERVE",
+          "action": "get_shelf_event",
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}",
+          "toolCall": {
+            "name": "get_shelf_event",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:48.901Z",
+            "input": {
+              "eventId": "web-model-1"
+            },
+            "result": {
+              "found": true,
+              "event": {
+                "eventId": "web-model-1",
+                "shelfId": "SHELF-01",
+                "laneId": "LANE-1",
+                "sku": "COKE",
+                "eventType": "PICK",
+                "timestamp": "2026-10-22T07:08:47.320Z",
+                "timeBasis": "SERVER_RECEIPT",
+                "receivedAt": "2026-10-22T07:08:47.320Z",
+                "delayed": false,
+                "rssi": {
+                  "A": -57,
+                  "B": -55,
+                  "HV01": -63
+                }
+              }
+            },
+            "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+          }
+        },
+        {
+          "number": 2,
+          "phase": "SELECT",
+          "action": "get_cart_history",
+          "source": "MODEL",
+          "summary": "Selected get_cart_history",
+          "model": "laya-rl-agent",
+          "confidence": 0.298,
+          "probabilities": {
+            "get_basket_evidence": 0.1844,
+            "get_cart_history": 0.298,
+            "get_signal_window": 0.0697,
+            "get_device_health": 0.0688,
+            "get_lane_state": 0.1299,
+            "get_event_neighbors": 0.1108,
+            "get_camera_evidence": 0.0904,
+            "STOP_STAFF": 0.048
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 2,
+          "phase": "OBSERVE",
+          "action": "get_cart_history",
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]",
+          "toolCall": {
+            "name": "get_cart_history",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:50.578Z",
+            "input": {},
+            "result": {
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": {
+                    "sessionId": "SES-08C43EA3",
+                    "basketId": "A",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:26.918Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": [
+                    {
+                      "caseId": "CASE-001",
+                      "eventId": "web-model-0",
+                      "resolution": {
+                        "actor": "STAFF",
+                        "decision": "APPROVE",
+                        "basketId": "A"
+                      },
+                      "resolvedAt": "2026-10-22T07:08:46.624Z"
+                    }
+                  ]
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": {
+                    "sessionId": "SES-8804442D",
+                    "basketId": "B",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:27.014Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                }
+              ]
+            },
+            "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+          }
+        },
+        {
+          "number": 3,
+          "phase": "SELECT",
+          "action": "get_basket_evidence",
+          "source": "MODEL",
+          "summary": "Selected get_basket_evidence",
+          "model": "laya-rl-agent",
+          "confidence": 0.2674,
+          "probabilities": {
+            "get_basket_evidence": 0.2674,
+            "get_signal_window": 0.063,
+            "get_device_health": 0.0816,
+            "get_lane_state": 0.1092,
+            "get_event_neighbors": 0.1332,
+            "get_camera_evidence": 0.0746,
+            "analyze_cart_consistency": 0.2281,
+            "STOP_STAFF": 0.0428
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 3,
+          "phase": "OBSERVE",
+          "action": "get_basket_evidence",
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-57,\"B\":-55,\"HV01\":-63},\"candidate\":\"B\",\"active\":{\"A\":true,\"B\":true}}",
+          "toolCall": {
+            "name": "get_basket_evidence",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:52.506Z",
+            "input": {
+              "eventId": "web-model-1"
+            },
+            "result": {
+              "found": true,
+              "eventId": "web-model-1",
+              "shelfId": "SHELF-01",
+              "laneId": "LANE-1",
+              "sku": "COKE",
+              "eventType": "PICK",
+              "delayed": false,
+              "rssi": {
+                "A": -57,
+                "B": -55,
+                "HV01": -63
+              },
+              "marginDb": 2,
+              "candidate": "B",
+              "activeSessions": {
+                "A": true,
+                "B": true
+              },
+              "zone": "AMBIGUOUS"
+            },
+            "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-57,\"B\":-55,\"HV01\":-63},\"candidate\":\"B\",\"active\":{\"A\":true,\"B\":true}}"
+          }
+        },
+        {
+          "number": 4,
+          "phase": "SELECT",
+          "action": "analyze_cart_consistency",
+          "source": "MODEL",
+          "summary": "Selected analyze_cart_consistency",
+          "model": "laya-rl-agent",
+          "confidence": 0.2032,
+          "probabilities": {
+            "get_signal_window": 0.1214,
+            "get_device_health": 0.1177,
+            "get_lane_state": 0.1167,
+            "get_event_neighbors": 0.0959,
+            "get_camera_evidence": 0.1137,
+            "analyze_cart_consistency": 0.2032,
+            "DECIDE": 0.1852,
+            "STOP_STAFF": 0.0464
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 4,
+          "phase": "OBSERVE",
+          "action": "analyze_cart_consistency",
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}",
+          "toolCall": {
+            "name": "run_evidence_analysis",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:08:54.860Z",
+            "input": {
+              "eventId": "web-model-1",
+              "scriptId": "cart_consistency"
+            },
+            "result": {
+              "scriptId": "cart_consistency",
+              "status": "AVAILABLE",
+              "eventType": "PICK",
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": true,
+                  "quantity": 0
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": true,
+                  "quantity": 0
+                }
+              ],
+              "validTargets": [
+                "A",
+                "B"
+              ]
+            },
+            "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+          }
+        },
+        {
+          "number": 5,
+          "phase": "SELECT",
+          "action": "DECIDE",
+          "source": "MODEL",
+          "summary": "Selected DECIDE",
+          "model": "laya-rl-agent",
+          "confidence": 0.2991,
+          "probabilities": {
+            "get_signal_window": 0.0962,
+            "get_device_health": 0.1363,
+            "get_lane_state": 0.1514,
+            "get_event_neighbors": 0.1351,
+            "get_camera_evidence": 0.1162,
+            "DECIDE": 0.2991,
+            "STOP_STAFF": 0.0656
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_shelf_event",
+          "input": {
+            "eventId": "web-model-1"
+          },
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+        },
+        {
+          "name": "get_cart_history",
+          "input": {},
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+        },
+        {
+          "name": "get_basket_evidence",
+          "input": {
+            "eventId": "web-model-1"
+          },
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-57,\"B\":-55,\"HV01\":-63},\"candidate\":\"B\",\"active\":{\"A\":true,\"B\":true}}"
+        },
+        {
+          "name": "run_evidence_analysis",
+          "input": {
+            "eventId": "web-model-1",
+            "scriptId": "cart_consistency"
+          },
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+        }
+      ]
+    },
+    {
+      "caseId": "CASE-003",
+      "candidate": "B",
+      "confidence": 0.3836,
+      "nextAction": "STAFF_HITL",
+      "model": "laya-rl-agent",
+      "steps": [
+        {
+          "number": 1,
+          "phase": "SELECT",
+          "action": "get_shelf_event",
+          "source": "MODEL",
+          "summary": "Selected get_shelf_event",
+          "model": "laya-rl-agent",
+          "confidence": 0.2368,
+          "probabilities": {
+            "get_shelf_event": 0.2368,
+            "get_basket_evidence": 0.1524,
+            "get_cart_history": 0.1908,
+            "get_signal_window": 0.0472,
+            "get_device_health": 0.054,
+            "get_lane_state": 0.1081,
+            "get_event_neighbors": 0.1419,
+            "get_camera_evidence": 0.0688
+          },
+          "availableActions": [
+            "get_shelf_event",
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence"
+          ]
+        },
+        {
+          "number": 1,
+          "phase": "OBSERVE",
+          "action": "get_shelf_event",
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}",
+          "toolCall": {
+            "name": "get_shelf_event",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:09:02.696Z",
+            "input": {
+              "eventId": "web-model-2"
+            },
+            "result": {
+              "found": true,
+              "event": {
+                "eventId": "web-model-2",
+                "shelfId": "SHELF-01",
+                "laneId": "LANE-1",
+                "sku": "COKE",
+                "eventType": "PICK",
+                "timestamp": "2026-10-22T07:09:01.026Z",
+                "timeBasis": "SERVER_RECEIPT",
+                "receivedAt": "2026-10-22T07:09:01.026Z",
+                "delayed": false,
+                "rssi": {
+                  "A": -56,
+                  "B": -56,
+                  "HV01": -63
+                }
+              }
+            },
+            "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+          }
+        },
+        {
+          "number": 2,
+          "phase": "SELECT",
+          "action": "get_cart_history",
+          "source": "MODEL",
+          "summary": "Selected get_cart_history",
+          "model": "laya-rl-agent",
+          "confidence": 0.298,
+          "probabilities": {
+            "get_basket_evidence": 0.1844,
+            "get_cart_history": 0.298,
+            "get_signal_window": 0.0697,
+            "get_device_health": 0.0688,
+            "get_lane_state": 0.1299,
+            "get_event_neighbors": 0.1108,
+            "get_camera_evidence": 0.0904,
+            "STOP_STAFF": 0.048
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_cart_history",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 2,
+          "phase": "OBSERVE",
+          "action": "get_cart_history",
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]",
+          "toolCall": {
+            "name": "get_cart_history",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:09:04.475Z",
+            "input": {},
+            "result": {
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": {
+                    "sessionId": "SES-08C43EA3",
+                    "basketId": "A",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:26.918Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": [
+                    {
+                      "caseId": "CASE-002",
+                      "eventId": "web-model-1",
+                      "resolution": {
+                        "actor": "STAFF",
+                        "decision": "APPROVE",
+                        "basketId": "A"
+                      },
+                      "resolvedAt": "2026-10-22T07:09:00.375Z"
+                    },
+                    {
+                      "caseId": "CASE-001",
+                      "eventId": "web-model-0",
+                      "resolution": {
+                        "actor": "STAFF",
+                        "decision": "APPROVE",
+                        "basketId": "A"
+                      },
+                      "resolvedAt": "2026-10-22T07:08:46.624Z"
+                    }
+                  ]
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": {
+                    "sessionId": "SES-8804442D",
+                    "basketId": "B",
+                    "status": "ACTIVE",
+                    "startedAt": "2026-10-22T07:08:27.014Z"
+                  },
+                  "cart": [],
+                  "recentOrders": [],
+                  "recentResolutions": []
+                }
+              ]
+            },
+            "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+          }
+        },
+        {
+          "number": 3,
+          "phase": "SELECT",
+          "action": "get_basket_evidence",
+          "source": "MODEL",
+          "summary": "Selected get_basket_evidence",
+          "model": "laya-rl-agent",
+          "confidence": 0.2674,
+          "probabilities": {
+            "get_basket_evidence": 0.2674,
+            "get_signal_window": 0.063,
+            "get_device_health": 0.0816,
+            "get_lane_state": 0.1092,
+            "get_event_neighbors": 0.1332,
+            "get_camera_evidence": 0.0746,
+            "analyze_cart_consistency": 0.2281,
+            "STOP_STAFF": 0.0428
+          },
+          "availableActions": [
+            "get_basket_evidence",
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 3,
+          "phase": "OBSERVE",
+          "action": "get_basket_evidence",
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-56,\"B\":-56,\"HV01\":-63},\"candidate\":null,\"active\":{\"A\":true,\"B\":true}}",
+          "toolCall": {
+            "name": "get_basket_evidence",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:09:06.420Z",
+            "input": {
+              "eventId": "web-model-2"
+            },
+            "result": {
+              "found": true,
+              "eventId": "web-model-2",
+              "shelfId": "SHELF-01",
+              "laneId": "LANE-1",
+              "sku": "COKE",
+              "eventType": "PICK",
+              "delayed": false,
+              "rssi": {
+                "A": -56,
+                "B": -56,
+                "HV01": -63
+              },
+              "marginDb": 0,
+              "candidate": null,
+              "activeSessions": {
+                "A": true,
+                "B": true
+              },
+              "zone": "AMBIGUOUS"
+            },
+            "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-56,\"B\":-56,\"HV01\":-63},\"candidate\":null,\"active\":{\"A\":true,\"B\":true}}"
+          }
+        },
+        {
+          "number": 4,
+          "phase": "SELECT",
+          "action": "analyze_cart_consistency",
+          "source": "MODEL",
+          "summary": "Selected analyze_cart_consistency",
+          "model": "laya-rl-agent",
+          "confidence": 0.2017,
+          "probabilities": {
+            "get_signal_window": 0.123,
+            "get_device_health": 0.1177,
+            "get_lane_state": 0.1211,
+            "get_event_neighbors": 0.0959,
+            "get_camera_evidence": 0.1071,
+            "analyze_cart_consistency": 0.2017,
+            "DECIDE": 0.1882,
+            "STOP_STAFF": 0.0454
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "analyze_cart_consistency",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        },
+        {
+          "number": 4,
+          "phase": "OBSERVE",
+          "action": "analyze_cart_consistency",
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}",
+          "toolCall": {
+            "name": "run_evidence_analysis",
+            "status": "OK",
+            "calledAt": "2026-10-22T07:09:08.641Z",
+            "input": {
+              "eventId": "web-model-2",
+              "scriptId": "cart_consistency"
+            },
+            "result": {
+              "scriptId": "cart_consistency",
+              "status": "AVAILABLE",
+              "eventType": "PICK",
+              "baskets": [
+                {
+                  "basketId": "A",
+                  "activeSession": true,
+                  "quantity": 0
+                },
+                {
+                  "basketId": "B",
+                  "activeSession": true,
+                  "quantity": 0
+                }
+              ],
+              "validTargets": [
+                "A",
+                "B"
+              ]
+            },
+            "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+          }
+        },
+        {
+          "number": 5,
+          "phase": "SELECT",
+          "action": "DECIDE",
+          "source": "MODEL",
+          "summary": "Selected DECIDE",
+          "model": "laya-rl-agent",
+          "confidence": 0.3004,
+          "probabilities": {
+            "get_signal_window": 0.0982,
+            "get_device_health": 0.1339,
+            "get_lane_state": 0.1536,
+            "get_event_neighbors": 0.1353,
+            "get_camera_evidence": 0.114,
+            "DECIDE": 0.3004,
+            "STOP_STAFF": 0.0647
+          },
+          "availableActions": [
+            "get_signal_window",
+            "get_device_health",
+            "get_lane_state",
+            "get_event_neighbors",
+            "get_camera_evidence",
+            "DECIDE",
+            "STOP_STAFF"
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_shelf_event",
+          "input": {
+            "eventId": "web-model-2"
+          },
+          "summary": "{\"found\":true,\"eventType\":\"PICK\",\"delayed\":false}"
+        },
+        {
+          "name": "get_cart_history",
+          "input": {},
+          "summary": "[{\"basket\":\"A\",\"active\":true,\"cart\":[]},{\"basket\":\"B\",\"active\":true,\"cart\":[]}]"
+        },
+        {
+          "name": "get_basket_evidence",
+          "input": {
+            "eventId": "web-model-2"
+          },
+          "summary": "{\"zone\":\"AMBIGUOUS\",\"rssi\":{\"A\":-56,\"B\":-56,\"HV01\":-63},\"candidate\":null,\"active\":{\"A\":true,\"B\":true}}"
+        },
+        {
+          "name": "run_evidence_analysis",
+          "input": {
+            "eventId": "web-model-2",
+            "scriptId": "cart_consistency"
+          },
+          "summary": "{\"scriptId\":\"cart_consistency\",\"status\":\"AVAILABLE\",\"eventType\":\"PICK\",\"baskets\":[{\"basketId\":\"A\",\"activeSession\":true,\"quantity\":0},{\"basketId\":\"B\",\"activeSession\":true,\"quantity\":0}],\"validTargets\":[\"A\",\"B\"]}"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    "Next.js same-origin proxy and three native SSE tabs; sessions started through Shopper",
+    "30 complete MQTT cycles across A/B and Coke/Water; 60 transitions + 30 duplicates, no Agent and no wrong cart",
+    "Three real model-directed Laya investigations visible in Admin; action/observation trace, telemetry tools, RUNNING guard, HITL, cart and audit",
+    "Missing basket tags (HV01 only) and delayed events cannot charge; Staff rejects in real dashboard",
+    "Mock checkout/receipt survives reload, JSON persistence and Admin audit agree, mobile rendering has no runtime error"
+  ],
+  "errors": [],
+  "simulated": [
+    "hardware signals",
+    "human button choices",
+    "development mock staff login"
+  ],
+  "notExercised": [
+    "physical ESP32/BLE",
+    "AWS services",
+    "real payment"
+  ],
+  "passed": true,
+  "completedAt": "2026-10-22T07:09:16.219Z"
+}

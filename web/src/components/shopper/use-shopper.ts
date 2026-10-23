@@ -25,9 +25,16 @@ export function useShopper() {
     return live.refresh();
   }
 
-  function selectBasket(id: BasketId) {
+  function selectBasket(id: BasketId, pairingCode?: string) {
     if (locked.current) return;
+    if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true") {
+      const url = new URL(window.location.href);
+      if (pairingCode) url.searchParams.set("code", pairingCode);
+      else if (id !== basketId) url.searchParams.delete("code");
+      window.history.replaceState(null, "", url);
+    }
     selection.select(id);
+    if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true") void live.refresh();
     setNotice("");
     setShowReceipt(true);
 
@@ -57,7 +64,7 @@ export function useShopper() {
       setShowReceipt(false);
       setCompletedOrder(null);
       setCompletedSessionId(null);
-      return `Basket ${id} พร้อมสำหรับการช้อปแล้ว`;
+      return `Basket ${id} เชื่อมต่อแล้ว`;
     });
   }
 
@@ -83,7 +90,7 @@ export function useShopper() {
     if (!currentCase) return;
     return runAction(async () => {
       const result = await confirmCustomerCase(currentCase.caseId, answer);
-      return result.case.status === "CLOSED" ? "ยืนยันรายการแล้ว และตรวจสอบตะกร้าล่าสุดเรียบร้อย"
+      return result.case.status === "CLOSED" ? "ยืนยันรายการแล้ว"
         : "ส่งรายการให้พนักงานตรวจสอบแล้ว รายการยังไม่เปลี่ยนยอดชำระ";
     });
   }

@@ -1,0 +1,11 @@
+{
+  "stackName": "basketly-prototype",
+  "region": "ap-southeast-1",
+  "profile": "",
+  "imageTag": "REPLACE_WITH_UNIQUE_COMMIT_TAG",
+  "bedrockModelId": "REPLACE_WITH_ENABLED_CONVERSE_TOOL_USE_MODEL_OR_INFERENCE_PROFILE",
+  "bedrockInvokeResources": ["REPLACE_WITH_EXACT_MODEL_AND_PROFILE_ARNS"],
+  "budgetEmail": "REPLACE_WITH_YOUR_EMAIL",
+  "monthlyBudgetUsd": 50,
+  "shelfId": "SHELF-01"
+}

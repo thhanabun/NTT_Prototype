@@ -1,0 +1,12 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import { pairingCode } from "../src/cloud/auth.mjs";
+import QRCode from "qrcode";
+const outputs = JSON.parse(await readFile("data/cloud-outputs.json", "utf8"));
+if (outputs.Profile) process.env.AWS_PROFILE = outputs.Profile;
+const result = await new SecretsManagerClient({ region: outputs.Region }).send(new GetSecretValueCommand({ SecretId: outputs.SessionSecretArn }));
+if (!result.SecretString) throw new Error("Session signing secret unavailable");
+const links = Object.fromEntries(["A", "B"].map(basket => [basket, outputs.WebUrl + "/shopper?" + new URLSearchParams({ basket, code: pairingCode(result.SecretString, basket) })]));
+await writeFile("data/cloud-basket-urls.json", JSON.stringify(links, null, 2));
+for (const [basket, url] of Object.entries(links)) await QRCode.toFile(`data/cloud-basket-${basket}.svg`, url, { type: "svg", errorCorrectionLevel: "M", margin: 4, width: 512 });
+console.log("Pairing URLs and printable cloud-basket-A/B.svg labels saved under ignored data/. No pairing code was sent to a QR service.");
