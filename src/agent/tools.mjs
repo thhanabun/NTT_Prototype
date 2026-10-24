@@ -1,14 +1,11 @@
 import { ANALYSIS_SCRIPTS, SCRIPT_DESCRIPTIONS } from "./analysis-scripts.mjs";
 import { inspectVisionEvidence } from "./vision.mjs";
+import { productCatalog } from "../product-catalog.mjs";
+import { assessProximity } from "../proximity-policy.mjs";
 
 function getActiveSession(store, basketId) {
   const sessionId = store.activeSessions[basketId];
   return store.sessions.find((session) => session.sessionId === sessionId && session.status === "ACTIVE") || null;
-}
-
-function chooseCandidate(rssi) {
-  if (!Number.isFinite(rssi?.A) || !Number.isFinite(rssi?.B) || rssi.A === rssi.B) return null;
-  return rssi.A > rssi.B ? "A" : "B";
 }
 
 export function getShelfEvent(store, { eventId } = {}) {
@@ -21,13 +18,11 @@ export function getBasketEvidence(store, { eventId } = {}) {
   if (!event) return { found: false, eventId: String(eventId || ""), zone: "ZONE_UNKNOWN" };
 
   const rssi = event.rssi || { A: null, B: null };
-  const bothFresh = Number.isFinite(rssi.A) && Number.isFinite(rssi.B);
-  const marginDb = bothFresh ? Math.abs(rssi.A - rssi.B) : null;
-  const candidate = bothFresh ? chooseCandidate(rssi) : null;
   const activeSessions = {
     A: Boolean(getActiveSession(store, "A")),
     B: Boolean(getActiveSession(store, "B")),
   };
+  const { marginDb, candidate, zone, selectionBasis } = assessProximity(rssi, activeSessions);
   return {
     found: true,
     eventId: event.eventId,
@@ -40,18 +35,20 @@ export function getBasketEvidence(store, { eventId } = {}) {
     marginDb,
     candidate,
     activeSessions,
-    zone: event.delayed ? "DELAYED" : !bothFresh ? "ZONE_UNKNOWN" : marginDb >= 10 ? "CLEAR" : "AMBIGUOUS",
+    selectionBasis,
+    zone: event.delayed ? "DELAYED" : zone,
   };
 }
 
 export function getCartHistory(store) {
+  const products = productCatalog(store.products);
   return {
     baskets: ["A", "B"].map((basketId) => ({
       basketId,
       activeSession: getActiveSession(store, basketId),
       cart: Object.entries(store.carts[basketId] || {}).map(([sku, quantity]) => ({
         sku,
-        name: store.products[sku]?.name || sku,
+        name: products[sku]?.name || sku,
         quantity,
       })),
       recentOrders: store.orders.filter((order) => order.basketId === basketId).slice(0, 3),

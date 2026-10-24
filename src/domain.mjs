@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { deviceState } from "./device-state.mjs";
 import { shelfStates } from "./shelves.mjs";
+import { productCatalog, shelfSku } from "./product-catalog.mjs";
+import { assessProximity, RSSI_CLEAR_MARGIN_DB, SINGLE_BASKET_MIN_RSSI } from "./proximity-policy.mjs";
 
 const PRODUCT_BY_LANE = {
   "LANE-1": "COKE",
@@ -10,16 +12,15 @@ const PRODUCT_BY_LANE = {
 };
 
 const BASKETS = ["A", "B"];
-const RSSI_CLEAR_MARGIN_DB = 10;
 const CUSTOMER_CONFIRM_THRESHOLD = 0.75;
 const AUDIT_LOG_LIMIT = 500;
 
 export function createStore() {
   return {
-    products: {
-      COKE: { sku: "COKE", name: "Coca-Cola", price: 25, color: "#d84f3f" },
+    products: productCatalog({
+      COKE: { sku: "COKE", name: "Cola", price: 25, color: "#d84f3f" },
       WATER: { sku: "WATER", name: "Mineral water", price: 15, color: "#4e91ad" },
-    },
+    }),
     sessions: [],
     activeSessions: { A: null, B: null },
     carts: { A: {}, B: {} },
@@ -114,12 +115,6 @@ function createCase(store, event, details) {
   return caseItem;
 }
 
-function chooseBasket(rssi) {
-  if (!rssi || !Number.isFinite(rssi.A) || !Number.isFinite(rssi.B)) return null;
-  if (rssi.A === rssi.B) return null;
-  return rssi.A > rssi.B ? "A" : "B";
-}
-
 function recordEvent(store, event) {
   store.events.unshift(event);
   store.events = store.events.slice(0, 100);
@@ -132,7 +127,9 @@ export function processShelfEvent(store, input) {
   if (!input || typeof input !== "object") throw new Error("Event payload must be an object");
   const eventId = String(input.eventId || "").trim();
   const eventType = String(input.eventType || "").toUpperCase();
-  const sku = PRODUCT_BY_LANE[String(input.laneId || "").toUpperCase()];
+  const laneSku = PRODUCT_BY_LANE[String(input.laneId || "").toUpperCase()];
+  const shelfId = String(input.shelfId || store.shelf.shelfId);
+  const sku = shelfSku(shelfId, laneSku);
   if (!eventId) throw new Error("eventId is required");
   if (store.seenEventIds.includes(eventId)) {
     addAuditEntry(store, "DUPLICATE_EVENT_IGNORED", "FSM", { eventId });
@@ -141,8 +138,9 @@ export function processShelfEvent(store, input) {
   if (input.delayed !== undefined && typeof input.delayed !== "boolean") {
     throw new Error("delayed must be a boolean");
   }
-  if (!sku) throw new Error("laneId must be LANE-1 or LANE-2");
-  if (input.sku && input.sku !== sku) throw new Error("sku does not match laneId");
+  if (!laneSku) throw new Error("laneId must be LANE-1 or LANE-2");
+  // Accept the current firmware's lane SKU or the canonical mapped SKU.
+  if (input.sku && input.sku !== laneSku && input.sku !== sku) throw new Error("sku does not match laneId");
   if (!["PICK", "PUT_BACK"].includes(eventType)) throw new Error("eventType must be PICK or PUT_BACK");
 
   const rawRssi = input.rssi && typeof input.rssi === "object" ? input.rssi : {};
@@ -156,9 +154,10 @@ export function processShelfEvent(store, input) {
   if (Object.hasOwn(rawRssi, "HV01")) rssi.HV01 = normalizeRssi(rawRssi.HV01);
   const event = {
     eventId,
-    shelfId: String(input.shelfId || store.shelf.shelfId),
+    shelfId,
     laneId: String(input.laneId).toUpperCase(),
     sku,
+    ...(sku !== laneSku ? { sourceSku: input.sku || laneSku } : {}),
     eventType,
     timestamp: input.timestamp || isoNow(),
     timeBasis: input.timestamp ? "SOURCE_TIMESTAMP" : "SERVER_RECEIPT",
@@ -167,6 +166,7 @@ export function processShelfEvent(store, input) {
     rssi,
   };
 
+  store.products = productCatalog(store.products);
   store.seenEventIds.push(eventId);
   store.seenEventIds = store.seenEventIds.slice(-2000);
   recordEvent(store, event);
@@ -177,6 +177,7 @@ export function processShelfEvent(store, input) {
     sku: event.sku,
     eventType: event.eventType,
     delayed: event.delayed,
+    ...(event.sourceSku ? { sourceSku: event.sourceSku } : {}),
   });
   store.shelf.fsmState = "PROCESSING_" + eventType;
 
@@ -194,24 +195,25 @@ export function processShelfEvent(store, input) {
     return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
   }
 
-  if (!Number.isFinite(rssi.A) || !Number.isFinite(rssi.B)) {
+  const proximity = assessProximity(rssi, Object.fromEntries(BASKETS.map(id => [id, Boolean(activeSession(store, id))])));
+  const { candidate, marginDb: margin, selectionBasis } = proximity;
+  const proximityEvidence = { rssi, selectionBasis, ...(margin !== null ? { marginDb: margin } : {}),
+    ...(selectionBasis === "SINGLE_ACTIVE_BASKET" ? { singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI } : {}) };
+  if (proximity.zone === "ZONE_UNKNOWN") {
     const caseItem = createCase(store, event, {
       type: "ZONE_UNKNOWN",
       candidate: null,
       confidence: 0,
       nextAction: "STAFF_HITL",
       proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
-      evidence: { rssi, zone: "ZONE_UNKNOWN" },
-      reason: "Basket RSSI evidence is missing; the item stays out of every payable cart.",
+      evidence: { ...proximityEvidence, zone: "ZONE_UNKNOWN" },
+      reason: "Incomplete basket evidence: a single tag requires exactly one matching active session and RSSI at or above " + SINGLE_BASKET_MIN_RSSI + " dBm; staff review is required.",
     });
     store.shelf.fsmState = "WAITING_STAFF";
     return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
   }
 
-  const margin = Math.abs(rssi.A - rssi.B);
-  const candidate = chooseBasket(rssi);
-
-  if (margin >= RSSI_CLEAR_MARGIN_DB && candidate) {
+  if (proximity.zone === "CLEAR" && candidate) {
     if (!activeSession(store, candidate)) {
       const caseItem = createCase(store, event, {
         type: "MISSING_SESSION",
@@ -219,7 +221,7 @@ export function processShelfEvent(store, input) {
         confidence: 1,
         nextAction: "STAFF_HITL",
         proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
-        evidence: { rssi, marginDb: margin, zone: "CLEAR", session: null },
+        evidence: { ...proximityEvidence, zone: "CLEAR", session: null },
         reason: "The nearest basket has no active shopper session.",
       });
       store.shelf.fsmState = "WAITING_STAFF";
@@ -233,7 +235,7 @@ export function processShelfEvent(store, input) {
         confidence: 1,
         nextAction: "STAFF_HITL",
         proposedAction: "REVIEW_CART",
-        evidence: { rssi, marginDb: margin, zone: "CLEAR", cartQuantity: store.carts[candidate][sku] || 0 },
+        evidence: { ...proximityEvidence, zone: "CLEAR", cartQuantity: store.carts[candidate][sku] || 0 },
         reason: "PUT_BACK does not match a confirmed item in this basket.",
       });
       store.shelf.fsmState = "WAITING_STAFF";
@@ -246,6 +248,8 @@ export function processShelfEvent(store, input) {
       basketId: candidate,
       sku: event.sku,
       eventType: event.eventType,
+      selectionBasis,
+      ...(selectionBasis === "SINGLE_ACTIVE_BASKET" ? { singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI } : {}),
     });
     return { duplicate: false, event, disposition: "CONFIRMED", basketId: candidate };
   }
@@ -256,7 +260,7 @@ export function processShelfEvent(store, input) {
     confidence: 0,
     nextAction: "INVESTIGATE",
     proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
-    evidence: { rssi, marginDb: margin, zone: "AMBIGUOUS" },
+    evidence: { ...proximityEvidence, zone: "AMBIGUOUS" },
     reason: "RSSI difference is below the clear-zone threshold; the case manager will inspect supporting evidence.",
   });
   store.shelf.fsmState = "AGENT_INVESTIGATING";
@@ -374,12 +378,13 @@ export function checkout(store, basketId) {
       (!item.candidate || item.candidate === basketId || item.evidence.zone === "ZONE_UNKNOWN"),
   );
   if (openCases.length) throw new Error("Resolve pending cases before mock checkout");
+  const products = productCatalog(store.products);
   const lines = Object.entries(store.carts[basketId]).map(([sku, quantity]) => ({
     sku,
-    name: store.products[sku].name,
+    name: products[sku].name,
     quantity,
-    unitPrice: store.products[sku].price,
-    subtotal: quantity * store.products[sku].price,
+    unitPrice: products[sku].price,
+    subtotal: quantity * products[sku].price,
   }));
   if (!lines.length) throw new Error("Cart has no confirmed items");
   const total = lines.reduce((sum, line) => sum + line.subtotal, 0);
@@ -407,13 +412,14 @@ export function checkout(store, basketId) {
 }
 
 export function snapshot(store, now = Date.now()) {
+  const products = productCatalog(store.products);
   const baskets = BASKETS.map((basketId) => {
     const lines = Object.entries(store.carts[basketId]).map(([sku, quantity]) => ({
       sku,
-      name: store.products[sku].name,
-      price: store.products[sku].price,
+      name: products[sku].name,
+      price: products[sku].price,
       quantity,
-      subtotal: store.products[sku].price * quantity,
+      subtotal: products[sku].price * quantity,
     }));
     const unresolved = store.cases.filter(
       (item) => ["WAITING_CUSTOMER", "OPEN_STAFF"].includes(item.status) &&
@@ -430,7 +436,7 @@ export function snapshot(store, now = Date.now()) {
   });
 
   return {
-    products: Object.values(store.products),
+    products: Object.values(products),
     shelf: { ...store.shelf, device: deviceState(store, now) },
     shelves: shelfStates(store, now),
     baskets,
@@ -438,6 +444,6 @@ export function snapshot(store, now = Date.now()) {
     recentEvents: store.events.slice(0, 20),
     recentOrders: store.orders.slice(0, 10),
     auditLog: (store.auditLog || []).slice(0, 100),
-    policy: { clearMarginDb: RSSI_CLEAR_MARGIN_DB, customerConfirmThreshold: CUSTOMER_CONFIRM_THRESHOLD },
+    policy: { clearMarginDb: RSSI_CLEAR_MARGIN_DB, customerConfirmThreshold: CUSTOMER_CONFIRM_THRESHOLD, singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI },
   };
 }

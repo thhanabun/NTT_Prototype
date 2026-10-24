@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Signal } from "lucide-react";
 import type { Shelf } from "@/lib/api/types";
+import { SHELF_PRODUCTS } from "@/lib/shelves";
 import { formatTime } from "./case-details";
 import styles from "./admin.module.css";
 
@@ -10,6 +11,7 @@ export function ShelfMonitor({ shelves }: { shelves: Shelf[] }) {
   const [selectedId, setSelectedId] = useState("SHELF-01");
   const shelf = shelves.find(shelf => shelf.shelfId === selectedId) ?? shelves[0];
   const device = shelf?.device;
+  const product = SHELF_PRODUCTS.find(product => product.shelfId === shelf?.shelfId);
   const status = device?.status || "UNKNOWN";
   return <section className={styles.card} aria-labelledby="proximity-heading">
     <div className={styles.sectionHeading}><h2 id="proximity-heading">ชั้นวาง</h2><span className={styles.smallLabel}>เปิดใช้งาน {shelves.filter(shelf => shelf.enabled).length} / {shelves.length}</span></div>
@@ -20,12 +22,13 @@ export function ShelfMonitor({ shelves }: { shelves: Shelf[] }) {
       </button>)}
     </div>
     <div className={styles.shelfDetailHeading}><h3>{shelf?.label}</h3><span className={`${styles.badge} ${status === "ONLINE" ? styles.green : styles.amber}`} data-testid="device-status">{status}</span></div>
+    <p className={styles.muted}>{product?.name}</p>
     <p className={styles.muted}><Signal size={14} aria-hidden="true" /> ความใกล้ตะกร้า · RSSI</p>
     {(["A", "B", "HV01"] as const).map(id => {
       const reading = device?.rssi[id];
       return <div className={styles.signalRow} key={id}><span>{id === "HV01" ? "HV-001" : `Basket ${id}`}</span><div className={styles.signalTrack}><span style={{ width: reading === null || reading === undefined ? "0%" : `${Math.max(3, Math.min(100, (reading + 100) * 1.5))}%` }} /></div><strong data-testid={`device-rssi-${id}`}>{reading ?? "—"}{reading !== null && reading !== undefined ? " dBm" : ""}</strong></div>;
     })}
-    <div className={styles.hardwareLanes}>{[["LANE-1", "LANE-COKE", "Coke · GPIO 26"], ["LANE-2", "LANE-WATER", "Water · GPIO 27"]].map(([id, alias, label]) => {
+    <div className={styles.hardwareLanes}>{[["LANE-1", "LANE-COKE", "ช่อง 1"], ["LANE-2", "LANE-WATER", "ช่อง 2"]].map(([id, alias, label]) => {
       const lane = device?.lanes.find(lane => lane.laneId === id || lane.laneId === alias);
       return <div key={id}><span>{label}</span><strong data-testid={`device-lane-${id}`}>{lane ? lane.present ? "PRESENT" : "EMPTY" : "UNKNOWN"}</strong></div>;
     })}</div>

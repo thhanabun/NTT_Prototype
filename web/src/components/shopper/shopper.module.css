@@ -77,6 +77,8 @@
 .productArt { width: 68px; height: 82px; flex-shrink: 0; display: grid; place-items: center; border-radius: 18px; }
 .cokeArt { background: #ffe1dc; }
 .waterArt { background: #dcefff; }
+.spriteArt { background: #e5f1cc; }
+:global(html[data-theme="night"]) .spriteArt { background: #25311d; }
 :global(html[data-theme="night"]) .cokeArt { background: #2e1c19; }
 :global(html[data-theme="night"]) .waterArt { background: #17222e; }
 .can { position: relative; height: 58px; width: 31px; background: linear-gradient(90deg, #b51c25, #f34b50 40%, #d52831 80%, #ad1820); border-radius: 5px; box-shadow: 3px 4px 7px #bb303024; border-top: 3px solid #c0c7cf; border-bottom: 3px solid #c0c7cf; display: grid; place-items: center; }
@@ -85,6 +87,10 @@
 .bottle { position: relative; height: 54px; width: 28px; border: 1px solid #92c7e7; background: linear-gradient(90deg, #b7e2f8, #e9f9ff 45%, #abd7ef); border-radius: 8px 8px 6px 6px; margin-top: 9px; box-shadow: 3px 4px 7px #548bab24; display: grid; place-items: center; }
 .bottle > i { position: absolute; top: -9px; left: 7px; width: 12px; height: 9px; background: #2b76bd; border-radius: 2px 2px 0 0; }
 .bottle span { display: block; text-align: center; background: #4294cf; color: #fff; font-size: 6px; line-height: 1.1; padding: 5px 0; width: 100%; }
+.spriteBottle { background: linear-gradient(90deg, #b6d459, #e5f1ad 45%, #8fba50); border-color: #83aa3d; }
+.spriteBottle > i, .spriteBottle span { background: #3f7b28; }
+.fantaBottle { background: linear-gradient(90deg, #2a9de0, #80dcff 45%, #1183cf); border-color: #267cb4; }
+.fantaBottle span { background: #215cb2; }
 .productCopy { flex: 1; }
 .productCategory { color: var(--c-soft); font-size: 9px; letter-spacing: .07em; }
 .productCopy h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }

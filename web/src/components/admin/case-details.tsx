@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { CheckCheck, Clock3, FileSearch } from "lucide-react";
 import type { BasketCase, Product } from "@/lib/api/types";
+import { getShelfProduct } from "@/lib/shelves";
 import styles from "./admin.module.css";
 import { AgentInvestigation } from "./agent-investigation";
 
@@ -17,13 +18,14 @@ export function CaseDetails({ item, product, actions }: { item: BasketCase; prod
   return (
     <section className={styles.card} aria-labelledby="case-detail-heading">
       <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>CASE DETAIL</p><h2 id="case-detail-heading">{item.caseId}</h2></div><span className={`${styles.badge} ${item.status === "OPEN_STAFF" ? styles.amber : item.status === "CLOSED" ? styles.green : styles.blue}`}>{caseStatusLabel[item.status]}</span></div>
-      <div className={styles.caseIntro}><FileSearch size={23} aria-hidden="true" /><div><h3>{product?.name ?? item.sku}</h3><p>{item.type.replaceAll("_", " ")} · {item.eventType}</p></div></div>
+      <div className={styles.caseIntro}><FileSearch size={23} aria-hidden="true" /><div><h3>{getShelfProduct(item.shelfId)?.name ?? product?.name ?? item.sku}</h3><p>{item.type.replaceAll("_", " ")} · {item.eventType}</p></div></div>
       <p className={styles.reason}>{item.reason}</p>
       <dl className={styles.details}>
         {item.shelfId && <div><dt>Shelf</dt><dd>{item.shelfId}</dd></div>}
         <div><dt>Event ID</dt><dd>{item.eventId}</dd></div><div><dt>สร้างเมื่อ</dt><dd>{formatTime(item.createdAt)}</dd></div>
         <div><dt>ตะกร้าที่เสนอ</dt><dd>{item.candidate ? `Basket ${item.candidate}` : "ยังระบุไม่ได้"}</dd></div><div><dt>การทำงานที่เสนอ</dt><dd>{item.proposedAction}</dd></div>
         <div><dt>ขั้นตอนถัดไป</dt><dd>{item.nextAction}</dd></div><div><dt>Zone evidence</dt><dd>{item.evidence.zone ?? "—"}</dd></div>
+        {item.evidence.selectionBasis && <div><dt>Basket selection</dt><dd>{item.evidence.selectionBasis === "SINGLE_ACTIVE_BASKET" ? "ตะกร้าเดียวที่เปิด session" : item.evidence.selectionBasis === "RSSI_MARGIN" ? "ส่วนต่าง RSSI สองตะกร้า" : "หลักฐานไม่พอ"}</dd></div>}
         <div><dt>RSSI A / B</dt><dd>{rssi?.A ?? "—"} / {rssi?.B ?? "—"} dBm</dd></div>
         {rssi?.HV01 !== undefined && <div><dt>Reference beacon HV01</dt><dd>{rssi.HV01 ?? "—"} dBm · reference only</dd></div>}
         {item.evidence.marginDb !== undefined && <div><dt>Signal margin</dt><dd>{item.evidence.marginDb} dB</dd></div>}

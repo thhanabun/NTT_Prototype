@@ -24,7 +24,7 @@ export interface StatsResponse {
     empty: boolean;
   };
 }
-export type Sku = "COKE" | "WATER";
+export type Sku = "COKE" | "WATER" | "SPRITE_PLUS_TEA";
 export type EventType = "PICK" | "PUT_BACK";
 export type CaseStatus = "WAITING_CUSTOMER" | "OPEN_STAFF" | "CLOSED";
 export type CaseType =
@@ -98,6 +98,8 @@ export interface Shelf {
 }
 
 export interface Evidence {
+  selectionBasis?: "RSSI_MARGIN" | "SINGLE_ACTIVE_BASKET" | "INSUFFICIENT_EVIDENCE";
+  singleBasketMinRssi?: number;
   rssi?: RssiReadings;
   zone?: string;
   marginDb?: number;
@@ -187,6 +189,7 @@ export interface ShelfEvent {
   shelfId: string;
   laneId: string;
   sku: Sku;
+  sourceSku?: Sku;
   eventType: EventType;
   timestamp: string;
   receivedAt: string;
@@ -221,6 +224,7 @@ export interface ApiState {
   auditLog?: AuditEntry[];
   policy: {
     clearMarginDb: number;
+    singleBasketMinRssi?: number;
     customerConfirmThreshold: number;
   };
 }
