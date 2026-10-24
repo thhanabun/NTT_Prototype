@@ -39,7 +39,7 @@ Bedrock Nova Lite มี authorization, entitlement และ region availabilit
 - Failed stack rollback โดยเก็บ retained resources ไว้ ไม่ลบ DB/archive/secret; inventory อยู่ ignored `data/cloud-recovery-retained.json`
 - ไม่มีการสร้าง IoT Thing/device policy/rule และไม่ได้เปลี่ยน firmware หรือข้อมูล local demo
 - Lambda stack deploy สำเร็จ, Cognito login เข้า Admin ได้ และ Laya/YOLO health เป็น Healthy
-- **Actual Bedrock Converse ยังถูกปฏิเสธ HTTP 403 เพราะ AWS account verification pending** แม้ availability/entitlement เป็น AVAILABLE ต้องให้ NTT ตรวจการยืนยันบัญชี/Bedrock ไม่ใช่ขอ profile ใหม่
+- Bedrock Converse รอบแรกติด HTTP 403 account verification แต่ตรวจซ้ำวันที่ 25 ต.ค. เรียกจริงผ่านแล้ว: Nova Lite เลือก `STOP_STAFF` สำเร็จใน 1,738 ms โดยใช้ ChallengerAccess เดิม ไม่ได้เปลี่ยน IAM/profile; full investigation ผ่าน Agent/Step Functions ยังต้องตรวจแยก
 - ดูผลล่าสุดใน [รายงาน deployment](cloud-deployment-status.md)
 
 ## Deploy ด้วยสิทธิ์ปัจจุบัน

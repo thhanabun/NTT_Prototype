@@ -15,7 +15,7 @@
 3. Changed hosting to Lambda containers via AWS Lambda Web Adapter 1.1.0. Both amd64 images built and pushed successfully.
 4. Actual Lambda creation revealed the account limit of 3,008 MB; Agent memory was reduced to that limit. Failed stack containers were removed only after rollback; retained DB/archive/secret resources were preserved in ignored `data/cloud-recovery-retained.json`.
 5. Stack creation and Cognito callback update completed. HTTPS `/admin/login` and `/shopper` returned 200. Laya startup exposed owner-only HF cache file permissions under Lambda UID; the image now grants read/traverse access to bundled model files.
-6. An actual Bedrock Converse tool-selection readiness request returned HTTP 403 `AccessDeniedException`: AWS account verification is pending (request ID `af7887ef-5e60-4bbd-8553-129b6170c9e3`). Model availability/entitlement APIs had returned available, which did not guarantee inference. This is an external account activation blocker, not an application success.
+6. An actual Bedrock Converse tool-selection readiness request returned HTTP 403 `AccessDeniedException`: AWS account verification is pending (request ID `af7887ef-5e60-4bbd-8553-129b6170c9e3`). Model availability/entitlement APIs had returned available, which did not guarantee inference. This was an external account activation blocker; it cleared on the subsequent readiness check recorded below.
 
 ## Checks already completed
 
@@ -38,15 +38,18 @@ Already generated with `node scripts/cloud-pairing.mjs`:  Basket A/B URLs (`clou
 
 ## Acceptance still required
 
-Basket QR sessions, clear/ambiguous/Staff HITL flows, actual Bedrock tool calls, checkout, Stat Query, camera permission/inference, realtime reconnect, duplicate/retry behavior, latency and billing must be exercised on AWS before claiming full system acceptance. Cloud reset remains disabled. Payment is mock; camera positions still need physical calibration.
+Basket QR sessions, clear/ambiguous/Staff HITL flows, Bedrock investigation/tool execution through the deployed Agent, checkout, Stat Query, camera permission/inference, realtime reconnect, duplicate/retry behavior, latency and billing must be exercised on AWS before claiming full system acceptance. Cloud reset remains disabled. Payment is mock; camera positions still need physical calibration.
 
-## Bedrock activation blocker
+## Bedrock activation — resolved on 25 Oct 2026
 
-Ask the NTT account administrator to check AWS/Bedrock account verification for account `134250568427`. The API message says verification normally takes less than two hours and directs the account owner to AWS verification support if it persists. No support email or message was sent by this agent. Do not change IAM permission sets or claim Bedrock works merely because model access reports AVAILABLE. Until activation, ambiguous cases must remain uncharged and fall back to staff review.
+A subsequent actual Converse call using `ChallengerAccess` and the existing planner succeeded with model `apac.amazon.nova-lite-v1:0`, selecting the sole allowed action `STOP_STAFF`. Observed request duration was 1,738 ms (508 input / 78 output tokens). No customer data was sent and no cart/case was mutated. The account-verification denial is no longer the active blocker; no profile or IAM permission change was needed.
+
+This checks actual model access and the tool-selection contract from the deployment machine. It does not prove that a full investigation through the deployed Agent execution role and Step Functions has passed.
 
 ## Verified final deployment
 
-- CloudFormation `fast-prototype`: `UPDATE_COMPLETE`
+- CloudFormation `fast-prototype`: `UPDATE_COMPLETE`; latest resource inventory has no unfinished resources. Web and Agent Lambda are `Active` / `Successful`.
+- Bedrock actual Converse readiness passed after the initial account-verification denial cleared.
 - [Admin](https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/admin)
 - [Shopper](https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/shopper)
 - Existing FAST demo account signed in through Cognito/PKCE and loaded the Admin dashboard with backend state and realtime connected indicator.

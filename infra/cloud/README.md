@@ -200,3 +200,5 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 - AgentCore ติด `iam:PassRole`; App Runner แม้ generic simulation เป็น allowed แต่สร้าง service จริงไม่ผ่าน PassRole ของ execution role จึงเปลี่ยนเป็น Lambda container + AWS Lambda Web Adapter โดยใช้ ChallengerAccess เดิม ไม่แก้ permission set
 - Image Lambda amd64 ของ Web/Agent build และ push ECR ผ่านแล้ว รอบแรกของ Lambda พบ memory quota สูงสุด 3,008 MB จึงปรับ Agent ให้ตรง quota; ดูสถานะล่าสุดและหลักฐานใน [รายงาน deployment](../../docs/cloud-deployment-status.md) ยังไม่ถือว่าผ่าน cloud acceptance จนกว่าจะตรวจ flow จริง
 - Failed stack ถูก rollback แล้วลบเฉพาะ stack container เพื่อ retry เก็บ retained DB/archive/secret ของแต่ละรอบใน ignored `data/cloud-recovery-retained.json` โดยไม่ลบข้อมูล retained
+
+- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, ไม่มี IoT resources และเรียก Bedrock Converse จริงเลือก `STOP_STAFF` ผ่านแล้วหลัง account verification denial หายไป; full cloud acceptance ยังไม่ครบ ดูรายงาน deployment ด้านบน
