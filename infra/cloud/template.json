@@ -1,7 +1,17 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "Basketly cloud prototype: IoT, split state, API, realtime, Cognito, HITL and Bedrock AgentCore",
+  "Description": "FAST cloud prototype: split state, API, realtime, Cognito, HITL, live vision and optional IoT",
+  "Conditions": {
+    "ProvisionIoT": {
+      "Fn::Equals": [
+        {
+          "Ref": "EnableIoT"
+        },
+        "true"
+      ]
+    }
+  },
   "Parameters": {
     "WebImageUri": {
       "Type": "String"
@@ -9,25 +19,32 @@
     "AgentImageUri": {
       "Type": "String"
     },
-    "WebRepositoryArn": {
-      "Type": "String"
-    },
-    "AgentRepositoryArn": {
-      "Type": "String"
-    },
-    "AgentRuntimeName": {
-      "Type": "String",
-      "Default": "basketly_prototype",
-      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_]{0,47}"
-    },
     "WebOrigin": {
       "Type": "String",
       "Default": "http://localhost:3001",
       "AllowedPattern": "https://[^/]+|http://localhost:3001"
     },
+    "EnableIoT": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "EnableDemoSignals": {
+      "Type": "String",
+      "Default": "true",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Description": "Allow authenticated STAFF to submit labelled demo shelf signals"
+    },
     "IoTDataEndpoint": {
       "Type": "String",
-      "AllowedPattern": "[a-zA-Z0-9.-]+\\.iot\\.[a-z0-9-]+\\.amazonaws\\.com"
+      "Default": "",
+      "AllowedPattern": "^$|[a-zA-Z0-9.-]+\\.iot\\.[a-z0-9-]+\\.amazonaws\\.com"
     },
     "ShelfId": {
       "Type": "String",
@@ -54,8 +71,6 @@
   },
   "Globals": {
     "Function": {
-      "CodeUri": "../../data/cloud-package/",
-      "Runtime": "nodejs22.x",
       "Timeout": 29,
       "MemorySize": 512,
       "Architectures": [
@@ -80,6 +95,9 @@
           },
           "SHELF_ID": {
             "Ref": "ShelfId"
+          },
+          "ENABLE_DEMO_SIGNALS": {
+            "Ref": "EnableDemoSignals"
           }
         }
       }
@@ -294,6 +312,8 @@
     "ApiFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.api",
         "Policies": [
           {
@@ -329,24 +349,26 @@
               },
               {
                 "Effect": "Allow",
-                "Action": "bedrock-agentcore:InvokeAgentRuntime",
-                "Resource": [
-                  {
-                    "Fn::GetAtt": [
-                      "AgentRuntime",
-                      "AgentRuntimeArn"
-                    ]
-                  },
-                  {
-                    "Fn::Sub": "${AgentRuntime.AgentRuntimeArn}/runtime-endpoint/*"
-                  }
-                ]
+                "Action": "lambda:InvokeFunction",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "AgentRuntime",
+                    "Arn"
+                  ]
+                }
               },
               {
                 "Effect": "Allow",
                 "Action": "secretsmanager:GetSecretValue",
                 "Resource": {
                   "Ref": "SessionSecret"
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "states:StartExecution",
+                "Resource": {
+                  "Ref": "CaseWorkflow"
                 }
               },
               {
@@ -359,11 +381,14 @@
         ],
         "Environment": {
           "Variables": {
-            "AGENT_RUNTIME_ARN": {
+            "AGENT_FUNCTION_ARN": {
               "Fn::GetAtt": [
                 "AgentRuntime",
-                "AgentRuntimeArn"
+                "Arn"
               ]
+            },
+            "WORKFLOW_ARN": {
+              "Ref": "CaseWorkflow"
             }
           }
         },
@@ -387,11 +412,18 @@
             "Ref": "ApiFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "IngestFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.ingest",
         "Policies": [
           {
@@ -460,11 +492,19 @@
             "Ref": "IngestFunctionLog"
           }
         }
+      },
+      "Condition": "ProvisionIoT",
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "InvestigateFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.investigate",
         "Policies": [
           {
@@ -486,18 +526,13 @@
               },
               {
                 "Effect": "Allow",
-                "Action": "bedrock-agentcore:InvokeAgentRuntime",
-                "Resource": [
-                  {
-                    "Fn::GetAtt": [
-                      "AgentRuntime",
-                      "AgentRuntimeArn"
-                    ]
-                  },
-                  {
-                    "Fn::Sub": "${AgentRuntime.AgentRuntimeArn}/runtime-endpoint/*"
-                  }
-                ]
+                "Action": "lambda:InvokeFunction",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "AgentRuntime",
+                    "Arn"
+                  ]
+                }
               }
             ]
           }
@@ -505,10 +540,10 @@
         "Timeout": 300,
         "Environment": {
           "Variables": {
-            "AGENT_RUNTIME_ARN": {
+            "AGENT_FUNCTION_ARN": {
               "Fn::GetAtt": [
                 "AgentRuntime",
-                "AgentRuntimeArn"
+                "Arn"
               ]
             }
           }
@@ -521,11 +556,18 @@
             "Ref": "InvestigateFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "HandoffFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.handoff",
         "Policies": [
           {
@@ -575,11 +617,18 @@
             "Ref": "HandoffFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "ValidateFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.validate",
         "Policies": [
           {
@@ -610,11 +659,18 @@
             "Ref": "ValidateFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "ReconcileFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.reconcile",
         "Policies": [
           {
@@ -697,11 +753,18 @@
             "Ref": "ReconcileFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "WebSocketFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.websocket",
         "Policies": [
           {
@@ -731,11 +794,18 @@
             "Ref": "WebSocketFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "ChangesFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.changes",
         "Policies": [
           {
@@ -820,11 +890,18 @@
             "Ref": "ChangesFunctionLog"
           }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
       }
     },
     "ToolsFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/agent-runtime.toolsHandler",
         "Policies": [
           {
@@ -853,6 +930,11 @@
           "LogGroup": {
             "Ref": "ToolsFunctionLog"
           }
+        }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
         }
       }
     },
@@ -896,6 +978,8 @@
     "ArchiveFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.archive",
         "Policies": [
           {
@@ -959,6 +1043,11 @@
           "LogGroup": {
             "Ref": "ArchiveFunctionLog"
           }
+        }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
         }
       }
     },
@@ -1044,24 +1133,17 @@
             {
               "Effect": "Allow",
               "Principal": {
-                "Service": "bedrock-agentcore.amazonaws.com"
+                "Service": "lambda.amazonaws.com"
               },
-              "Action": "sts:AssumeRole",
-              "Condition": {
-                "StringEquals": {
-                  "aws:SourceAccount": {
-                    "Ref": "AWS::AccountId"
-                  }
-                },
-                "ArnLike": {
-                  "aws:SourceArn": {
-                    "Fn::Sub": "arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:*"
-                  }
-                }
-              }
+              "Action": "sts:AssumeRole"
             }
           ]
         },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          }
+        ],
         "Policies": [
           {
             "PolicyName": "AgentRuntime",
@@ -1099,33 +1181,6 @@
                   "Resource": {
                     "Ref": "BedrockInvokeResources"
                   }
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "ecr:BatchGetImage",
-                    "ecr:GetDownloadUrlForLayer"
-                  ],
-                  "Resource": {
-                    "Ref": "AgentRepositoryArn"
-                  }
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "ecr:GetAuthorizationToken",
-                  "Resource": "*"
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "logs:CreateLogGroup",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents",
-                    "logs:DescribeLogStreams"
-                  ],
-                  "Resource": {
-                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/*"
-                  }
                 }
               ]
             }
@@ -1134,44 +1189,46 @@
       }
     },
     "AgentRuntime": {
-      "Type": "AWS::BedrockAgentCore::Runtime",
+      "Type": "AWS::Serverless::Function",
       "Properties": {
-        "AgentRuntimeName": {
-          "Ref": "AgentRuntimeName"
+        "PackageType": "Image",
+        "ImageUri": {
+          "Ref": "AgentImageUri"
         },
-        "AgentRuntimeArtifact": {
-          "ContainerConfiguration": {
-            "ContainerUri": {
-              "Ref": "AgentImageUri"
-            }
-          }
-        },
-        "RoleArn": {
+        "Role": {
           "Fn::GetAtt": [
             "AgentRole",
             "Arn"
           ]
         },
-        "NetworkConfiguration": {
-          "NetworkMode": "PUBLIC"
-        },
-        "ProtocolConfiguration": "HTTP",
-        "EnvironmentVariables": {
-          "STATE_TABLE": {
-            "Ref": "StateTable"
-          },
-          "TOOLS_FUNCTION_ARN": {
-            "Fn::GetAtt": [
-              "ToolsFunction",
-              "Arn"
-            ]
-          },
-          "BEDROCK_MODEL_ID": {
-            "Ref": "BedrockModelId"
-          },
-          "AWS_REGION": {
-            "Ref": "AWS::Region"
+        "MemorySize": 3008,
+        "Timeout": 300,
+        "Environment": {
+          "Variables": {
+            "AGENT_HOSTING": "lambda",
+            "TOOLS_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "ToolsFunction",
+                "Arn"
+              ]
+            },
+            "BEDROCK_MODEL_ID": {
+              "Ref": "BedrockModelId"
+            }
           }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-AgentRuntime"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "AgentRuntimeLog"
+          }
+        }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
         }
       }
     },
@@ -1441,7 +1498,8 @@
         "ThingName": {
           "Ref": "ShelfId"
         }
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "DevicePolicy": {
       "Type": "AWS::IoT::Policy",
@@ -1484,7 +1542,8 @@
             }
           ]
         }
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "IoTErrorRole": {
       "Type": "AWS::IAM::Role",
@@ -1521,7 +1580,8 @@
             }
           }
         ]
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "ShelfRule": {
       "Type": "AWS::IoT::TopicRule",
@@ -1558,7 +1618,8 @@
             }
           }
         }
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "IoTInvokePermission": {
       "Type": "AWS::Lambda::Permission",
@@ -1577,139 +1638,92 @@
             "Arn"
           ]
         }
-      }
-    },
-    "WebPullRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "build.apprunner.amazonaws.com"
-              },
-              "Action": "sts:AssumeRole"
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": "PullWebImage",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "ecr:BatchGetImage",
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:DescribeImages"
-                  ],
-                  "Resource": {
-                    "Ref": "WebRepositoryArn"
-                  }
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "ecr:GetAuthorizationToken",
-                  "Resource": "*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "WebScaling": {
-      "Type": "AWS::AppRunner::AutoScalingConfiguration",
-      "Properties": {
-        "MinSize": 1,
-        "MaxSize": 1,
-        "MaxConcurrency": 50
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "WebService": {
-      "Type": "AWS::AppRunner::Service",
+      "Type": "AWS::Serverless::Function",
       "Properties": {
-        "AutoScalingConfigurationArn": {
-          "Fn::GetAtt": [
-            "WebScaling",
-            "AutoScalingConfigurationArn"
-          ]
+        "PackageType": "Image",
+        "ImageUri": {
+          "Ref": "WebImageUri"
         },
-        "SourceConfiguration": {
-          "AutoDeploymentsEnabled": false,
-          "AuthenticationConfiguration": {
-            "AccessRoleArn": {
-              "Fn::GetAtt": [
-                "WebPullRole",
-                "Arn"
-              ]
-            }
-          },
-          "ImageRepository": {
-            "ImageIdentifier": {
-              "Ref": "WebImageUri"
+        "MemorySize": 2048,
+        "Timeout": 60,
+        "Environment": {
+          "Variables": {
+            "NEXT_PUBLIC_CLOUD_MODE": "true",
+            "CLOUD_API_ORIGIN": {
+              "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
             },
-            "ImageRepositoryType": "ECR",
-            "ImageConfiguration": {
-              "Port": "3001",
-              "RuntimeEnvironmentVariables": [
-                {
-                  "Name": "NEXT_PUBLIC_CLOUD_MODE",
-                  "Value": "true"
-                },
-                {
-                  "Name": "CLOUD_API_ORIGIN",
-                  "Value": {
-                    "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
-                  }
-                },
-                {
-                  "Name": "CLOUD_WEBSOCKET_URL",
-                  "Value": {
-                    "Fn::Sub": "wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"
-                  }
-                },
-                {
-                  "Name": "WEB_ORIGIN",
-                  "Value": {
-                    "Ref": "WebOrigin"
-                  }
-                },
-                {
-                  "Name": "COGNITO_CLIENT_ID",
-                  "Value": {
-                    "Ref": "UserPoolClient"
-                  }
-                },
-                {
-                  "Name": "COGNITO_DOMAIN",
-                  "Value": {
-                    "Fn::Sub": "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
-                  }
-                }
-              ]
+            "CLOUD_WEBSOCKET_URL": {
+              "Fn::Sub": "wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"
+            },
+            "WEB_ORIGIN": {
+              "Ref": "WebOrigin"
+            },
+            "COGNITO_CLIENT_ID": {
+              "Ref": "UserPoolClient"
+            },
+            "COGNITO_DOMAIN": {
+              "Fn::Sub": "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+            },
+            "CLOUD_DEMO_SIGNALS": {
+              "Ref": "EnableDemoSignals"
             }
           }
         },
-        "InstanceConfiguration": {
-          "Cpu": "1024",
-          "Memory": "2048"
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-WebService"
         },
-        "HealthCheckConfiguration": {
-          "Protocol": "HTTP",
-          "Path": "/",
-          "Interval": 10
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WebServiceLog"
+          }
         }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
+      }
+    },
+    "WebFunctionUrl": {
+      "Type": "AWS::Lambda::Url",
+      "Properties": {
+        "TargetFunctionArn": {
+          "Ref": "WebService"
+        },
+        "AuthType": "NONE"
+      }
+    },
+    "WebUrlPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Ref": "WebService"
+        },
+        "Principal": "*",
+        "FunctionUrlAuthType": "NONE"
+      }
+    },
+    "WebUrlInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "WebService"
+        },
+        "Principal": "*",
+        "InvokedViaFunctionUrl": true
       }
     },
     "RetentionFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
         "Handler": "src/cloud/handlers.retention",
         "Policies": [
           {
@@ -1722,31 +1736,20 @@
               {
                 "Effect": "Allow",
                 "Action": "logs:PutRetentionPolicy",
-                "Resource": [
-                  {
-                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/${AgentRuntime.AgentRuntimeId}*"
-                  },
-                  {
-                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apprunner/*"
-                  }
-                ]
+                "Resource": {
+                  "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*"
+                }
               }
             ]
           }
         ],
         "Environment": {
           "Variables": {
-            "AGENT_RUNTIME_ID": {
-              "Fn::GetAtt": [
-                "AgentRuntime",
-                "AgentRuntimeId"
-              ]
+            "AGENT_LOG_GROUP": {
+              "Ref": "AgentRuntimeLog"
             },
-            "WEB_SERVICE_ARN": {
-              "Fn::GetAtt": [
-                "WebService",
-                "ServiceArn"
-              ]
+            "WEB_LOG_GROUP": {
+              "Ref": "WebServiceLog"
             }
           }
         },
@@ -1766,6 +1769,11 @@
           "LogGroup": {
             "Ref": "RetentionFunctionLog"
           }
+        }
+      },
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
         }
       }
     },
@@ -1871,7 +1879,8 @@
           "Fn::Sub": "/aws/lambda/${AWS::StackName}-IngestFunction"
         },
         "RetentionInDays": 14
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "IngestFunctionErrorAlarm": {
       "Type": "AWS::CloudWatch::Alarm",
@@ -1897,7 +1906,8 @@
             "Ref": "AlarmTopic"
           }
         ]
-      }
+      },
+      "Condition": "ProvisionIoT"
     },
     "InvestigateFunctionLog": {
       "Type": "AWS::Logs::LogGroup",
@@ -2179,6 +2189,76 @@
         ]
       }
     },
+    "AgentRuntimeLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-AgentRuntime"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "AgentRuntimeErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "AgentRuntime"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
+    "WebServiceLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-WebService"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "WebServiceErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "WebService"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      }
+    },
     "RetentionFunctionLog": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -2218,7 +2298,10 @@
   "Outputs": {
     "WebUrl": {
       "Value": {
-        "Fn::Sub": "https://${WebService.ServiceUrl}"
+        "Fn::GetAtt": [
+          "WebFunctionUrl",
+          "FunctionUrl"
+        ]
       }
     },
     "ApiUrl": {
@@ -2252,20 +2335,30 @@
       }
     },
     "DevicePolicyName": {
+      "Condition": "ProvisionIoT",
       "Value": {
         "Ref": "DevicePolicy"
       }
     },
     "ThingName": {
+      "Condition": "ProvisionIoT",
       "Value": {
         "Ref": "ShelfThing"
       }
     },
-    "AgentRuntimeArn": {
+    "AgentFunctionArn": {
       "Value": {
         "Fn::GetAtt": [
           "AgentRuntime",
-          "AgentRuntimeArn"
+          "Arn"
+        ]
+      }
+    },
+    "WebFunctionArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WebService",
+          "Arn"
         ]
       }
     },

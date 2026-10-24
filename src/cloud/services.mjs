@@ -1,10 +1,10 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { SFNClient, StartExecutionCommand, SendTaskSuccessCommand } from "@aws-sdk/client-sfn";
 import { IoTDataPlaneClient, PublishCommand } from "@aws-sdk/client-iot-data-plane";
 import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
-import { BedrockAgentCoreClient, InvokeAgentRuntimeCommand } from "@aws-sdk/client-bedrock-agentcore";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -16,7 +16,7 @@ const seconds = () => Math.floor(Date.now() / 1000);
 export function createCloudServices(env = process.env) {
   const documentClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), { marshallOptions: { removeUndefinedValues: true } });
   const repository = new DynamoDbRecordsRepository({ tableName: env.STATE_TABLE, documentClient });
-  const step = new SFNClient({}), secrets = new SecretsManagerClient({}), agent = new BedrockAgentCoreClient({});
+  const step = new SFNClient({}), secrets = new SecretsManagerClient({}), agent = new LambdaClient({});
   const control = env.CONTROL_TABLE;
   let keyPromise, verifier;
   async function get(key) { return (await documentClient.send(new GetCommand({ TableName: control, Key: { id: key }, ConsistentRead: true }))).Item; }
@@ -27,14 +27,23 @@ export function createCloudServices(env = process.env) {
     return items;
   }
   async function invokeAgent(payload) {
-    const response = await agent.send(new InvokeAgentRuntimeCommand({ agentRuntimeArn: env.AGENT_RUNTIME_ARN, runtimeSessionId: hash("basketly:" + env.STATE_TABLE), qualifier: "DEFAULT", contentType: "application/json", accept: "application/json", payload: Buffer.from(JSON.stringify(payload)) }));
-    const text = await response.response.transformToString();
-    const value = JSON.parse(text);
+    const event = { version: "2.0", routeKey: "POST /invocations", rawPath: "/invocations", rawQueryString: "",
+      headers: { "content-type": "application/json", host: "agent.internal" },
+      requestContext: { accountId: env.AGENT_FUNCTION_ARN?.split(":")[4], apiId: "agent", domainName: "agent.internal", domainPrefix: "agent",
+        requestId: randomUUID(), routeKey: "POST /invocations", stage: "$default", time: new Date().toISOString(), timeEpoch: Date.now(),
+        http: { method: "POST", path: "/invocations", protocol: "HTTP/1.1", sourceIp: "127.0.0.1", userAgent: "FAST Lambda API" } },
+      body: JSON.stringify(payload), isBase64Encoded: false };
+    const response = await agent.send(new InvokeCommand({ FunctionName: env.AGENT_FUNCTION_ARN, Payload: Buffer.from(JSON.stringify(event)) }),
+      { abortSignal: AbortSignal.timeout(payload.type === "LIVE_VISION" ? 10000 : payload.type === "STAT_PLAN" ? 28000 : 240000) });
+    if (response.FunctionError) throw new Error("Agent Lambda unavailable");
+    const http = JSON.parse(Buffer.from(response.Payload).toString());
+    if (http.statusCode !== 200) throw new Error("Agent runtime unavailable");
+    const value = JSON.parse(http.isBase64Encoded ? Buffer.from(http.body, "base64").toString() : http.body);
     if (value.error) throw new Error(value.error);
     return value;
   }
   return {
-    repository, get, put, scan,
+    repository, get, put, scan, demoSignalsEnabled: env.ENABLE_DEMO_SIGNALS === "true",
     async key() {
       keyPromise ||= secrets.send(new GetSecretValueCommand({ SecretId: env.SESSION_SECRET_ARN })).then(result => {
         if (!result.SecretString || result.SecretString.length < 32) throw new Error("Invalid cloud session signing secret");
@@ -99,9 +108,9 @@ export function createCloudServices(env = process.env) {
     },
     async retention() {
       const client = new CloudWatchLogsClient({});
-      const runtimeId = env.AGENT_RUNTIME_ID, service = env.WEB_SERVICE_ARN?.split("/").slice(1).join("/");
-      if (!runtimeId || !service) throw new Error("Missing owned log group configuration");
-      for (const prefix of ["/aws/bedrock-agentcore/runtimes/" + runtimeId, "/aws/apprunner/" + service]) {
+      const prefixes = [env.WEB_LOG_GROUP, env.AGENT_LOG_GROUP].filter(Boolean);
+      if (prefixes.length !== 2) throw new Error("Missing owned log group configuration");
+      for (const prefix of prefixes) {
         let nextToken;
         do {
           const groups = await client.send(new DescribeLogGroupsCommand({ logGroupNamePrefix: prefix, nextToken }));

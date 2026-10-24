@@ -67,7 +67,7 @@ Then open `https://<PC-IP>:3001/admin` on the phone. Keep both devices on the sa
 - Only JPEG requests up to 512,000 bytes and images up to 1280×720 are accepted; the UI usually sends width ≤640, height ≤720. No URLs or filesystem paths are accepted from a camera request.
 - At most four in-memory tracker sessions; inactive sessions expire after 60 seconds. The model lock serializes inference. Live images/results are not written to disk, carts, case evidence or audit records.
 - The existing `/infer {frameId}` evidence tool remains unchanged. Live boxes are display data, and do not authorize cart mutations.
-- `/local-vision/live` is enabled only in local `dev:mock`; cloud/production return 404 until a separate authenticated live-camera service is integrated. It checks same origin, sizes and session format, and does not add wildcard CORS.
+- `/local-vision/live` uses the local vision service in `dev:mock`. In cloud mode it requires a STAFF cookie and forwards bounded JPEG frames through the same-origin HTTPS BFF → authenticated Lambda API → private Agent Lambda → loopback YOLO service. The Agent has no public Function URL; only backend IAM roles can invoke it. No AWS credentials reach the browser. Both paths check origin, size and session format, and do not add wildcard CORS. Production outside cloud mode keeps this route disabled.
 - The annotated recording remains available without a webcam or the live service.
 
 Static validation: TypeScript, ESLint and production compilation. Physical webcam/mobile capture, camera permission handling on actual devices, tracking accuracy and staff mutations still need an explicit integration run with the team; no full test suite or physical-camera session was run during this change.

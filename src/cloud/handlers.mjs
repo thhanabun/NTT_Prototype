@@ -9,8 +9,8 @@ import { createCloudServices } from "./services.mjs";
 const hash = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const caseId = value => { if (!/^CASE-\d+$/.test(value || "")) throw httpError(400, "Invalid case ID"); return value; };
 const reply = (statusCode, body) => ({ statusCode, headers: { "content-type": "application/json", "cache-control": "no-store" }, body: JSON.stringify(body) });
-function bodyOf(event) {
-  if (event.isBase64Encoded || Buffer.byteLength(event.body || "") > 64000) throw httpError(400, "Invalid request size or encoding");
+function bodyOf(event, maxBytes = 64000) {
+  if (event.isBase64Encoded || Buffer.byteLength(event.body || "") > maxBytes) throw httpError(400, "Invalid request size or encoding");
   try { return JSON.parse(event.body || "{}"); } catch { throw httpError(400, "Invalid JSON"); }
 }
 const tokenKey = (id, actor) => `HITL#${id}#${actor.toUpperCase()}`;
@@ -38,7 +38,37 @@ export function createCloudHandlers(services) {
         if (method === "GET" && path === "/api/auth/me") { requireStaff(principal); return reply(200, { email: principal.email, expiresAt: principal.exp * 1000 }); }
         if (method === "GET" && path === "/api/state") return reply(200, scopedState(await repository.read(), principal));
         if (method === "GET" && path === "/api/audit") { requireStaff(principal); const store = await repository.read(); return reply(200, { items: store.auditLog.slice(0, 100) }); }
+        if (method === "POST" && path === "/api/vision/live") {
+          requireStaff(principal);
+          const frame = bodyOf(event, 700000);
+          if (!/^[a-f0-9-]{36}$/.test(frame.cameraSession || "") || typeof frame.jpeg !== "string" || frame.jpeg.length > 682668 ||
+              !/^[A-Za-z0-9+/]+={0,2}$/.test(frame.jpeg) || Buffer.from(frame.jpeg, "base64").toString("base64") !== frame.jpeg) throw httpError(400, "Invalid camera frame");
+          return reply(200, await services.invokeAgent({ type: "LIVE_VISION", cameraSession: frame.cameraSession, jpeg: frame.jpeg }));
+        }
         const body = bodyOf(event);
+        if (method === "POST" && path === "/api/events") {
+          requireStaff(principal);
+          if (!services.demoSignalsEnabled) throw httpError(403, "Cloud demo signals are disabled");
+          const allowed = ["eventId", "shelfId", "laneId", "eventType", "rssi"];
+          if (Object.keys(body).some(key => !allowed.includes(key)) || !/^web-demo-[a-f0-9-]{36}$/.test(body.eventId || "") ||
+              !["SHELF-01", "SHELF-02", "SHELF-03"].includes(body.shelfId)) throw httpError(400, "Invalid demo signal");
+          const { result, store } = await repository.mutate(draft => {
+            const received = draft.cloudReceipts?.find(item => item.eventId === body.eventId);
+            if (received) { addAuditEntry(draft, "DUPLICATE_EVENT_IGNORED", "STAFF_SIMULATOR", { eventId: body.eventId, staffSub: principal.sub }); return { duplicate: true, eventId: body.eventId, caseId: received.caseId }; }
+            const result = processShelfEvent(draft, body);
+            const recorded = draft.events.find(item => item.eventId === body.eventId);
+            if (recorded) recorded.source = "SIMULATOR";
+            const receivedAudit = draft.auditLog.find(item => item.action === "SHELF_EVENT_RECEIVED" && item.details.eventId === body.eventId);
+            if (receivedAudit) { receivedAudit.actor = "STAFF_SIMULATOR"; receivedAudit.details.staffSub = principal.sub; }
+            const item = draft.cases.find(item => item.eventId === body.eventId);
+            if (item) { draft.cloudWorkflows ||= {}; draft.cloudWorkflows[item.caseId] ||= { launched: false }; }
+            draft.cloudReceipts ||= []; draft.cloudReceipts.push({ eventId: body.eventId, caseId: item?.caseId || null });
+            return result;
+          });
+          const item = store.cases.find(item => item.eventId === body.eventId);
+          if (item && !store.cloudWorkflows[item.caseId].launched) await launch(item);
+          return reply(200, result);
+        }
         if (method === "POST" && path === "/api/realtime-ticket") return reply(200, await services.ticket(principal));
         if (method === "POST" && path === "/api/sessions") {
           const basket = basketId(body.basketId), key = await services.key();

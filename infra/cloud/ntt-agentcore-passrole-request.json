@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PassFastExecutionRoleToAgentCore",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::134250568427:role/fast-prototype-AgentRole-*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "bedrock-agentcore.amazonaws.com"
+        }
+      }
+    }
+  ]
+}

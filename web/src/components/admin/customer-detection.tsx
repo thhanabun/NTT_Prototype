@@ -19,7 +19,7 @@ export function CustomerDetection({ view, onViewChange, active }: { view: MapVie
     </header>
     <div className={styles.sourceControls} role="group" aria-label="แหล่งภาพ Object Detection">
       <button type="button" aria-pressed={source === "recording"} onClick={() => setSource("recording")}>คลิปจริง</button>
-      <button type="button" aria-pressed={source === "live"} disabled={process.env.NEXT_PUBLIC_CLOUD_MODE === "true"} onClick={() => setSource("live")}>กล้องสด</button>
+      <button type="button" aria-pressed={source === "live"} onClick={() => setSource("live")}>กล้องสด</button>
     </div>
     {source === "recording" ? <RecordedCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : active ? <LiveCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : <p>กล้องหยุดเมื่อออกจาก Dashboard</p>}
   </section>;

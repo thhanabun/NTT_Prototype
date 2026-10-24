@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlaskConical, Send } from "lucide-react";
 import { submitShelfEvent } from "@/lib/api/client";
 import type { ShelfEventInput } from "@/lib/api/types";
@@ -27,6 +27,15 @@ export function LocalSimulator({ disabled, shelfId, run }: {
   const [selectedShelf, setSelectedShelf] = useState(shelfId);
   const last = useRef<ShelfEventInput | null>(null);
   const [hasLast, setHasLast] = useState(false);
+  const cloud = process.env.NEXT_PUBLIC_CLOUD_MODE === "true";
+  const [cloudEnabled, setCloudEnabled] = useState(false);
+  useEffect(() => {
+    if (!cloud) return;
+    const abort = new AbortController();
+    void fetch("/api/config", { cache: "no-store", signal: abort.signal }).then(response => response.ok ? response.json() : null)
+      .then(config => { if (!abort.signal.aborted) setCloudEnabled(config?.demoSignalsEnabled === true); }).catch(() => {});
+    return () => abort.abort();
+  }, [cloud]);
 
   function send(scenario: Scenario) {
     if (disabled || (scenario === "duplicate" && !last.current)) return;
@@ -48,10 +57,10 @@ export function LocalSimulator({ disabled, shelfId, run }: {
     });
   }
 
-  if (process.env.NODE_ENV !== "development") return null;
+  if (cloud ? !cloudEnabled : process.env.NODE_ENV !== "development") return null;
   return (
     <details className={`${styles.card} ${styles.simulator}`}>
-      <summary><FlaskConical size={18} aria-hidden="true" /> Local simulator <span>จำลอง event สำหรับทดสอบ</span></summary>
+      <summary><FlaskConical size={18} aria-hidden="true" /> {cloud ? "Cloud simulator" : "Local simulator"} <span>จำลอง event สำหรับทดสอบ</span></summary>
       <p className={styles.muted}>ส่งสัญญาณจำลองแทน ESP32</p>
       <p className={styles.muted}>{getShelfProduct(selectedShelf)?.name}</p>
       <p className={styles.footnote}>เชื่อมตะกร้าใน Shopper ก่อนเริ่มทดสอบ</p>

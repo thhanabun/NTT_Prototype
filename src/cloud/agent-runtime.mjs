@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { timingSafeEqual } from "node:crypto";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { createRepository } from "../store-repository.mjs";
 import { investigateStoredCase } from "../agent/investigate-stored-case.mjs";
@@ -23,6 +24,16 @@ export function createAgentRuntime({ repository, planner = requestBedrockToolDec
   statsPlanner = planStatsQuery, lambda = new LambdaClient({}), toolFunctionArn = process.env.TOOLS_FUNCTION_ARN,
 } = {}) {
   return async input => {
+    if (input?.type === "LIVE_VISION") {
+      if (!/^[a-f0-9-]{36}$/.test(input.cameraSession || "") || typeof input.jpeg !== "string" || input.jpeg.length > 682668 ||
+          !/^[A-Za-z0-9+/]+={0,2}$/.test(input.jpeg)) throw new Error("Invalid live camera request");
+      const jpeg = Buffer.from(input.jpeg, "base64");
+      if (!jpeg.length || jpeg.length > 512000 || jpeg.toString("base64") !== input.jpeg) throw new Error("Invalid JPEG encoding");
+      const response = await fetch("http://127.0.0.1:8001/live", { method: "POST", headers: { "content-type": "image/jpeg", "x-camera-session": input.cameraSession },
+        body: jpeg, signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error("Live YOLO inference unavailable");
+      return response.json();
+    }
     if (input?.type === "STAT_PLAN") return statsPlanner({ message: input.message, previousPlan: input.previousPlan, now: input.now });
     if (input?.type !== "CASE" || !/^CASE-\d+$/.test(input.caseId || "")) throw new Error("Invalid Agent runtime task");
     const { result } = await investigateStoredCase(repository, input.caseId, { provider: "bedrock", planner, decision,
@@ -38,18 +49,25 @@ export function createAgentRuntime({ repository, planner = requestBedrockToolDec
   };
 }
 
-export function serveAgentRuntime(run, { port = 8080, host = "0.0.0.0", ready = () => true } = {}) {
+export function serveAgentRuntime(run, { port = 8080, host = "0.0.0.0", ready = () => true, secret = process.env.AGENT_INVOKE_SECRET } = {}) {
+  if (process.env.AGENT_HOSTING === "apprunner" && (!secret || secret.length < 32)) throw new Error("Agent invocation secret is required");
   let active = 0;
   return createServer(async (request, response) => {
     const send = (status, body) => { response.writeHead(status, { "content-type": "application/json" }); response.end(JSON.stringify(body)); };
     if (request.method === "GET" && request.url === "/ping") return send(ready() ? 200 : 503, { status: active ? "HealthyBusy" : "Healthy" });
     if (request.method !== "POST" || request.url !== "/invocations") return send(404, { error: "Not found" });
+    if (secret) {
+      const expected = Buffer.from("Bearer " + secret), provided = Buffer.from(request.headers.authorization || "");
+      if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) return send(401, { error: "Unauthorized" });
+    }
     if (!ready()) return send(503, { error: "Models warming up" });
     active++;
     try {
       let body = "";
-      for await (const chunk of request) { body += chunk; if (Buffer.byteLength(body) > 4096) throw new Error("Invocation too large"); }
-      send(200, await run(JSON.parse(body)));
+      for await (const chunk of request) { body += chunk; if (Buffer.byteLength(body) > 700000) throw new Error("Invocation too large"); }
+      const input = JSON.parse(body);
+      if (input?.type !== "LIVE_VISION" && Buffer.byteLength(body) > 4096) throw new Error("Invocation too large");
+      send(200, await run(input));
     } catch (error) {
       console.error(JSON.stringify({ event: "AGENT_RUNTIME_FAILED", message: error.message }));
       send(503, { error: "Agent runtime unavailable; staff review required" });

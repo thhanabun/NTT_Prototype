@@ -2,7 +2,7 @@ node_modules/
 .venv-laya/
 .venv-vision/
 .venv-cloud/
-web/.next-cloud/
+web/.next-cloud*/
 __pycache__/
 .env
 .env.*
@@ -11,6 +11,7 @@ firmware/esp32/secrets.h
 firmware/esp32/wifi_test/secrets.h
 firmware/esp32/certs/
 infra/.aws-sam/
+.aws-sam/
 data/
 tmp/
 *.log

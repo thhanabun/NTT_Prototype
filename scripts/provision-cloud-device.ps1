@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $taskRoot
 $outputs = Get-Content -LiteralPath $OutputsPath -Raw | ConvertFrom-Json
+if ($outputs.IoTEnabled -eq $false -or -not $outputs.ThingName -or -not $outputs.DevicePolicyName) { throw 'IoT is disabled in this stack. Enable it in a later deployment before provisioning devices.' }
 $env:AWS_REGION = $outputs.Region
 if ($outputs.Profile) { $env:AWS_PROFILE = $outputs.Profile }
 $deviceDirectory = Join-Path $taskRoot 'data/aws-device'

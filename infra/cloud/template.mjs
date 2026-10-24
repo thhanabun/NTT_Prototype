@@ -10,9 +10,10 @@ const stateRead = statement(["dynamodb:GetItem", "dynamodb:BatchGetItem"], att("
 const stateWrite = statement(["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"], att("StateTable"));
 const controls = statement(["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"], att("ControlTable"));
 const controlScan = statement("dynamodb:Scan", att("ControlTable"));
-const agentInvoke = statement("bedrock-agentcore:InvokeAgentRuntime", [att("AgentRuntime", "AgentRuntimeArn"), sub("${AgentRuntime.AgentRuntimeArn}/runtime-endpoint/*")]);
+const agentInvoke = statement("lambda:InvokeFunction", att("AgentRuntime"));
+const agentEnvironment = { AGENT_FUNCTION_ARN: att("AgentRuntime") };
 const fn = (handler, statements, properties = {}) => resource("AWS::Serverless::Function", {
-  Handler: "src/cloud/handlers." + handler, Policies: [{ Statement: statements }], ...properties,
+  Runtime: "nodejs22.x", CodeUri: "../../data/cloud-package/", Handler: "src/cloud/handlers." + handler, Policies: [{ Statement: statements }], ...properties,
 });
 const task = (functionName, payload, next, rest = {}) => ({ Type: "Task", Resource: "arn:aws:states:::lambda:invoke", Parameters: { FunctionName: att(functionName), Payload: payload }, ResultPath: "$.task", Next: next, ...rest });
 const handoff = (stage, next, seconds) => ({ Type: "Task", Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken", TimeoutSeconds: seconds,
@@ -33,9 +34,9 @@ export function cloudTemplate() {
     WebSocketIntegration: resource("AWS::ApiGatewayV2::Integration", { ApiId: ref("WebSocketApi"), IntegrationType: "AWS_PROXY", IntegrationUri: sub("arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketFunction.Arn}/invocations") }),
     WebSocketStage: resource("AWS::ApiGatewayV2::Stage", { ApiId: ref("WebSocketApi"), StageName: "live", AutoDeploy: true, DefaultRouteSettings: { ThrottlingBurstLimit: 30, ThrottlingRateLimit: 15 } }),
     WebSocketPermission: resource("AWS::Lambda::Permission", { Action: "lambda:InvokeFunction", FunctionName: ref("WebSocketFunction"), Principal: "apigateway.amazonaws.com", SourceArn: sub("arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*") }),
-    ApiFunction: fn("api", [stateWrite, controls, agentInvoke, statement("secretsmanager:GetSecretValue", ref("SessionSecret"))], { Environment: { Variables: { AGENT_RUNTIME_ARN: att("AgentRuntime", "AgentRuntimeArn") } }, Events: { Api: { Type: "HttpApi", Properties: { ApiId: ref("HttpApi"), Path: "/api/{proxy+}", Method: "ANY" } } } }),
+    ApiFunction: fn("api", [stateWrite, controls, agentInvoke, statement("secretsmanager:GetSecretValue", ref("SessionSecret"))], { Environment: { Variables: { ...agentEnvironment } }, Events: { Api: { Type: "HttpApi", Properties: { ApiId: ref("HttpApi"), Path: "/api/{proxy+}", Method: "ANY" } } } }),
     IngestFunction: fn("ingest", [stateWrite, statement("states:StartExecution", ref("CaseWorkflow")), statement("iot:Publish", sub("arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/acks"))], { Environment: { Variables: { WORKFLOW_ARN: ref("CaseWorkflow"), IOT_DATA_ENDPOINT: ref("IoTDataEndpoint") } }, EventInvokeConfig: { MaximumRetryAttempts: 2, DestinationConfig: { OnFailure: { Type: "SQS", Destination: att("FailureQueue") } } } }),
-    InvestigateFunction: fn("investigate", [stateWrite, agentInvoke], { Timeout: 300, Environment: { Variables: { AGENT_RUNTIME_ARN: att("AgentRuntime", "AgentRuntimeArn") } } }),
+    InvestigateFunction: fn("investigate", [stateWrite, agentInvoke], { Timeout: 300, Environment: { Variables: { ...agentEnvironment } } }),
     HandoffFunction: fn("handoff", [stateWrite, controls, statement("states:SendTaskSuccess", "*")]),
     ValidateFunction: fn("validate", [stateWrite]),
     ReconcileFunction: fn("reconcile", [stateWrite, controls, controlScan, statement("states:StartExecution", ref("CaseWorkflow")), statement("states:SendTaskSuccess", "*")], { Environment: { Variables: { WORKFLOW_ARN: ref("CaseWorkflow") } }, Events: { Reconcile: { Type: "Schedule", Properties: { Schedule: "rate(1 minute)", Enabled: true } } } }),
@@ -49,8 +50,8 @@ export function cloudTemplate() {
       { Effect: "Allow", Principal: { Service: "cloudtrail.amazonaws.com" }, Action: "s3:PutObject", Resource: sub("${ArchiveBucket.Arn}/AWSLogs/${AWS::AccountId}/*"), Condition: { StringEquals: { "s3:x-amz-acl": "bucket-owner-full-control", "AWS:SourceArn": sub("arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${AWS::StackName}") } } },
     ] } }),
     Trail: resource("AWS::CloudTrail::Trail", { TrailName: ref("AWS::StackName"), S3BucketName: ref("ArchiveBucket"), IsLogging: true, EnableLogFileValidation: true, IsMultiRegionTrail: false, IncludeGlobalServiceEvents: true, EventSelectors: [{ IncludeManagementEvents: true, ReadWriteType: "All" }] }, { DependsOn: "TrailBucketPolicy" }),
-    AgentRole: resource("AWS::IAM::Role", { AssumeRolePolicyDocument: { Version: "2012-10-17", Statement: [{ Effect: "Allow", Principal: { Service: "bedrock-agentcore.amazonaws.com" }, Action: "sts:AssumeRole", Condition: { StringEquals: { "aws:SourceAccount": ref("AWS::AccountId") }, ArnLike: { "aws:SourceArn": sub("arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:*") } } }] }, Policies: [{ PolicyName: "AgentRuntime", PolicyDocument: { Version: "2012-10-17", Statement: [stateWrite, statement("lambda:InvokeFunction", att("ToolsFunction")), statement("bedrock:InvokeModel", ref("BedrockInvokeResources")), statement(["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer"], ref("AgentRepositoryArn")), statement("ecr:GetAuthorizationToken", "*"), statement(["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"], sub("arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/*"))] } }] }),
-    AgentRuntime: resource("AWS::BedrockAgentCore::Runtime", { AgentRuntimeName: ref("AgentRuntimeName"), AgentRuntimeArtifact: { ContainerConfiguration: { ContainerUri: ref("AgentImageUri") } }, RoleArn: att("AgentRole"), NetworkConfiguration: { NetworkMode: "PUBLIC" }, ProtocolConfiguration: "HTTP", EnvironmentVariables: { STATE_TABLE: ref("StateTable"), TOOLS_FUNCTION_ARN: att("ToolsFunction"), BEDROCK_MODEL_ID: ref("BedrockModelId"), AWS_REGION: ref("AWS::Region") } }),
+    AgentRole: resource("AWS::IAM::Role", { AssumeRolePolicyDocument: { Version: "2012-10-17", Statement: [{ Effect: "Allow", Principal: { Service: "lambda.amazonaws.com" }, Action: "sts:AssumeRole" }] }, ManagedPolicyArns: [sub("arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")], Policies: [{ PolicyName: "AgentRuntime", PolicyDocument: { Version: "2012-10-17", Statement: [stateWrite, statement("lambda:InvokeFunction", att("ToolsFunction")), statement("bedrock:InvokeModel", ref("BedrockInvokeResources"))] } }] }),
+    AgentRuntime: resource("AWS::Serverless::Function", { PackageType: "Image", ImageUri: ref("AgentImageUri"), Role: att("AgentRole"), MemorySize: 3008, Timeout: 300, Environment: { Variables: { AGENT_HOSTING: "lambda", TOOLS_FUNCTION_ARN: att("ToolsFunction"), BEDROCK_MODEL_ID: ref("BedrockModelId") } } }),
     CaseWorkflow: resource("AWS::Serverless::StateMachine", { Type: "STANDARD", Policies: [{ Statement: [statement("lambda:InvokeFunction", [att("InvestigateFunction"), att("HandoffFunction"), att("ValidateFunction")])] }], Definition: {
       StartAt: "Investigate", TimeoutSeconds: 90000, States: {
         Investigate: task("InvestigateFunction", { "caseId.$": "$.caseId", "investigate.$": "$.investigate" }, "Route", { ResultSelector: { "nextAction.$": "$.Payload.nextAction" }, Catch: [{ ErrorEquals: ["States.ALL"], ResultPath: "$.failure", Next: "StaffApproval" }] }),
@@ -71,39 +72,46 @@ export function cloudTemplate() {
     IoTErrorRole: resource("AWS::IAM::Role", { AssumeRolePolicyDocument: { Version: "2012-10-17", Statement: [{ Effect: "Allow", Principal: { Service: "iot.amazonaws.com" }, Action: "sts:AssumeRole" }] }, Policies: [{ PolicyName: "FailureQueue", PolicyDocument: { Version: "2012-10-17", Statement: [statement("sqs:SendMessage", att("FailureQueue"))] } }] }),
     ShelfRule: resource("AWS::IoT::TopicRule", { TopicRulePayload: { AwsIotSqlVersion: "2016-03-23", Sql: sub("SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId FROM 'smartbasket/shelf/${ShelfId}/+' WHERE topic(4) = 'events' OR topic(4) = 'telemetry'"), RuleDisabled: false, Actions: [{ Lambda: { FunctionArn: att("IngestFunction") } }], ErrorAction: { Sqs: { QueueUrl: ref("FailureQueue"), RoleArn: att("IoTErrorRole") } } } }),
     IoTInvokePermission: resource("AWS::Lambda::Permission", { Action: "lambda:InvokeFunction", FunctionName: ref("IngestFunction"), Principal: "iot.amazonaws.com", SourceAccount: ref("AWS::AccountId"), SourceArn: att("ShelfRule") }),
-    WebPullRole: resource("AWS::IAM::Role", { AssumeRolePolicyDocument: { Version: "2012-10-17", Statement: [{ Effect: "Allow", Principal: { Service: "build.apprunner.amazonaws.com" }, Action: "sts:AssumeRole" }] }, Policies: [{ PolicyName: "PullWebImage", PolicyDocument: { Version: "2012-10-17", Statement: [statement(["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability", "ecr:DescribeImages"], ref("WebRepositoryArn")), statement("ecr:GetAuthorizationToken", "*")] } }] }),
-    WebScaling: resource("AWS::AppRunner::AutoScalingConfiguration", { MinSize: 1, MaxSize: 1, MaxConcurrency: 50 }),
-    WebService: resource("AWS::AppRunner::Service", { AutoScalingConfigurationArn: att("WebScaling", "AutoScalingConfigurationArn"), SourceConfiguration: { AutoDeploymentsEnabled: false, AuthenticationConfiguration: { AccessRoleArn: att("WebPullRole") }, ImageRepository: { ImageIdentifier: ref("WebImageUri"), ImageRepositoryType: "ECR", ImageConfiguration: { Port: "3001", RuntimeEnvironmentVariables: [
-      { Name: "NEXT_PUBLIC_CLOUD_MODE", Value: "true" }, { Name: "CLOUD_API_ORIGIN", Value: sub("https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}") },
-      { Name: "CLOUD_WEBSOCKET_URL", Value: sub("wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live") }, { Name: "WEB_ORIGIN", Value: ref("WebOrigin") },
-      { Name: "COGNITO_CLIENT_ID", Value: ref("UserPoolClient") }, { Name: "COGNITO_DOMAIN", Value: sub("https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com") },
-    ] } } }, InstanceConfiguration: { Cpu: "1024", Memory: "2048" }, HealthCheckConfiguration: { Protocol: "HTTP", Path: "/", Interval: 10 } }),
-    RetentionFunction: fn("retention", [statement("logs:DescribeLogGroups", "*"), statement("logs:PutRetentionPolicy", [sub("arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/${AgentRuntime.AgentRuntimeId}*"), sub("arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apprunner/*")])], { Environment: { Variables: { AGENT_RUNTIME_ID: att("AgentRuntime", "AgentRuntimeId"), WEB_SERVICE_ARN: att("WebService", "ServiceArn") } }, Events: { Retention: { Type: "Schedule", Properties: { Schedule: "rate(1 day)", Enabled: true } } } }),
+    WebService: resource("AWS::Serverless::Function", { PackageType: "Image", ImageUri: ref("WebImageUri"), MemorySize: 2048, Timeout: 60, Environment: { Variables: { NEXT_PUBLIC_CLOUD_MODE: "true", CLOUD_API_ORIGIN: sub("https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"), CLOUD_WEBSOCKET_URL: sub("wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live"), WEB_ORIGIN: ref("WebOrigin"), COGNITO_CLIENT_ID: ref("UserPoolClient"), COGNITO_DOMAIN: sub("https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"), CLOUD_DEMO_SIGNALS: ref("EnableDemoSignals") } } }),
+    WebFunctionUrl: resource("AWS::Lambda::Url", { TargetFunctionArn: ref("WebService"), AuthType: "NONE" }),
+    WebUrlPermission: resource("AWS::Lambda::Permission", { Action: "lambda:InvokeFunctionUrl", FunctionName: ref("WebService"), Principal: "*", FunctionUrlAuthType: "NONE" }),
+    WebUrlInvokePermission: resource("AWS::Lambda::Permission", { Action: "lambda:InvokeFunction", FunctionName: ref("WebService"), Principal: "*", InvokedViaFunctionUrl: true }),
+    RetentionFunction: fn("retention", [statement("logs:DescribeLogGroups", "*"), statement("logs:PutRetentionPolicy", sub("arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*"))], { Environment: { Variables: { AGENT_LOG_GROUP: ref("AgentRuntimeLog"), WEB_LOG_GROUP: ref("WebServiceLog") } }, Events: { Retention: { Type: "Schedule", Properties: { Schedule: "rate(1 day)", Enabled: true } } } }),
   };
+  for (const name of ["IngestFunction", "ShelfThing", "DevicePolicy", "IoTErrorRole", "ShelfRule", "IoTInvokePermission"]) Resources[name].Condition = "ProvisionIoT";
+  Resources.ApiFunction.Properties.Environment.Variables.WORKFLOW_ARN = ref("CaseWorkflow");
+  Resources.ApiFunction.Properties.Policies[0].Statement.push(statement("states:StartExecution", ref("CaseWorkflow")));
   // Task-token API actions cannot be resource scoped by AWS; other write permissions are scoped.
   Resources.ApiFunction.Properties.Policies[0].Statement.push(statement("states:SendTaskSuccess", "*"));
   for (const [suffix, route] of [["Connect", "$connect"], ["Disconnect", "$disconnect"], ["Default", "$default"]]) Resources["WebSocket" + suffix] = resource("AWS::ApiGatewayV2::Route", { ApiId: ref("WebSocketApi"), RouteKey: route, Target: { "Fn::Join": ["/", ["integrations", ref("WebSocketIntegration")]] } });
   for (const name of Object.keys(Resources).filter(name => Resources[name].Type === "AWS::Serverless::Function")) {
     Resources[name].Properties.FunctionName = sub(`\${AWS::StackName}-${name}`);
+    Resources[name].Metadata = { BuildProperties: { UseNpmCi: true } };
     Resources[name].Properties.LoggingConfig = { LogGroup: ref(name + "Log") };
     Resources[name + "Log"] = resource("AWS::Logs::LogGroup", { LogGroupName: sub(`/aws/lambda/\${AWS::StackName}-${name}`), RetentionInDays: 14 });
     Resources[name + "ErrorAlarm"] = resource("AWS::CloudWatch::Alarm", { Namespace: "AWS/Lambda", MetricName: "Errors", Dimensions: [{ Name: "FunctionName", Value: ref(name) }], Statistic: "Sum", Period: 60, EvaluationPeriods: 1, Threshold: 0, ComparisonOperator: "GreaterThanThreshold", TreatMissingData: "notBreaching", AlarmActions: [ref("AlarmTopic")] });
+    if (Resources[name].Condition) {
+      Resources[name + "Log"].Condition = Resources[name].Condition;
+      Resources[name + "ErrorAlarm"].Condition = Resources[name].Condition;
+    }
   }
   return {
-    AWSTemplateFormatVersion: "2010-09-09", Transform: "AWS::Serverless-2016-10-31", Description: "Basketly cloud prototype: IoT, split state, API, realtime, Cognito, HITL and Bedrock AgentCore",
+    AWSTemplateFormatVersion: "2010-09-09", Transform: "AWS::Serverless-2016-10-31", Description: "FAST cloud prototype: split state, API, realtime, Cognito, HITL, live vision and optional IoT",
+    Conditions: { ProvisionIoT: { "Fn::Equals": [ref("EnableIoT"), "true"] } },
     Parameters: {
-      WebImageUri: { Type: "String" }, AgentImageUri: { Type: "String" }, WebRepositoryArn: { Type: "String" }, AgentRepositoryArn: { Type: "String" },
-      AgentRuntimeName: { Type: "String", Default: "basketly_prototype", AllowedPattern: "[a-zA-Z][a-zA-Z0-9_]{0,47}" },
+      WebImageUri: { Type: "String" }, AgentImageUri: { Type: "String" },
       WebOrigin: { Type: "String", Default: "http://localhost:3001", AllowedPattern: "https://[^/]+|http://localhost:3001" },
-      IoTDataEndpoint: { Type: "String", AllowedPattern: "[a-zA-Z0-9.-]+\\.iot\\.[a-z0-9-]+\\.amazonaws\\.com" },
+      EnableIoT: { Type: "String", Default: "false", AllowedValues: ["true", "false"] },
+      EnableDemoSignals: { Type: "String", Default: "true", AllowedValues: ["true", "false"], Description: "Allow authenticated STAFF to submit labelled demo shelf signals" },
+      IoTDataEndpoint: { Type: "String", Default: "", AllowedPattern: "^$|[a-zA-Z0-9.-]+\\.iot\\.[a-z0-9-]+\\.amazonaws\\.com" },
       ShelfId: { Type: "String", Default: "SHELF-01", AllowedPattern: "[A-Z0-9-]+" },
       BedrockModelId: { Type: "String", Description: "A tool-use-capable Converse model/inference profile available in the deployment account/region" },
       BedrockInvokeResources: { Type: "CommaDelimitedList", Description: "Exact Bedrock model/profile ARNs needed by the selected model" },
       BudgetEmail: { Type: "String", AllowedPattern: "[^@ ]+@[^@ ]+\\.[^@ ]+" }, MonthlyBudgetUsd: { Type: "Number", Default: 50, MinValue: 1 },
     },
-    Globals: { Function: { CodeUri: "../../data/cloud-package/", Runtime: "nodejs22.x", Timeout: 29, MemorySize: 512, Architectures: ["x86_64"], Environment: { Variables: { STATE_TABLE: ref("StateTable"), CONTROL_TABLE: ref("ControlTable"), SESSION_SECRET_ARN: ref("SessionSecret"), USER_POOL_ID: ref("UserPool"), USER_POOL_CLIENT_ID: ref("UserPoolClient"), SHELF_ID: ref("ShelfId") } } } },
+    Globals: { Function: { Timeout: 29, MemorySize: 512, Architectures: ["x86_64"], Environment: { Variables: { STATE_TABLE: ref("StateTable"), CONTROL_TABLE: ref("ControlTable"), SESSION_SECRET_ARN: ref("SessionSecret"), USER_POOL_ID: ref("UserPool"), USER_POOL_CLIENT_ID: ref("UserPoolClient"), SHELF_ID: ref("ShelfId"), ENABLE_DEMO_SIGNALS: ref("EnableDemoSignals") } } } },
     Resources,
-    Outputs: { WebUrl: { Value: sub("https://${WebService.ServiceUrl}") }, ApiUrl: { Value: sub("https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}") }, WebSocketUrl: { Value: sub("wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live") }, UserPoolId: { Value: ref("UserPool") }, UserPoolClientId: { Value: ref("UserPoolClient") }, StateTable: { Value: ref("StateTable") }, SessionSecretArn: { Value: ref("SessionSecret") }, DevicePolicyName: { Value: ref("DevicePolicy") }, ThingName: { Value: ref("ShelfThing") }, AgentRuntimeArn: { Value: att("AgentRuntime", "AgentRuntimeArn") }, WorkflowArn: { Value: ref("CaseWorkflow") } },
+    Outputs: { WebUrl: { Value: att("WebFunctionUrl", "FunctionUrl") }, ApiUrl: { Value: sub("https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}") }, WebSocketUrl: { Value: sub("wss://${WebSocketApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live") }, UserPoolId: { Value: ref("UserPool") }, UserPoolClientId: { Value: ref("UserPoolClient") }, StateTable: { Value: ref("StateTable") }, SessionSecretArn: { Value: ref("SessionSecret") }, DevicePolicyName: { Condition: "ProvisionIoT", Value: ref("DevicePolicy") }, ThingName: { Condition: "ProvisionIoT", Value: ref("ShelfThing") }, AgentFunctionArn: { Value: att("AgentRuntime") }, WebFunctionArn: { Value: att("WebService") }, WorkflowArn: { Value: ref("CaseWorkflow") } },
   };
 }
 

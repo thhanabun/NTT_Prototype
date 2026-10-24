@@ -1,9 +1,9 @@
-FROM --platform=linux/arm64 node:24-bookworm-slim AS dependencies
+FROM node:24-bookworm-slim AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-FROM --platform=linux/arm64 python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends libglib2.0-0 libgl1 libgomp1 libstdc++6 && rm -rf /var/lib/apt/lists/*
 COPY --from=dependencies /usr/local/bin/node /usr/local/bin/node
 WORKDIR /app
@@ -22,11 +22,16 @@ ENV HF_HOME=/models/cache HF_HUB_DISABLE_TELEMETRY=1 USE_TF=0 \
 RUN /opt/laya/bin/python infra/cloud/prepare-models.py \
     && useradd --create-home agent && chown -R agent:agent /models /app/data
 ENV HF_HUB_CACHE=/models/cache HF_HUB_OFFLINE=1
+ENV AWS_LWA_PORT=8080 AWS_LWA_READINESS_CHECK_PATH=/ping AWS_LWA_READINESS_CHECK_HEALTHY_STATUS=200 \
+    AWS_LWA_ASYNC_INIT=true YOLO_CONFIG_DIR=/tmp/vision-settings MPLCONFIGDIR=/tmp/matplotlib XDG_CACHE_HOME=/tmp/cache
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json ./
 COPY src ./src
 COPY scripts/vision-service.py ./scripts/vision-service.py
 COPY infra/cloud/agent-entrypoint.mjs ./infra/cloud/agent-entrypoint.mjs
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.1.0 /lambda-adapter /opt/extensions/lambda-adapter
+# Lambda assigns its own unprivileged UID; downloaded HF cache files default to owner-only.
+RUN chmod -R a+rX /models
 USER agent
 EXPOSE 8080
 CMD ["node", "infra/cloud/agent-entrypoint.mjs"]

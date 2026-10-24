@@ -1,5 +1,6 @@
 {
-  "stackName": "basketly-prototype",
+  "stackName": "fast-prototype",
+  "accountId": "REPLACE_WITH_12_DIGIT_ACCOUNT_ID",
   "region": "ap-southeast-1",
   "profile": "",
   "imageTag": "REPLACE_WITH_UNIQUE_COMMIT_TAG",
@@ -7,5 +8,7 @@
   "bedrockInvokeResources": ["REPLACE_WITH_EXACT_MODEL_AND_PROFILE_ARNS"],
   "budgetEmail": "REPLACE_WITH_YOUR_EMAIL",
   "monthlyBudgetUsd": 50,
-  "shelfId": "SHELF-01"
+  "shelfId": "SHELF-01",
+  "enableIoT": false,
+  "enableDemoSignals": true
 }

@@ -1,5 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { readCameraFrame } from "./camera-request";
 
 const cookieOptions = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" };
 function config() {
@@ -14,7 +15,7 @@ export async function cloudProxy(request: NextRequest) {
   try {
     const cfg = config(), path = request.nextUrl.pathname;
     if (request.method !== "GET" && request.headers.get("origin") !== cfg.origin) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
-    if (path === "/api/config" && request.method === "GET") return NextResponse.json({ websocketUrl: process.env.CLOUD_WEBSOCKET_URL }, { headers: { "cache-control": "no-store" } });
+    if (path === "/api/config" && request.method === "GET") return NextResponse.json({ websocketUrl: process.env.CLOUD_WEBSOCKET_URL, demoSignalsEnabled: process.env.CLOUD_DEMO_SIGNALS === "true" }, { headers: { "cache-control": "no-store" } });
     if (path === "/api/auth/login" && request.method === "GET") {
       const state = randomBytes(24).toString("base64url"), verifier = randomBytes(32).toString("base64url");
       const url = new URL(cfg.issuer + "/oauth2/authorize");
@@ -46,7 +47,7 @@ export async function cloudProxy(request: NextRequest) {
     }
     const target = path === "/api/auth/session" ? "/api/auth/me" : path;
     if (path === "/api/stream") return NextResponse.json({ error: "Cloud uses WebSocket realtime" }, { status: 404 });
-    if (!/^\/api\/(state|audit|sessions|checkout|realtime-ticket|stats\/query|auth\/session|cases\/CASE-\d+\/(customer|staff))$/.test(path)) return NextResponse.json({ error: "Route unavailable" }, { status: 404 });
+    if (!/^\/api\/(state|audit|sessions|checkout|events|realtime-ticket|stats\/query|auth\/session|cases\/CASE-\d+\/(customer|staff))$/.test(path)) return NextResponse.json({ error: "Route unavailable" }, { status: 404 });
     const basket = request.headers.get("x-basket-id") || "A";
     if (!["A", "B"].includes(basket)) return NextResponse.json({ error: "Invalid basket" }, { status: 400 });
     const token = request.cookies.get("basketly-staff")?.value;
@@ -66,5 +67,22 @@ export async function cloudProxy(request: NextRequest) {
     return response;
   } catch {
     return NextResponse.json({ error: "Cloud service unavailable; refresh state before retrying" }, { status: 503 });
+  }
+}
+
+export async function cloudVisionProxy(request: NextRequest) {
+  try {
+    const cfg = config();
+    if (request.headers.get("origin") !== cfg.origin) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    const token = request.cookies.get("basketly-staff")?.value;
+    if (!token) return NextResponse.json({ error: "Staff login required" }, { status: 401 });
+    const frame = await readCameraFrame(request);
+    if (frame instanceof Response) return frame;
+    const response = await fetch(cfg.api + "/api/vision/live", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + token },
+      body: JSON.stringify({ cameraSession: frame.session, jpeg: frame.jpeg.toString("base64") }), cache: "no-store",
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(12000)]) });
+    return NextResponse.json(await response.json(), { status: response.status, headers: { "cache-control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Cloud vision unavailable; retry after the model is ready" }, { status: 503 });
   }
 }
