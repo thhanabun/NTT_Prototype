@@ -10,6 +10,8 @@ The [primary IoT roadmap](docs/iot-roadmap.md) sets the hardware: ESP32-WROOM-32
 
 ## Run locally
 
+Windows one-command install/start: see [local setup](docs/local-setup.md). Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Install` once, then omit `-Install` on subsequent starts.
+
 Requirements: Node.js 20+ and Python 3.12 recommended. Work in the codex/fsm-iotcore checkout. The HTTP server now selects real Laya inference by default. Install Node dependencies with npm ci, and start the model service in a separate terminal:
 
     powershell -NoProfile -File scripts/start-laya.ps1 -Install

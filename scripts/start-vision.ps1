@@ -24,7 +24,16 @@ New-Item -ItemType Directory -Force -Path $assetRoot | Out-Null
 foreach ($asset in @($assets.model) + @($assets.frames.PSObject.Properties.Value)) {
   $destination = Join-Path $assetRoot $asset.file
   if (-not (Test-Path -LiteralPath $destination)) { Invoke-WebRequest -Uri $asset.url -OutFile $destination }
-  if ((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant() -ne $asset.sha256) {
+  # Use .NET directly so hash validation also works in nested Windows PowerShell sessions.
+  $assetHasher = [System.Security.Cryptography.SHA256]::Create()
+  $assetStream = [System.IO.File]::OpenRead($destination)
+  try {
+    $assetDigest = [System.BitConverter]::ToString($assetHasher.ComputeHash($assetStream)).Replace('-', '').ToLowerInvariant()
+  } finally {
+    $assetStream.Dispose()
+    $assetHasher.Dispose()
+  }
+  if ($assetDigest -ne $asset.sha256) {
     throw "Asset hash mismatch: $($asset.file). Remove the damaged file and retry."
   }
 }

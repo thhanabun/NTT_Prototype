@@ -5,7 +5,7 @@ const apiOrigin = (process.env.LOCAL_API_ORIGIN ?? "http://127.0.0.1:3000").repl
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
-  allowedDevOrigins: ["127.0.0.1"],
+  allowedDevOrigins: ["127.0.0.1", ...(process.env.LOCAL_DEV_HOSTS || "").split(",").map(host => host.trim()).filter(Boolean)],
   // The site has its own floating menu bottom-left; the Next.js dev badge would sit on top of it. Error overlays still show.
   devIndicators: false,
   cacheComponents: true,

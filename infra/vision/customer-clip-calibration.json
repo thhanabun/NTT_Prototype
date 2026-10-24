@@ -1,0 +1,24 @@
+{
+  "source": "IMG_0465.MOV",
+  "referenceImageSize": [1280, 720],
+  "method": "APPROXIMATE_FLOOR_HOMOGRAPHY_WITH_CAMERA_ALIGNMENT",
+  "metricScale": false,
+  "floorImagePoints": [[60, 351.33], [1110, 354], [1273.33, 713.33], [0, 713.33]],
+  "floorMapPoints": [[0.04, 0.06], [0.96, 0.06], [0.96, 0.96], [0.04, 0.96]],
+  "shelves": [
+    { "id": "SHELF-01", "label": "Shelf 1", "floorImagePolygon": [[323, 398], [433, 393], [411, 435], [333, 433]], "labelImagePoint": [380, 350] },
+    { "id": "SHELF-02", "label": "Shelf 2", "floorImagePolygon": [[563, 400], [657, 399], [654, 440], [571, 438]], "labelImagePoint": [610, 350] },
+    { "id": "SHELF-03", "label": "Shelf 3", "floorImagePolygon": [[787, 405], [890, 405], [883, 452], [795, 447]], "labelImagePoint": [842, 358] }
+  ],
+  "basketAssignments": [
+    { "basketId": "B", "order": 1, "color": "#71c9ff", "trackIds": [1, 12] },
+    { "basketId": "A", "order": 2, "color": "#c9f56b", "trackIds": [2] }
+  ],
+  "excludedTracks": [{ "trackId": 3, "reason": "Reviewed false person detection on the Shelf 1 laptop, 4.1-4.5 seconds." }],
+  "limitations": [
+    "Basket identities are supplied by the user for this recording, not inferred from BLE or face recognition.",
+    "Floor anchors and shelf footprints are estimated from the image without measured dimensions or lens intrinsics.",
+    "Static background alignment compensates camera motion approximately; floor parallax and wide-angle distortion remain.",
+    "Bounding-box bottom center approximates the feet and may be inaccurate during occlusion."
+  ]
+}

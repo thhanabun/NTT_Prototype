@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Check, LoaderCircle, X } from "lucide-react";
 import type { Basket, BasketCase, BasketId } from "@/lib/api/types";
 import styles from "./admin.module.css";
@@ -14,6 +14,7 @@ export function StaffActions({ item, baskets, disabled, pending, onDecide }: {
   onDecide: (decision: "APPROVE" | "REJECT", target?: BasketId) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, BasketId>>({});
+  const reasonId = useId();
   const target = choices[item.caseId] ?? item.candidate;
   if (item.status !== "OPEN_STAFF") return null;
   if (item.agent?.status === "RUNNING") return <p role="status">Agent กำลังตรวจสอบหลักฐาน กรุณารอผลก่อนตัดสิน</p>;
@@ -27,10 +28,10 @@ export function StaffActions({ item, baskets, disabled, pending, onDecide }: {
   return (
     <div className={styles.staffActions} aria-label="Staff decision">
       <h3>ตัดสินหลังตรวจสอบหลักฐาน</h3>
-      <fieldset disabled={disabled}><legend>เลือกตะกร้าที่ตรวจสอบแล้ว</legend><div className={styles.targetChoices}>{(["A", "B"] as const).map((id) => <label key={id} className={target === id ? styles.chosenTarget : ""}><input type="radio" name={`target-${item.caseId}`} checked={target === id} onChange={() => setChoices((previous) => ({...previous, [item.caseId]: id}))} /><span className={styles.targetLetter} aria-hidden="true">{id}</span><span>Basket {id}</span><small>{baskets.find((entry) => entry.basketId === id)?.session ? "Active" : "No session"}</small></label>)}</div></fieldset>
-      {invalidReason && <p className={styles.validation} id="decision-reason">{invalidReason}</p>}
+      <fieldset disabled={disabled}><legend>เลือกตะกร้าที่ตรวจสอบแล้ว</legend><div className={styles.targetChoices}>{(["A", "B"] as const).map((id) => <label key={id} className={target === id ? styles.chosenTarget : ""}><input type="radio" name={`target-${reasonId}`} checked={target === id} onChange={() => setChoices((previous) => ({...previous, [item.caseId]: id}))} /><span className={styles.targetLetter} aria-hidden="true">{id}</span><span>Basket {id}</span><small>{baskets.find((entry) => entry.basketId === id)?.session ? "Active" : "No session"}</small></label>)}</div></fieldset>
+      {invalidReason && <p className={styles.validation} id={reasonId}>{invalidReason}</p>}
       {!basket?.session && target && <Link className={styles.shopperLink} href={`/shopper?basket=${target}`} target="_blank" rel="noopener noreferrer">เปิด Shopper ของ Basket {target} →</Link>}
-      <div className={styles.actionButtons}><button className={styles.primaryButton} disabled={disabled || Boolean(invalidReason)} aria-describedby={invalidReason ? "decision-reason" : undefined} onClick={() => onDecide("APPROVE", target ?? undefined)}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Approve{target ? ` → ${target}` : ""}</button><button className={styles.rejectButton} disabled={disabled} onClick={() => onDecide("REJECT")}><X size={17} aria-hidden="true" /> Reject</button></div>
+      <div className={styles.actionButtons}><button className={styles.primaryButton} disabled={disabled || Boolean(invalidReason)} aria-describedby={invalidReason ? reasonId : undefined} onClick={() => onDecide("APPROVE", target ?? undefined)}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />} Approve{target ? ` → ${target}` : ""}</button><button className={styles.rejectButton} disabled={disabled} onClick={() => onDecide("REJECT")}><X size={17} aria-hidden="true" /> Reject</button></div>
       <p className={styles.footnote}>Reject จะปิดเคสโดยไม่เปลี่ยนรายการสินค้า</p>
     </div>
   );

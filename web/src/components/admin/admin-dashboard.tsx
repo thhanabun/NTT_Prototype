@@ -13,12 +13,13 @@ import { releaseBasketSession } from "@/lib/api/client";
 import { ConnectionStatus } from "@/components/connection-status";
 import { getShelves, getShelfProduct } from "@/lib/shelves";
 import styles from "./admin.module.css";
+import type { MapView } from "@/lib/admin-commands";
 
 const money = (value: number) => `฿${value.toLocaleString("th-TH")}`;
 type Filter = "OPEN" | "ALL" | "WAITING_CUSTOMER" | "OPEN_STAFF" | "CLOSED";
 const filters: {id:Filter; label:string}[] = [{id:"OPEN",label:"เคสที่ยังเปิด"},{id:"OPEN_STAFF",label:"รอพนักงาน"},{id:"WAITING_CUSTOMER",label:"รอลูกค้า"},{id:"CLOSED",label:"ปิดแล้ว"},{id:"ALL",label:"ทั้งหมด"}];
 
-export function AdminDashboard() {
+export function AdminDashboard({ mapView, onMapViewChange, active }: { mapView: MapView; onMapViewChange: (view: MapView) => void; active: boolean }) {
   const admin = useAdmin();
   const [filter, setFilter] = useState<Filter>("OPEN");
   const state = admin.state;
@@ -50,7 +51,7 @@ export function AdminDashboard() {
         <ShelfMonitor shelves={shelves} />
         <section className={styles.card} aria-labelledby="baskets-heading"><div className={styles.sectionHeading}><div><h2 id="baskets-heading">ตะกร้าในร้าน</h2></div><ShoppingBasket size={23} aria-hidden="true" /></div><div className={styles.basketGrid}>{state?.baskets.map((basket)=><article className={styles.basket} key={basket.basketId}><div><h3>Basket {basket.basketId}</h3><span className={`${styles.badge} ${basket.session?styles.green:styles.neutral}`}>{basket.session?"ใช้งานอยู่":"ว่าง"}</span></div><strong className={styles.basketTotal}>{money(basket.total)}</strong><p>{basket.lines.reduce((sum,line)=>sum+line.quantity,0)} ชิ้น · รอยืนยัน {basket.unresolvedCaseCount} รายการ</p>{basket.lines.length ? <ul>{basket.lines.map(line=><li key={line.sku}>{line.name} ×{line.quantity}<span>{money(line.subtotal)}</span></li>)}</ul>:<p className={styles.muted}>ยังไม่มีสินค้า</p>}<p className={styles.footnote}>{!basket.session?"พร้อมใช้งาน":basket.unresolvedCaseCount?"รอตรวจสอบ":basket.lines.length&&basket.payable?"พร้อมชำระเงิน":"ตะกร้าว่าง"}</p><Link href={`/shopper?basket=${basket.basketId}`}>เปิด Shopper →</Link></article>)}</div></section>
       </div>
-      <CustomerDetection />
+      <CustomerDetection view={mapView} onViewChange={onMapViewChange} active={active} />
       <div className={styles.caseGrid}>
         <section className={styles.card} aria-labelledby="cases-heading"><div className={styles.sectionHeading}><div><h2 id="cases-heading">รายการที่ต้องตรวจสอบ</h2></div><span className={styles.badge}>{cases.length}</span></div><div className={styles.filters} role="group" aria-label="Filter cases">{filters.map(item=><button key={item.id} aria-pressed={filter===item.id} onClick={()=>setFilter(item.id)}>{item.label}</button>)}</div><p className={styles.footnote}>30 เคสล่าสุด</p><div className={styles.caseList}>{cases.length ? cases.map(item=><button className={`${styles.caseButton} ${item.status==="OPEN_STAFF"?styles.caseStaff:item.status==="CLOSED"?styles.caseClosed:styles.caseCustomer} ${admin.selectedCase?.caseId===item.caseId ? styles.selectedCase:""}`} key={item.caseId} disabled={admin.loading || admin.pending} aria-pressed={admin.selectedCase?.caseId===item.caseId} onClick={()=>admin.selectCase(item.caseId)}><div><strong>{item.caseId}</strong><span className={`${styles.badge} ${item.status==="OPEN_STAFF"?styles.amber:item.status==="CLOSED"?styles.green:styles.blue}`}>{caseStatusLabel[item.status]}</span></div><h3>{getShelfProduct(item.shelfId)?.name??state?.products.find(product=>product.sku===item.sku)?.name??item.sku} · {item.eventType}</h3><p>{item.type.replaceAll("_"," ")}</p><small>{item.candidate?`Basket ${item.candidate}`:"ยังไม่ทราบตะกร้า"} · {formatTime(item.createdAt)}</small></button>):<div className={styles.empty}><CheckIcon /><h3>ไม่มีเคสในหมวดนี้</h3></div>}</div></section>
         {admin.selectedCase ? <CaseDetails item={admin.selectedCase} product={state?.products.find(item=>item.sku===admin.selectedCase?.sku)} actions={<StaffActions item={admin.selectedCase} baskets={state?.baskets ?? []} disabled={admin.loading || admin.pending || admin.stale} pending={admin.pending} onDecide={(decision,target)=>void admin.decide(decision,target)} />} />:<section className={styles.card}><div className={styles.empty}><Clock3 size={30} aria-hidden="true" /><h3>{admin.selectedId?"ไม่พบเคสในข้อมูลล่าสุด":"เลือกเคสเพื่อดูรายละเอียด"}</h3></div></section>}

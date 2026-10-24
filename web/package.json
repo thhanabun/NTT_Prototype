@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "dev:mock": "node scripts/dev-mock.mjs",
+    "dev:mock:https": "node scripts/dev-mock.mjs --experimental-https -H 0.0.0.0 -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint .",

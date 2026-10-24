@@ -5,8 +5,12 @@ import { Moon, Sun } from "lucide-react";
 // The theme lives on <html data-theme>; CSS chooses the icon, so there is no hydration mismatch.
 export function toggleTheme() {
   const next = document.documentElement.dataset.theme === "night" ? "day" : "night";
-  document.documentElement.dataset.theme = next;
-  try { localStorage.setItem("fast-theme", next); } catch { /* private mode: the theme still applies for this visit */ }
+  setTheme(next);
+}
+
+export function setTheme(theme: "day" | "night") {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem("fast-theme", theme); } catch { /* private mode: the theme still applies for this visit */ }
 }
 
 export function ThemeToggle() {

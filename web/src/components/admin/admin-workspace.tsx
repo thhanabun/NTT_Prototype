@@ -3,6 +3,7 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { BarChart3, LayoutDashboard, Pin, Plus, X } from "lucide-react";
 import type { StatsResponse } from "@/lib/api/types";
+import type { MapView } from "@/lib/admin-commands";
 import { AdminDashboard } from "./admin-dashboard";
 import { ChatDock } from "./chat-dock";
 import { StatResult } from "./stat-result";
@@ -18,6 +19,7 @@ export function AdminWorkspace() {
   const [tabs, setTabs] = useState<ResultTab[]>([]);
   const [active, setActive] = useState(HOME);
   const [chatOpen, setChatOpen] = useState(false);
+  const [mapView, setMapView] = useState<MapView>("points");
   const list = useRef<HTMLDivElement>(null);
 
   function openResult(entry: { id: string; message: string; response: StatsResponse }) {
@@ -64,13 +66,17 @@ export function AdminWorkspace() {
     </div>
 
     <div role="tabpanel" id="panel-dashboard" aria-labelledby="tab-dashboard" hidden={active !== HOME}>
-      <AdminDashboard />
+      <AdminDashboard mapView={mapView} onMapViewChange={setMapView} active={active === HOME} />
     </div>
     {tabs.map((tab) => <div key={tab.id} role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} hidden={active !== tab.id}>
       <StatResult response={tab.response} prompt={tab.message} openedAt={tab.openedAt} onAskMore={() => setChatOpen(true)} onClose={() => closeTab(tab.id)} />
     </div>)}
 
-    <ChatDock open={chatOpen} onOpenChange={setChatOpen} activeResultId={active === HOME ? null : active} onResult={openResult} onOpenResult={(entry) => {
+    <ChatDock open={chatOpen} onOpenChange={setChatOpen} activeResultId={active === HOME ? null : active} onResult={openResult} onMapViewChange={view => {
+      setMapView(current => view === "toggle" ? current === "points" ? "heatmap" : "points" : view);
+      setActive(HOME);
+      requestAnimationFrame(() => document.getElementById("customer-detection-heading")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    }} onOpenResult={(entry) => {
       if (!tabs.some((tab) => tab.id === entry.id)) openResult(entry); else { setActive(entry.id); if (window.matchMedia("(max-width: 900px)").matches) setChatOpen(false); }
     }} />
   </div>;
