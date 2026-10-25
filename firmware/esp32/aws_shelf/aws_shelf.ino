@@ -30,12 +30,38 @@
 #else
   #include "../secrets.example.h"
 #endif
+#if defined(SHELF_AWS_CREDENTIAL_HEADER)
+  #include SHELF_AWS_CREDENTIAL_HEADER
+#elif __has_include("../../../data/aws-device/aws-credentials.h")
+  #define SHELF_AWS_CREDENTIAL_HEADER "../../../data/aws-device/aws-credentials.h"
+  #include SHELF_AWS_CREDENTIAL_HEADER
+#endif
 #include "../shelf_protocol.h"
 #ifndef SHELF_PROJECT_UUID
   #define SHELF_PROJECT_UUID ""
 #endif
 #ifndef SHELF_ENABLE_TEST_COMMANDS
   #define SHELF_ENABLE_TEST_COMMANDS 0
+#endif
+#ifndef SHELF_ID_VALUE
+  #define SHELF_ID_VALUE "SHELF-01"
+#endif
+#ifndef SHELF_SWITCH_COKE_GPIO
+  #define SHELF_SWITCH_COKE_GPIO 26
+#endif
+#ifndef SHELF_SWITCH_WATER_GPIO
+  #define SHELF_SWITCH_WATER_GPIO 27
+#endif
+#if defined(SHELF_AWS_CREDENTIAL_HEADER)
+constexpr const char* ACTIVE_AWS_IOT_ENDPOINT = AWS_DEVICE_ENDPOINT;
+constexpr const char* ACTIVE_AWS_ROOT_CA = AWS_DEVICE_ROOT_CA;
+constexpr const char* ACTIVE_DEVICE_CERTIFICATE = AWS_DEVICE_CERTIFICATE;
+constexpr const char* ACTIVE_DEVICE_PRIVATE_KEY = AWS_DEVICE_PRIVATE_KEY;
+#else
+constexpr const char* ACTIVE_AWS_IOT_ENDPOINT = AWS_IOT_ENDPOINT;
+constexpr const char* ACTIVE_AWS_ROOT_CA = AWS_ROOT_CA;
+constexpr const char* ACTIVE_DEVICE_CERTIFICATE = DEVICE_CERTIFICATE;
+constexpr const char* ACTIVE_DEVICE_PRIVATE_KEY = DEVICE_PRIVATE_KEY;
 #endif
 
 
@@ -44,8 +70,8 @@
 // ----------------------------------------------------------------------------
 // Microswitch wiring: COM -> GND, NO -> GPIO pin (INPUT_PULLUP)
 // Closed = LOW (Product PRESENT); Open = HIGH (Product EMPTY)
-constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
-constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
+constexpr uint8_t COKE_SWITCH_PIN     = SHELF_SWITCH_COKE_GPIO; // Lane 1: Coca-Cola
+constexpr uint8_t WATER_SWITCH_PIN    = SHELF_SWITCH_WATER_GPIO; // Lane 2: Mineral Water
 constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // FR-1.2: 80 ms stable debounce
 
 // ----------------------------------------------------------------------------
@@ -62,7 +88,7 @@ constexpr uint16_t HIGH_VALUE_MAJOR   = 1;
 constexpr uint16_t HIGH_VALUE_MINOR   = 3;
 
 constexpr char HIGH_VALUE_TAG_ID[]    = "HV-001";
-constexpr char SHELF_ID[]             = "SHELF-01";
+constexpr char SHELF_ID[]             = SHELF_ID_VALUE;
 
 constexpr uint32_t TAG_FRESH_MS       = 5000; // FR-2.4: 5000 ms freshness window
 constexpr size_t RSSI_WINDOW          = 5;    // FR-2.3: 5-sample rolling median
@@ -73,8 +99,8 @@ constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 5000;
 constexpr uint32_t MQTT_RETRY_INTERVAL_MS = 5000;
 
 // AWS IoT Core MQTT Topics (FR-4 & FR-5)
-constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
-constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
+constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/" SHELF_ID_VALUE "/events";
+constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/" SHELF_ID_VALUE "/telemetry";
 
 // ----------------------------------------------------------------------------
 // 4. Data Types & Global State
@@ -125,7 +151,7 @@ portMUX_TYPE bleMux = portMUX_INITIALIZER_UNLOCKED;
 
 ShelfOutbox eventOutbox;
 bool ackSubscribed = false;
-constexpr char TOPIC_ACKS[] = "smartbasket/shelf/SHELF-01/acks";
+constexpr char TOPIC_ACKS[] = "smartbasket/shelf/" SHELF_ID_VALUE "/acks";
 uint32_t eventSequence = 0;
 uint32_t bootId = 0;
 
@@ -511,12 +537,12 @@ void setup() {
 
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
-  if (strlen(AWS_ROOT_CA) > 0) {
-    tlsClient.setCACert(AWS_ROOT_CA);
-    tlsClient.setCertificate(DEVICE_CERTIFICATE);
-    tlsClient.setPrivateKey(DEVICE_PRIVATE_KEY);
+  if (strlen(ACTIVE_AWS_ROOT_CA) > 0) {
+    tlsClient.setCACert(ACTIVE_AWS_ROOT_CA);
+    tlsClient.setCertificate(ACTIVE_DEVICE_CERTIFICATE);
+    tlsClient.setPrivateKey(ACTIVE_DEVICE_PRIVATE_KEY);
   }
-  mqttClient.setServer(AWS_IOT_ENDPOINT, 8883);
+  mqttClient.setServer(ACTIVE_AWS_IOT_ENDPOINT, 8883);
   mqttClient.setBufferSize(1024);
   mqttClient.setSocketTimeout(2);
   mqttClient.setCallback(onMqttMessage);

@@ -84,7 +84,7 @@ try {
   await telemetry(14000, true); await total(25);
   await event('telemetry-return', 'PUT_BACK'); await total(0);
   passed('MQTT PICK / duplicate / PUT_BACK traverses FSM, database and Shopper realtime with correct totals');
-  await event('telemetry-unknown', 'PICK', { A: -51, B: null });
+  await event('telemetry-unknown', 'PICK', { A: null, B: null });
   const unresolved = (await state()).cases[0];
   assert.equal(unresolved.type, 'ZONE_UNKNOWN'); assert.equal(unresolved.status, 'OPEN_STAFF');
   await total(0); assert.ok(await shopper.getByRole('button', { name: 'ชำระเงิน', exact: true }).isDisabled());

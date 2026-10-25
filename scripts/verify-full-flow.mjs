@@ -157,20 +157,21 @@ async function subscribe(label) {
   await waitFor(() => frames.length, label + " initial stream state");
   return stream;
 }
-let bridge;
+const bridges = [];
 let hardware;
 const acknowledgements = [];
 const bridgeLogs = [];
-const eventTopic = "smartbasket/shelf/SHELF-01/events";
-const ackTopic = "smartbasket/shelf/SHELF-01/acks";
+const eventTopic = shelfId => `smartbasket/shelf/${shelfId}/events`;
+const ackTopic = "smartbasket/shelf/+/acks";
 let sequence = 0;
 function signal(rssi, eventType = "PICK", laneId = "LANE-1", extra = {}) {
-  return { eventId: "full-" + (++sequence), shelfId: "SHELF-01", laneId, sku: laneId === "LANE-1" ? "COKE" : "WATER", eventType, timestamp: useLocalBroker ? "" : new Date().toISOString(), delayed: false, rssi: useLocalBroker ? { ...rssi, HV01: -48 } : rssi, ...extra };
+  const shelfId = laneId === "LANE-1" ? "SHELF-01" : "SHELF-02";
+  return { eventId: "full-" + (++sequence), shelfId, laneId, sku: laneId === "LANE-1" ? "COKE" : "WATER", eventType, timestamp: useLocalBroker ? "" : new Date().toISOString(), delayed: false, rssi: useLocalBroker ? { ...rssi, HV01: -48 } : rssi, ...extra };
 }
 async function sendHardware(payload, { qos = 0 } = {}) {
   const before = acknowledgements.filter((item) => item.eventId === payload.eventId).length;
   const started = performance.now();
-  await hardware.publishAsync(eventTopic, JSON.stringify(payload), { qos });
+  await hardware.publishAsync(eventTopic(payload.shelfId), JSON.stringify(payload), { qos });
   await waitFor(() => acknowledgements.filter((item) => item.eventId === payload.eventId).length > before, "application ACK for " + payload.eventId, 35000);
   const persisted = JSON.parse(await readFile(statePath, "utf8"));
   assert.ok(persisted.seenEventIds.includes(payload.eventId), "ACK must follow persisted event ingestion");
@@ -212,13 +213,13 @@ try {
       return bridgeLogs.some((line) => line.includes("Local MQTT Broker running"));
     }, "hardware PR broker ready");
   } else {
-    bridge = startIoTBridge({ brokerUrl, apiOrigin: origin, log: (...items) => bridgeLogs.push(items.join(" ")), logError: (...items) => bridgeLogs.push(items.join(" ")) });
-    await waitFor(() => bridgeLogs.some((line) => line.includes("Subscribed")), "production bridge subscription");
+    for (const shelfId of ["SHELF-01", "SHELF-02"]) bridges.push(startIoTBridge({ brokerUrl, shelfId, apiOrigin: origin, log: (...items) => bridgeLogs.push(items.join(" ")), logError: (...items) => bridgeLogs.push(items.join(" ")) }));
+    await waitFor(() => ["SHELF-01", "SHELF-02"].every(shelfId => bridgeLogs.some(line => line.includes(`Subscribed to smartbasket/shelf/${shelfId}/events`))), "production bridge subscriptions for Shelf 1 and Shelf 2");
   }
   hardware = mqtt.connect(brokerUrl, { clientId: "simulated-esp32", protocolVersion: 4, reconnectPeriod: 100 });
   hardware.on("error", (error) => bridgeLogs.push("hardware: " + error.message));
   hardware.on("message", (topic, payload) => {
-    if (topic === ackTopic) acknowledgements.push({ eventId: payload.toString(), at: performance.now() });
+    if (topic.endsWith("/acks")) acknowledgements.push({ eventId: payload.toString(), at: performance.now() });
   });
   await once(hardware, "connect");
   await hardware.subscribeAsync(ackTopic, { qos: 1 });
@@ -229,7 +230,7 @@ try {
   for (let cycle = 0; cycle < 30; cycle++) {
     const basketId = cycle % 2 ? "B" : "A";
     const laneId = cycle % 3 ? "LANE-1" : "LANE-2";
-    const sku = laneId === "LANE-1" ? "COKE" : "WATER";
+    const sku = laneId === "LANE-1" ? "COKE" : "SPRITE_PLUS_TEA";
     const rssi = basketId === "A" ? { A: -51, B: -72 } : { A: -72, B: -51 };
     const pick = signal(rssi, "PICK", laneId);
     let { state } = await sendHardware(pick, { qos: cycle % 2 });
@@ -241,7 +242,7 @@ try {
     assert.deepEqual(totals(state), [0, 0]);
   }
   assert.equal(report.modelCalls.length, 0);
-  passed("30 PICK/PUT_BACK cycles plus 30 duplicate retries: both baskets/products, zero negative or duplicate charges, no model calls", { cycles: 30, mqttSignals: 90 });
+  passed("30 PICK/PUT_BACK cycles plus 30 duplicate retries across Shelf 1 Cola and Shelf 2 Sprite Plus Tea: both baskets, zero negative or duplicate charges, no model calls", { cycles: 30, mqttSignals: 90 });
 
   await sendHardware(signal({ A: -51, B: -72 }));
   for (const [name, rssi, selected] of [["near-A", { A: -55, B: -57 }, "A"], ["near-B", { A: -57, B: -55 }, "B"], ["tie", { A: -56, B: -56 }, null]]) {
@@ -318,7 +319,7 @@ try {
   const callsBeforeSlow = report.modelCalls.length;
   const totalsBeforeSlow = totals(await api("/api/state"));
   modelMode = "slow";
-  await hardware.publishAsync(eventTopic, JSON.stringify(slowInput));
+  await hardware.publishAsync(eventTopic(slowInput.shelfId), JSON.stringify(slowInput));
   await waitFor(() => report.modelCalls.length > callsBeforeSlow, "actual inference before delayed response");
   modelMode = "real";
   const runningCase = (await api("/api/state")).cases.find((item) => item.eventId === slowInput.eventId);
@@ -341,7 +342,7 @@ try {
   const timeoutInput = signal({ A: -55, B: -57 });
   const callsBeforeTimeout = report.modelCalls.length;
   const timeoutStarted = performance.now();
-  await hardware.publishAsync(eventTopic, JSON.stringify(timeoutInput));
+  await hardware.publishAsync(eventTopic(timeoutInput.shelfId), JSON.stringify(timeoutInput));
   await waitFor(() => report.modelCalls.length > callsBeforeTimeout, "model timeout fault entered");
   assert.equal(acknowledgements.filter((item) => item.eventId === timeoutInput.eventId).length, 0);
   modelMode = "real";
@@ -361,8 +362,8 @@ try {
   const beforeInvalid = JSON.parse(await readFile(statePath, "utf8"));
   const ackCount = acknowledgements.length;
   const invalid = signal({ A: -51, B: -72 }, "PICK", "LANE-1", { sku: "WATER" });
-  await hardware.publishAsync(eventTopic, "invalid JSON", { qos: 1 });
-  await hardware.publishAsync(eventTopic, JSON.stringify(invalid), { qos: 1 });
+  await hardware.publishAsync(eventTopic(invalid.shelfId), "invalid JSON", { qos: 1 });
+  await hardware.publishAsync(eventTopic(invalid.shelfId), JSON.stringify(invalid), { qos: 1 });
   await waitFor(() => bridgeLogs.some((line) => line.includes("invalid JSON")) && bridgeLogs.some((line) => line.includes(invalid.eventId) && line.includes("not acknowledged")), "malformed signals rejected by bridge/compute");
   assert.equal(acknowledgements.length, ackCount);
   assert.deepEqual(JSON.parse(await readFile(statePath, "utf8")), beforeInvalid);
@@ -457,7 +458,7 @@ try {
   for (const stream of streams) stream.controller.abort();
   await Promise.allSettled(streams.map((stream) => stream.task));
   if (hardware) await hardware.endAsync(true);
-  if (bridge) await bridge.endAsync(true);
+  await Promise.all(bridges.map(bridge => bridge.endAsync(true)));
   await stopApp();
   if (brokerProcess && brokerProcess.exitCode === null) {
     const stopped = once(brokerProcess, "exit"); brokerProcess.kill(); await stopped;

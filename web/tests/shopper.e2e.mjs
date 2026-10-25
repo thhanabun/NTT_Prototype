@@ -54,12 +54,12 @@ const responsive=async label=>{
  await page.getByText('เชื่อมแล้ว',{exact:true}).waitFor();
  const snapshot=await page.request.get(api+'/api/state').then(r=>r.json());
  assert.equal(snapshot.baskets[1].session.status,'ACTIVE');
- await post('/api/events',{eventId:'test-step1',laneId:'LANE-2',eventType:'PICK',rssi:{A:-73,B:-48}});
+ await post('/api/events',{eventId:'test-step1',shelfId:'SHELF-02',laneId:'LANE-2',eventType:'PICK',rssi:{A:-73,B:-48}});
  await refresh();await total('฿15');
- await cart().getByRole('heading',{name:'Mineral water',exact:true}).waitFor();
+ await cart().getByRole('heading',{name:'Sprite Plus Tea',exact:true}).waitFor();
  await page.reload();await total('฿15');
  assert.equal(await page.getByRole('radio',{name:/Basket B/}).isChecked(),true);
- const event=async(id,rssi={A:-73,B:-48},eventType='PICK',laneId='LANE-1')=>post('/api/events',{eventId:id,laneId,eventType,rssi});
+ const event=async(id,rssi={A:-73,B:-48},eventType='PICK',laneId='LANE-1')=>post('/api/events',{eventId:id,shelfId:laneId==='LANE-2'?'SHELF-02':'SHELF-01',laneId,eventType,rssi});
  const check=()=>page.getByRole('button',{name:'ชำระเงิน',exact:true});
  await event('step2-clear');await refresh();await total('฿40');
  await responsive('cart');

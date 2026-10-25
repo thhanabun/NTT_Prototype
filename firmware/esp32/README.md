@@ -1,6 +1,6 @@
 # ESP32 Shelf Firmware
 
-This directory contains the firmware implementations for the Basketly Smart Shelf (`SHELF-01`).
+This directory contains the firmware implementations for the FAST Smart Shelf prototype (`SHELF-01` to `SHELF-03`).
 
 ---
 
@@ -11,6 +11,8 @@ This directory contains the firmware implementations for the Basketly Smart Shel
 | [`esp32.ino`](esp32.ino) | **Main Firmware (Local & Demo - Default)** | The primary sketch in `esp32/`. Pre-configured with the 3 physical beacon MACs. Runs standalone on USB Serial Monitor without Wi-Fi, or dispatches HTTP POST events to local server (`/api/events`). |
 | [`local_shelf/local_shelf.ino`](local_shelf/local_shelf.ino) | **Local Shelf Standalone** | Local development implementation; the root esp32.ino includes this file. |
 | [`aws_shelf/aws_shelf.ino`](aws_shelf/aws_shelf.ino) | **AWS IoT Core Firmware (not deployed/physically verified)** | Implements the source protocol described in [`esp32-firmware-requirements.md`](../../docs/esp32-firmware-requirements.md). Uses MQTT over TLS 1.2 (Port 8883) to **AWS IoT Core** with X.509 certificates, 1 Hz telemetry, and 8-slot outbox. |
+| [`aws_shelf_02/aws_shelf_02.ino`](aws_shelf_02/aws_shelf_02.ino) | **AWS Shelf 2** | Uses the same TLS/MQTT protocol with the `SHELF-02` identity and its own certificate. Backend maps every Shelf 2 lane to Sprite Plus Tea. |
+| [`aws_shelf_03/aws_shelf_03.ino`](aws_shelf_03/aws_shelf_03.ino) | **AWS Shelf 3** | Uses the same TLS/MQTT protocol with the `SHELF-03` identity, its own certificate, and GPIO 4/5 switch wiring reported by the connected ESP32-S3 board. |
 | [`ble_test/ble_test.ino`](ble_test/ble_test.ino) | **Standalone BLE Scanner** | Scans, decodes, and calibrates DX-CP101 beacons and iBeacon tags with distance estimation and lead margin evaluation. |
 | [`limit_switch_test/limit_switch_test.ino`](limit_switch_test/limit_switch_test.ino) | **Standalone Switch Test** | Tests mechanical roller switch debouncing on GPIO 26 without networking. |
 | [`wifi_test/wifi_test.ino`](wifi_test/wifi_test.ino) | **Standalone Wi-Fi Test** | Validates 2.4 GHz WLAN connectivity and DHCP IP assignment. |
@@ -68,23 +70,41 @@ arduino-cli monitor --port COM8 --config baudrate=115200
 
 ### 2. AWS IoT Core Production Firmware
 
-1. Copy `secrets.example.h` to `secrets.h`.
-2. Fill in your 2.4 GHz Wi-Fi credentials, AWS IoT Core endpoint, and X.509 certificates.
-3. Compile and upload:
+1. Ensure the shared `firmware/esp32/secrets.h` exists with Wi-Fi and beacon MAC settings.
+2. Provision each device once. The script stores each private key under ignored `data/aws-device/` and writes the matching firmware credential header:
 
 ```powershell
-# Compile AWS firmware
+.\scripts\provision-cloud-device.ps1 -ShelfId SHELF-02
+.\scripts\provision-cloud-device.ps1 -ShelfId SHELF-03
+```
+
+3. Compile and upload the matching sketch (use the port of that ESP32):
+
+```powershell
+# Compile Shelf 1
 arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-build firmware/esp32/aws_shelf
 
-# Upload to ESP32
+# Compile Shelf 2
+arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
+
+# Compile Shelf 3
+arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
+
+# Upload Shelf 1
 arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/aws-shelf-build firmware/esp32/aws_shelf
+
+# Upload Shelf 2
+arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM9 --input-dir tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
+
+# Upload Shelf 3 (change FQBN if this board is ESP32-S3)
+arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM10 --input-dir tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
 ```
 
 
 ## Protocol review fixes
 
 - Configure credentials in ignored secrets.h copied from the example. No real Wi-Fi passwords are embedded in the sketches.
-- Local and AWS paths retain up to eight events until the backend application ACK on smartbasket/shelf/SHELF-01/acks. A successful MQTT publish does not remove an event. Retry unchanged IDs after three seconds; queued/offline/retried events carry delayed:true for staff review.
+- Local and AWS paths retain up to eight events until the backend application ACK on each shelf's `smartbasket/shelf/<SHELF-ID>/acks` topic. A successful MQTT publish does not remove an event. Retry unchanged IDs after three seconds; queued/offline/retried events carry delayed:true for staff review.
 - Switches require 80 ms stable input and are sampled in a separate FreeRTOS task. Network connect/HTTP calls can block their own task without stopping input sampling.
 - Explicit beacon MACs are authoritative. To use UUID/major/minor matching, leave the role MAC empty and configure SHELF_PROJECT_UUID. An unrelated beacon with matching default major/minor cannot replace a configured MAC.
 - The median ages individual samples, so a new advertisement cannot revive old RSSI readings.

@@ -1,7 +1,9 @@
 import { deviceState } from "./device-state.mjs";
 
+export const SHELF_IDS = ["SHELF-01", "SHELF-02", "SHELF-03"];
+
 export function shelfStates(store, now = Date.now()) {
-  return ["SHELF-01", "SHELF-02", "SHELF-03"].map((shelfId, index) => {
+  return SHELF_IDS.map((shelfId, index) => {
     const event = store.events.find(item => item.shelfId === shelfId);
     const item = event && store.cases.find(item => item.eventId === event.eventId);
     const device = deviceState(store, now, shelfId);

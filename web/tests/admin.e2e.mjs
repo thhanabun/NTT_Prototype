@@ -100,6 +100,7 @@ try {
   assert.equal(await page.getByRole('button',{name:/CASE-/}).count(),4);
   // The simulator and staff tools work on the new Admin route.
   await page.locator('summary').filter({hasText:'Local simulator'}).click();
+  await page.getByLabel('Simulator shelf').selectOption('SHELF-02');
   await page.getByLabel('Shelf lane').selectOption('LANE-2');
   await page.getByRole('button',{name:'Clear pick → A',exact:true}).click();
   await page.getByRole('status').filter({hasText:'PICK · Basket A · ยืนยันแล้ว'}).waitFor();

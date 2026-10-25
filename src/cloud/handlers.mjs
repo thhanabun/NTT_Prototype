@@ -5,6 +5,7 @@ import { completeCaseInvestigation } from "../agent/case-manager.mjs";
 import { queryStatistics } from "../stats-query.mjs";
 import { authenticate, basketId, httpError, requireOwner, requireStaff, scopedState, signShopper, verifyPairing } from "./auth.mjs";
 import { createCloudServices } from "./services.mjs";
+import { SHELF_IDS } from "../shelves.mjs";
 
 const hash = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const caseId = value => { if (!/^CASE-\d+$/.test(value || "")) throw httpError(400, "Invalid case ID"); return value; };
@@ -136,7 +137,7 @@ export function createCloudHandlers(services) {
 
     async ingest(event) {
       const match = /^smartbasket\/shelf\/([A-Z0-9-]+)\/(events|telemetry)$/.exec(event.mqttTopic || "");
-      if (!match || match[1] !== process.env.SHELF_ID || event.mqttClientId !== match[1] || event.shelfId !== match[1]) throw new Error("IoT topic/client/shelf identity mismatch");
+      if (!match || !SHELF_IDS.includes(match[1]) || event.mqttClientId !== match[1] || event.shelfId !== match[1]) throw new Error("IoT topic/client/shelf identity mismatch");
       if (match[2] === "telemetry") { await repository.mutate(store => ingestTelemetry(store, { ...event, source: "DEVICE" })); return { ok: true }; }
       if (event.mockVisionFrameId !== undefined || event.agentMode !== undefined) throw new Error("Device cannot inject mock Agent evidence");
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(event.eventId || "")) throw new Error("Invalid device event ID");

@@ -51,6 +51,15 @@ struct Lane {
 #ifndef SHELF_ENABLE_TEST_COMMANDS
   #define SHELF_ENABLE_TEST_COMMANDS 0
 #endif
+#ifndef SHELF_ID_VALUE
+  #define SHELF_ID_VALUE "SHELF-01"
+#endif
+#ifndef SHELF_SWITCH_COKE_GPIO
+  #define SHELF_SWITCH_COKE_GPIO 26
+#endif
+#ifndef SHELF_SWITCH_WATER_GPIO
+  #define SHELF_SWITCH_WATER_GPIO 27
+#endif
 
 
 // Target MAC String references for auto-normalizing comparison
@@ -65,15 +74,15 @@ const char* LOCAL_HTTP_HOST = LOCAL_SERVER_HOST;
 const uint16_t LOCAL_HTTP_PORT = LOCAL_SERVER_PORT;
 
 // MQTT Topics matching AWS IoT schema
-constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/SHELF-01/events";
-constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/SHELF-01/telemetry";
-constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/SHELF-01/cmd";
+constexpr char TOPIC_EVENTS[]    = "smartbasket/shelf/" SHELF_ID_VALUE "/events";
+constexpr char TOPIC_TELEMETRY[] = "smartbasket/shelf/" SHELF_ID_VALUE "/telemetry";
+constexpr char TOPIC_COMMAND[]   = "smartbasket/shelf/" SHELF_ID_VALUE "/cmd";
 
 // ----------------------------------------------------------------------------
 // 2. Hardware Microswitch Pins (Roller switches: COM -> GND, NO -> GPIO pin)
 // ----------------------------------------------------------------------------
-constexpr uint8_t COKE_SWITCH_PIN     = 26; // Lane 1: Coca-Cola
-constexpr uint8_t WATER_SWITCH_PIN    = 27; // Lane 2: Mineral Water
+constexpr uint8_t COKE_SWITCH_PIN     = SHELF_SWITCH_COKE_GPIO; // Lane 1: Coca-Cola
+constexpr uint8_t WATER_SWITCH_PIN    = SHELF_SWITCH_WATER_GPIO; // Lane 2: Mineral Water
 constexpr uint32_t SWITCH_DEBOUNCE_MS = 80; // Stable transition; calibrate against physical switch bounce
 
 // Hardware interrupt counters (captures ANY electrical change, even for 1 microsecond)
@@ -89,7 +98,11 @@ void IRAM_ATTR isrWater() {
 }
 
 // Candidate GPIO probe list to detect accidental wrong pin insertion
+#if defined(SHELF_BOARD_IS_ESP32S3)
+constexpr uint8_t PROBE_PINS[] = {COKE_SWITCH_PIN, WATER_SWITCH_PIN};
+#else
 constexpr uint8_t PROBE_PINS[] = {25, 26, 27, 14, 13, 32, 33, 4, 18, 19, 21, 22, 23};
+#endif
 
 // ----------------------------------------------------------------------------
 // 3. BLE Beacons Configuration (3 Tags: Basket A, Basket B, Expensive Product)
@@ -102,7 +115,7 @@ constexpr uint16_t BASKET_B_MINOR       = 2;
 constexpr uint16_t EXPENSIVE_ITEM_MAJOR = 1;
 constexpr uint16_t EXPENSIVE_ITEM_MINOR = 3;
 
-constexpr char SHELF_ID[]          = "SHELF-01";
+constexpr char SHELF_ID[]          = SHELF_ID_VALUE;
 constexpr char EXPENSIVE_ITEM_ID[] = "HV-001";
 constexpr uint32_t TAG_FRESH_MS    = 5000; // 5000 ms freshness window
 constexpr size_t RSSI_WINDOW       = 5;    // 5-sample rolling median
@@ -153,7 +166,7 @@ uint32_t lastWifiRetryMs = 0;
 bool wasWifiConnected = false;
 ShelfOutbox eventOutbox;
 bool ackSubscribed = false;
-constexpr char TOPIC_ACKS[] = "smartbasket/shelf/SHELF-01/acks";
+constexpr char TOPIC_ACKS[] = "smartbasket/shelf/" SHELF_ID_VALUE "/acks";
 
 // ----------------------------------------------------------------------------
 // 5. Signal Filtering & Proximity Helpers
@@ -312,7 +325,7 @@ void maintainMqtt() {
   lastMqttRetryMs = now;
 
   char clientId[32];
-  snprintf(clientId, sizeof(clientId), "SHELF-01-%04x", bootId);
+  snprintf(clientId, sizeof(clientId), "%s-%04x", SHELF_ID, bootId);
 
   Serial.printf("[MQTT] Connecting to %s:%u (client: %s)...\n",
                 LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, clientId);
@@ -592,8 +605,14 @@ void printDashboard() {
 // 11. Setup
 // ----------------------------------------------------------------------------
 void probeAllPins() {
-  static int lastState[sizeof(PROBE_PINS)] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-  for (size_t i = 0; i < sizeof(PROBE_PINS); ++i) {
+  constexpr size_t probePinCount = sizeof(PROBE_PINS) / sizeof(PROBE_PINS[0]);
+  static int lastState[probePinCount];
+  static bool stateInitialized = false;
+  if (!stateInitialized) {
+    for (size_t i = 0; i < probePinCount; ++i) lastState[i] = -1;
+    stateInitialized = true;
+  }
+  for (size_t i = 0; i < probePinCount; ++i) {
     const uint8_t p = PROBE_PINS[i];
     const int val = digitalRead(p);
     if (lastState[i] != -1 && lastState[i] != val) {
@@ -626,7 +645,7 @@ void setup() {
   bootId = esp_random();
 
   Serial.println("\n==================================================================");
-  Serial.println("     Basketly — Local MQTT & Shelf Firmware (SHELF-01)           ");
+  Serial.printf("     Basketly — Local MQTT & Shelf Firmware (%s)           \n", SHELF_ID);
   Serial.println("==================================================================");
   Serial.printf("Shelf ID      : %s\n", SHELF_ID);
   Serial.printf("ESP32 BLE MAC : %s\n", NimBLEDevice::getAddress().toString().c_str());

@@ -99,7 +99,7 @@ test("Cloud API pairs by QR, retries an uncertain pairing safely and denies cros
   assert.equal((await f.api("/api/checkout", { basketId: "B" }, authorization)).status, 403);
   assert.equal((await f.api("/api/stats/query", { message: "ยอดขาย" }, authorization)).status, 403);
   assert.equal((await f.api("/api/cases/CASE-001/staff", { decision: "APPROVE", basketId: "A" }, authorization)).status, 403);
-  assert.equal((await f.api("/api/events", {}, "Bearer staff")).status, 404, "No public HTTP hardware injection route");
+  assert.equal((await f.api("/api/events", {}, "Bearer staff")).status, 403, "Staff demo signals remain disabled by default");
   assert.equal((await f.api("/api/reset", {}, "Bearer staff")).status, 404);
   assert.equal((await f.api("/api/sessions", { basketId: "A", action: "RELEASE" }, authorization)).status, 403);
   assert.equal((await f.api("/api/sessions", { basketId: "A", action: "RELEASE" }, "Bearer staff")).status, 200);
@@ -115,11 +115,12 @@ test("Cloud IoT ingestion persists before workflow and ACK, retries failed launc
   assert.equal(f.calls.filter(call => call[0] === "workflow").length, 0);
   await f.repository.mutate(store => { store.seenEventIds = []; });
   await f.ingest("clear"); assert.equal((await f.repository.read()).carts.A.COKE, 1, "Durable cloud receipt outlives the short domain cache");
+  await f.repository.mutate(store => startSession(store, "B"));
   f.services.startWorkflow = async () => { throw new Error("AWS workflow temporarily unavailable"); };
-  await assert.rejects(f.ingest("missing", { A: -51, B: null }), /unavailable/);
-  assert.equal(f.calls.some(call => call[0] === "ack" && call[1] === "missing"), false);
+  await assert.rejects(f.ingest("workflow-retry", { A: -55, B: -57 }), /unavailable/);
+  assert.equal(f.calls.some(call => call[0] === "ack" && call[1] === "workflow-retry"), false);
   f.services.startWorkflow = async item => { assert.ok((await f.repository.read()).cases.some(entry => entry.caseId === item.caseId)); f.calls.push(["workflow", item.caseId]); };
-  await f.ingest("missing", { A: -51, B: null });
+  await f.ingest("workflow-retry", { A: -55, B: -57 });
   assert.equal((await f.repository.read()).cases.length, 1); assert.equal(f.calls.at(-1)[0], "ack");
   await assert.rejects(f.handlers.ingest({ mqttTopic: "smartbasket/shelf/SHELF-01/events", mqttClientId: "attacker", shelfId: "SHELF-01" }), /identity/);
 });
@@ -199,7 +200,9 @@ test("Prepared SAM infrastructure references real resources, avoids dependency c
   assert.equal(resources.ControlTable.Properties.TimeToLiveSpecification.AttributeName, "ttl");
   assert.equal(resources.ApiFunctionLog.Properties.RetentionInDays, 14);
   assert.ok(resources.Trail && resources.Budget && resources.FailureQueue && resources.ArchiveBucket);
-  assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql["Fn::Sub"], /WHERE topic\(4\) = 'events' OR topic\(4\) = 'telemetry'$/);
+  assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql, /WHERE \(topic\(4\) = 'events' OR topic\(4\) = 'telemetry'\)/);
+  assert.equal(resources.ShelfRule.Properties.TopicRulePayload.ErrorAction, undefined);
+  assert.equal(resources.IoTErrorRole, undefined);
   assert.ok(!resources.ToolsFunction.Properties.Policies[0].Statement.some(statement => statement.Action.includes("dynamodb:PutItem")));
   assert.throws(() => stateRecords({ ...createStore(), cases: [{ caseId: "same" }, { caseId: "same" }] }), /Duplicate/);
 });

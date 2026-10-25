@@ -65,17 +65,17 @@ try {
   await waitFor(async()=>(await state()).baskets.every(x=>x.session),'both sessions');
   passed('Next.js same-origin proxy and three native SSE tabs; sessions started through Shopper');
   device=await mqtt.connectAsync('mqtt://127.0.0.1:'+mqttPort,{clientId:'mock-ESP32-WROOM',reconnectPeriod:500});
-  await device.subscribeAsync('smartbasket/shelf/SHELF-01/acks');
+  await device.subscribeAsync('smartbasket/shelf/+/acks');
   const acknowledgements=new Map();
   device.on('message',(_topic,payload)=>{const id=payload.toString();acknowledgements.set(id,(acknowledgements.get(id)||0)+1);});
   async function send(payload) {
     const before=acknowledgements.get(payload.eventId)||0;
-    await device.publishAsync('smartbasket/shelf/SHELF-01/events',JSON.stringify(payload),{qos:1});
+    await device.publishAsync(`smartbasket/shelf/${payload.shelfId}/events`,JSON.stringify(payload),{qos:1});
     report.deliveries++;
     await waitFor(()=>acknowledgements.get(payload.eventId)>before,'application ACK '+payload.eventId);
     return state();
   }
-  const signal=(eventId,eventType,rssi,laneId='LANE-1',extra={})=>({eventId,shelfId:'SHELF-01',laneId,sku:laneId==='LANE-1'?'COKE':'WATER',eventType,timestamp:'',rssi:{...rssi,HV01:-63},...extra});
+  const signal=(eventId,eventType,rssi,laneId='LANE-1',extra={})=>({eventId,shelfId:laneId==='LANE-1'?'SHELF-01':'SHELF-02',laneId,sku:laneId==='LANE-1'?'COKE':'WATER',eventType,timestamp:'',rssi:{...rssi,HV01:-63},...extra});
   async function total(page,expected) {
     await page.waitForFunction(value=>document.querySelector('[class*="totalRow"] strong')?.textContent===`฿${value}`,expected);
   }
@@ -94,7 +94,7 @@ try {
   let current=await state();
   assert.equal(current.cases.length,0,'Clear events bypass Agent');
   assert.ok(current.baskets.every(x=>x.lines.length===0));
-  passed('30 complete MQTT cycles across A/B and Coke/Water; 60 transitions + 30 duplicates, no Agent and no wrong cart');
+  passed('30 complete MQTT cycles across A/B and Shelf 1 Cola/Shelf 2 Sprite Plus Tea; 60 transitions + 30 duplicates, no Agent and no wrong cart');
   const checkout=page=>page.getByRole('button',{name:/ชำระเงิน/});
   for(const [index,rssi] of [{A:-55,B:-57},{A:-57,B:-55},{A:-56,B:-56}].entries()) {
     if(agentic)for(let sample=0;sample<4;sample++) {

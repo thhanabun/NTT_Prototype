@@ -5,10 +5,24 @@ export const META_KEY = "STATE#META";
 const MAX_ITEM_BYTES = 240_000;
 const digest = value => createHash("sha256").update(value).digest("base64url");
 const encode = value => JSON.stringify(value);
+const stableEncode = value => {
+  const sort = item => Array.isArray(item) ? item.map(sort) : item && typeof item === "object"
+    ? Object.fromEntries(Object.keys(item).sort().filter(key => item[key] !== undefined).map(key => [key, sort(item[key])]))
+    : item;
+  return JSON.stringify(sort(value));
+};
 
 // Keep domain arrays in separate records; a versioned manifest preserves their order.
-export function stateRecords(store) {
+export function stateRecords(store, previousRecords = new Map()) {
   const records = new Map();
+  const previousKeys = new Map();
+  for (const [key, item] of previousRecords) {
+    const field = key.split("#")[1];
+    const signature = `${field}\0${stableEncode(item.value)}`;
+    const keys = previousKeys.get(signature) || [];
+    keys.push(key);
+    previousKeys.set(signature, keys);
+  }
   const data = {}, arrays = {};
   for (const [field, value] of Object.entries(store)) {
     if (!Array.isArray(value)) { data[field] = value; continue; }
@@ -16,7 +30,8 @@ export function stateRecords(store) {
       const idField = { cases: "caseId", events: "eventId", cloudReceipts: "eventId", orders: "orderId", auditLog: "auditId", sessions: "sessionId" }[field];
       const identity = idField ? entry[idField] : encode(entry);
       if (typeof identity !== "string" || !identity) throw new Error(`Missing ${field} record identity`);
-      const key = `STATE#${field}#${digest(identity)}`;
+      const signature = `${field}\0${stableEncode(entry)}`;
+      const key = idField ? `STATE#${field}#${digest(identity)}` : previousKeys.get(signature)?.shift() || `STATE#${field}#${digest(stableEncode(entry))}`;
       if (records.has(key)) throw new Error(`Duplicate ${field} record`);
       records.set(key, { stateKey: key, value: entry });
       return key;
@@ -87,12 +102,12 @@ export class DynamoDbRecordsRepository {
       const next = structuredClone(current.store);
       const result = mutator(next);
       if (result && typeof result.then === "function") throw new Error("State mutators must be synchronous and contain no external side effects");
-      const { meta, records } = stateRecords(next);
+      const { meta, records } = stateRecords(next, current.records);
       const changed = [];
-      for (const [key, item] of records) if (encode(item) !== encode(current.records.get(key))) changed.push({ Put: { TableName: this.tableName, Item: item } });
+      for (const [key, item] of records) if (stableEncode(item) !== stableEncode(current.records.get(key))) changed.push({ Put: { TableName: this.tableName, Item: item } });
       for (const key of current.records.keys()) if (!records.has(key)) changed.push({ Delete: { TableName: this.tableName, Key: { stateKey: key } } });
-      const oldMeta = stateRecords(current.store).meta;
-      if (current.version && !changed.length && encode(oldMeta) === encode(meta)) return { result, store: next };
+      const oldMeta = stateRecords(current.store, current.records).meta;
+      if (current.version && !changed.length && stableEncode(oldMeta) === stableEncode(meta)) return { result, store: next };
       meta.version = current.version + 1;
       meta.updatedAt = new Date().toISOString();
       const transaction = [{ Put: { TableName: this.tableName, Item: meta,

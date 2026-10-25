@@ -19,7 +19,7 @@ try {
   for (let index = 0; index < 15; index++) {
     await post('/api/sessions', { basketId: 'A' });
     await post('/api/events', { eventId: `stats-coke-${index}`, laneId: 'LANE-1', eventType: 'PICK', rssi: { A: -51, B: -72 } });
-    if (index % 2) await post('/api/events', { eventId: `stats-water-${index}`, laneId: 'LANE-2', eventType: 'PICK', rssi: { A: -51, B: -72 } });
+    if (index % 2) await post('/api/events', { eventId: `stats-water-${index}`, shelfId: 'SHELF-02', laneId: 'LANE-2', eventType: 'PICK', rssi: { A: -51, B: -72 } });
     await post('/api/checkout', { basketId: 'A' });
   }
   // An unpaid cart is not a sale.
@@ -51,7 +51,7 @@ try {
   const latest = () => page.locator('[role="tabpanel"]:not([hidden]) article').last();
   async function query(message, doubleClick = false) {
     console.log('QUERY ' + message);
-    await panel.getByLabel('คำถามสถิติ', { exact: true }).fill(message);
+    await panel.getByLabel('คำถามหรือคำสั่ง Admin', { exact: true }).fill(message);
     const before = requests;
     const completed = page.waitForResponse(response => new URL(response.url()).pathname === '/api/stats/query', { timeout: 45000 });
     if (doubleClick) await panel.getByRole('button', { name: 'ส่งคำถาม', exact: true }).evaluate(button => { button.click(); button.click(); });
@@ -98,7 +98,7 @@ try {
   assert.equal(results.at(-1).result.empty, true);
   await latest().getByText(/ไม่มี order ที่ checkout สำเร็จ/).waitFor();
   failQuery = true;
-  await panel.getByLabel('คำถามสถิติ', { exact: true }).fill('ยอดขายรายวัน 7 วัน');
+  await panel.getByLabel('คำถามหรือคำสั่ง Admin', { exact: true }).fill('ยอดขายรายวัน 7 วัน');
   await panel.getByRole('button', { name: 'ส่งคำถาม', exact: true }).click();
   await panel.getByRole('alert').filter({ hasText: 'Test stats unavailable' }).waitFor();
   assert.equal(await panel.getByRole('button', { name: 'ส่งคำถาม', exact: true }).isEnabled(), true);

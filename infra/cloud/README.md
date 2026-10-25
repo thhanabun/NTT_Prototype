@@ -35,7 +35,7 @@ flowchart TD
 
 Lambda container เป็น runtime ของ agent; Bedrock Converse เลือก action จริงจาก tools/scripts ที่อนุญาต ส่วน Laya ให้ basket-choice probability และ policy เดิมยังบังคับยืนยันก่อนเปลี่ยน cart ผู้ใช้ Stat Query เรียก Laya ภายใน runtime เดียวกัน Evidence ของ case ใช้ registered frames ส่วนกล้องสดส่ง JPEG ผ่าน Staff BFF ไป YOLO โดยไม่เก็บภาพใน DB หรือ audit log
 
-เส้น ESP/IoT ใน diagram ใช้เมื่อเปิด `enableIoT` เท่านั้น สำหรับ deployment แรก `enableIoT: false` และ `enableDemoSignals: true` ปุ่ม simulator ส่ง event เข้า API → FSM → cart/case → workflow เดียวกัน โดยบันทึกว่าเป็น `SIMULATOR` ไม่สร้าง device telemetry หรือทำให้ shelf แสดง ONLINE
+เส้น ESP/IoT ใน diagram ใช้เมื่อเปิด `enableIoT` เท่านั้น เมื่อเปิดจะรับ `SHELF-01` ถึง `SHELF-03` ผ่าน topic rule เดียว โดยแต่ละบอร์ดใช้ client ID และ X.509 certificate แยกกัน ปุ่ม simulator บันทึกแหล่งที่มาเป็น `SIMULATOR` และไม่สร้าง device telemetry หรือทำให้ shelf แสดง ONLINE
 
 Agent image รวม Node agent และ Python model services สอง environment ไว้ด้วยกัน ใช้ AWS Lambda Web Adapter 1.1.0 และบริการโมเดลฟังเฉพาะ loopback ภายใน container โมเดลและภาพตัวอย่างดาวน์โหลด/ตรวจ hash ตอน build ใช้ Hugging Face cache เดียวกันและเปิด offline mode ตอน runtime จึงไม่ดาวน์โหลด weights ซ้ำตอนเริ่มระบบ Agent ไม่มี Function URL; API/Investigate Lambda เรียกผ่าน `lambda:InvokeFunction` ที่จำกัด ARN เท่านั้น Browser ไม่ได้รับ AWS credentials หรือ model endpoint
 
@@ -74,8 +74,8 @@ Copy-Item infra/cloud/config.example.json data/cloud-config.json
 | `bedrockModelId` | model หรือ inference profile ที่บัญชี/region ใช้ได้และรองรับ Converse tool use |
 | `bedrockInvokeResources` | ARN ของ model/profile ทั้งหมดที่ต้อง invoke; script ไม่รับ wildcard |
 | `budgetEmail`, `monthlyBudgetUsd` | ผู้รับแจ้งเตือนและวงเงินแจ้งเตือนรายเดือน |
-| `shelfId` | `SHELF-01` ให้ตรงกับ firmware/client ID |
-| `enableIoT` | `false` สำหรับรอบนี้; ไม่เรียก IoT endpoint discovery หรือสร้าง ingestion/Thing/policy/rule |
+| `shelfId` | `SHELF-01` สำหรับ Thing เดิม; IoT ingestion รองรับ shelf ID ทั้งสาม |
+| `enableIoT` | `false` ใน config ตัวอย่าง; `true` สร้าง ingestion, Thing, policy และ rule สำหรับทั้งสาม shelf |
 | `enableDemoSignals` | `true` เปิด mock signal เฉพาะผู้ใช้ Cognito group `STAFF`; ปิดได้หลังต่ออุปกรณ์จริง |
 
 การมีชื่อ model ใน config ไม่ยืนยันสิทธิ์ใช้งาน ต้องตรวจ model access, region และ inference-profile permissions ในบัญชีจริงก่อน deploy ไม่มี paid model ถูกเรียกโดยการทดสอบ offline
@@ -129,8 +129,8 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 3. รัน `node scripts/cloud-pairing.mjs` เพื่อสร้าง URL และ SVG QR สองใบใน `data/` แบบ offline รหัส QR เป็นสิทธิ์เริ่ม session ของ basket จึงแจกเฉพาะตะกร้า demo
 4. ก่อนซ้อมรัน `.\.venv-cloud\Scripts\python.exe scripts/warm-cloud-agent.py` เพื่อ warm Laya/YOLO ผ่าน private Lambda health route โดยไม่แตะ cart/case (cold start ที่วัดได้ประมาณ 176 วินาที) คำสั่งนี้ไม่ยืนยันสิทธิ์ Bedrock
 5. เปิด HTTPS Shopper ด้วย QR และ Staff login ใช้ simulator ใน Admin เพื่อส่ง PICK/PUT_BACK โดยยังไม่ต่อ ESP และเปิดกล้องบนอุปกรณ์ที่ใช้ Admin ได้จาก “กล้องสด”
-6. เมื่อพร้อมเพิ่ม IoT ให้เปลี่ยน `enableIoT: true` และ deploy ใหม่ จากนั้นรัน `powershell -NoProfile -File scripts/provision-cloud-device.ps1` เพื่อสร้าง certificate และ attach policy/Thing เก็บ private key ใน `data/aws-device/` เท่านั้น
-7. สำรอง firmware secrets แล้วใช้ `aws_shelf/aws_shelf.ino` กับ ATS endpoint/certificate ของ cloud เมื่อพร้อมเปลี่ยน ESP; รอบนี้ไม่ flash บอร์ดหรือหยุด local services
+6. เมื่อเปิด IoT แล้ว provision แยกทีละบอร์ดด้วย `powershell -NoProfile -File scripts/provision-cloud-device.ps1 -ShelfId SHELF-01` (เปลี่ยน ID เป็น `SHELF-02` หรือ `SHELF-03`); private key และ header อยู่ใน ignored `data/aws-device/`
+7. Compile/flash sketch ที่ตรงกับ shelf: `aws_shelf`, `aws_shelf_02` หรือ `aws_shelf_03`; Shelf 3 ใช้ GPIO 18/21 ตาม wiring ของบอร์ดนั้น
 
 ## Guarantees และการ recover
 
@@ -158,7 +158,7 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 
 1. HTTPS/Staff login/logout; anonymous ไม่อ่าน cart/audit, Basket A อ่าน/แก้ Basket B ไม่ได้
 2. รอบไม่ใช้ IoT: anonymous ส่ง mock event ไม่ได้; STAFF ส่งจาก simulator ได้และ audit แสดง SIMULATOR โดยไม่สร้าง device ONLINE ทดลองกล้องสดกับสิทธิ์เข้าถึงกล้องบนอุปกรณ์จริง
-3. อย่างน้อย 30 PICK/PUT_BACK cycles รวม duplicate/retry; cart ไม่ติดลบ/เพิ่มซ้ำ เมื่อเพิ่ม IoT ภายหลังจึงตรวจ device ONLINE/OFFLINE และ ACK หลัง DB persist
+3. ทดสอบ IoT telemetry, PICK/PUT_BACK, duplicate/retry และ ACK แยกครบทั้งสาม shelf; cart ไม่ติดลบหรือเพิ่มซ้ำ
 4. Clear → cart โดยไม่เรียก model; ambiguous → **Bedrock trace/tool calls จริง** → Laya → Customer YES และ NO; missing/low-confidence → Staff
 5. Customer timeout, Agent/model outage, callback transport failure และ workflow retry ไม่สร้าง payable line โดยไม่มี valid decision
 6. Mock checkout/receipt, Stat Query อ่านเฉพาะ completed orders; S3 audit/archive, Lambda logs retention, CloudTrail และ budget/SNS ทำงานจริง
@@ -201,4 +201,4 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 - Image Lambda amd64 ของ Web/Agent build และ push ECR ผ่านแล้ว รอบแรกของ Lambda พบ memory quota สูงสุด 3,008 MB จึงปรับ Agent ให้ตรง quota; ดูสถานะล่าสุดและหลักฐานใน [รายงาน deployment](../../docs/cloud-deployment-status.md) ยังไม่ถือว่าผ่าน cloud acceptance จนกว่าจะตรวจ flow จริง
 - Failed stack ถูก rollback แล้วลบเฉพาะ stack container เพื่อ retry เก็บ retained DB/archive/secret ของแต่ละรอบใน ignored `data/cloud-recovery-retained.json` โดยไม่ลบข้อมูล retained
 
-- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, ไม่มี IoT resources และเรียก Bedrock Converse จริงเลือก `STOP_STAFF` ผ่านแล้วหลัง account verification denial หายไป; full cloud acceptance ยังไม่ครบ ดูรายงาน deployment ด้านบน
+- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, IoT rule/policy รองรับสาม shelf; physical flash และ IoT acceptance ของ Shelf 2/3 ยังต้องทำบนบอร์ดจริง ดูรายงาน deployment ด้านบน

@@ -13,12 +13,14 @@ import { DynamoDbRecordsRepository } from "./records-repository.mjs";
 
 const hash = value => createHash("sha256").update(value).digest("hex");
 const seconds = () => Math.floor(Date.now() / 1000);
+const transientRealtimeCodes = new Set(["EBUSY", "EAI_AGAIN", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED", "ENETUNREACH", "EHOSTUNREACH"]);
+const isTransientRealtimeError = error => transientRealtimeCodes.has(error.code) || [429, 500, 502, 503, 504].includes(error.$metadata?.httpStatusCode);
 export function createCloudServices(env = process.env) {
   const documentClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), { marshallOptions: { removeUndefinedValues: true } });
   const repository = new DynamoDbRecordsRepository({ tableName: env.STATE_TABLE, documentClient });
   const step = new SFNClient({}), secrets = new SecretsManagerClient({}), agent = new LambdaClient({});
   const control = env.CONTROL_TABLE;
-  let keyPromise, verifier;
+  let keyPromise, verifier, realtimeClient, lastRealtimeWarningAt = 0;
   async function get(key) { return (await documentClient.send(new GetCommand({ TableName: control, Key: { id: key }, ConsistentRead: true }))).Item; }
   async function put(item, options = {}) { await documentClient.send(new PutCommand({ TableName: control, Item: item, ...options })); return item; }
   async function scan(filter, projection) {
@@ -85,17 +87,33 @@ export function createCloudServices(env = process.env) {
     },
     async disconnect(connectionId) { await documentClient.send(new DeleteCommand({ TableName: control, Key: { id: "CONNECTION#" + connectionId } })); },
     async broadcast() {
-      const client = new ApiGatewayManagementApiClient({ endpoint: env.WS_MANAGEMENT_ENDPOINT });
+      const client = realtimeClient ||= new ApiGatewayManagementApiClient({ endpoint: env.WS_MANAGEMENT_ENDPOINT });
       const connections = await scan(item => item.id.startsWith("CONNECTION#"), "id, connectionId, expiresAt");
       for (const connection of connections) {
         if (connection.expiresAt <= seconds()) { await documentClient.send(new DeleteCommand({ TableName: control, Key: { id: connection.id } })); continue; }
-        try {
-          // Invalidation only: large/private snapshots are fetched through scoped HTTP authorization.
-          await client.send(new PostToConnectionCommand({ ConnectionId: connection.connectionId, Data: Buffer.from('{"type":"STATE_CHANGED"}') }));
-        } catch (error) {
-          if (error.name !== "GoneException" && error.$metadata?.httpStatusCode !== 410) throw error;
-          await documentClient.send(new DeleteCommand({ TableName: control, Key: { id: connection.id } }));
+        const command = new PostToConnectionCommand({ ConnectionId: connection.connectionId, Data: Buffer.from('{"type":"STATE_CHANGED"}') });
+        let deliveryError;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try { await client.send(command); deliveryError = undefined; break; }
+          catch (error) {
+            deliveryError = error;
+            if (attempt || !isTransientRealtimeError(error)) break;
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
+        if (!deliveryError) continue;
+        if (deliveryError.name === "GoneException" || deliveryError.$metadata?.httpStatusCode === 410) {
+          await documentClient.send(new DeleteCommand({ TableName: control, Key: { id: connection.id } }));
+          continue;
+        }
+        if (isTransientRealtimeError(deliveryError)) {
+          if (Date.now() - lastRealtimeWarningAt >= 60_000) {
+            lastRealtimeWarningAt = Date.now();
+            console.warn("Skipped a transient WebSocket notification failure; state remains available through the API", { code: deliveryError.code, status: deliveryError.$metadata?.httpStatusCode });
+          }
+          continue;
+        }
+        throw deliveryError;
       }
     },
     async archive(records) {

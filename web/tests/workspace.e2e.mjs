@@ -18,7 +18,7 @@ try {
     },
   });
   const days = Array.from({ length: 7 }, (_, index) => ({ key: `2026-10-${17 + index}`, label: `2026-10-${17 + index}`, value: 100 * (index + 1), revenue: 100 * (index + 1), quantity: 5 * (index + 1), orderCount: index + 1 }));
-  const top = [{ key: 'COKE', label: 'Coca-Cola', value: 300, revenue: 300, quantity: 12, orderCount: 8 }, { key: 'WATER', label: 'Mineral water', value: 120, revenue: 120, quantity: 8, orderCount: 6 }];
+  const top = [{ key: 'COKE', label: 'Cola', value: 300, revenue: 300, quantity: 12, orderCount: 8 }, { key: 'SPRITE_PLUS_TEA', label: 'Sprite Plus Tea', value: 120, revenue: 120, quantity: 8, orderCount: 6 }];
   let count = 0;
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {}) });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -47,7 +47,7 @@ try {
   await page.getByRole('button', { name: 'เปิดแชทถามข้อมูลร้าน', exact: true }).click();
   const panel = page.getByRole('region', { name: 'ถามข้อมูลร้าน', exact: true });
   const ask = async message => {
-    await panel.getByLabel('คำถามสถิติ', { exact: true }).fill(message);
+    await panel.getByLabel('คำถามหรือคำสั่ง Admin', { exact: true }).fill(message);
     await panel.getByRole('button', { name: 'ส่งคำถาม', exact: true }).click();
     await panel.locator('[role="log"][aria-busy="false"]').waitFor();
   };
@@ -74,7 +74,7 @@ try {
   await ask('สินค้า top 10 ตามยอดเงิน 7 วัน');
   assert.equal(await page.getByRole('tab').count(), 3, 'Dashboard + two result tabs');
   await active().getByRole('button', { name: 'อันดับ', exact: true }).click();
-  await active().getByText('Coca-Cola').first().waitFor();
+  await active().getByText('Cola').first().waitFor();
 
   // Dashboard stays mounted; switching back and forth keeps the chat history link working.
   await dashboardTab.click();

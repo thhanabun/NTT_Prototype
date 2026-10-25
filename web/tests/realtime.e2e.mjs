@@ -30,7 +30,7 @@ try {
     const response=await context.request.post(api.origin+path,{data});
     assert.ok(response.ok(),await response.text());return response.json();
   };
-  const event=(id,rssi,eventType='PICK',laneId='LANE-1')=>apiPost('/api/events',{eventId:id,rssi,eventType,laneId});
+  const event=(id,rssi,eventType='PICK',laneId='LANE-1')=>apiPost('/api/events',{eventId:id,shelfId:laneId==='LANE-2'?'SHELF-02':'SHELF-01',rssi,eventType,laneId});
   async function open(path) {
     const page=await context.newPage();
     page.on('pageerror',error=>errors.push(error.message));
@@ -135,7 +135,7 @@ try {
   await shopperB.getByRole('status').filter({hasText:/1\/5/}).waitFor();
   for(const [index,delay] of [1500,3000,6000,12000,30000].entries()) {
     await shopperB.clock.runFor(delay);
-    await shopperB.getByRole('status').filter({hasText:index===4?'Realtime offline':`${index+2}/5`}).waitFor();
+    await shopperB.getByRole('status').filter({hasText:index===4?/ออฟไลน์/:`${index+2}/5`}).waitFor();
   }
   assert.equal(await subscribers(),0,'Retry exhaustion must close the stream');
   assert.equal(await shopperB.getByRole('button',{name:'ชำระเงิน',exact:true}).isDisabled(),true);
@@ -143,7 +143,7 @@ try {
   await shopperB.getByRole('button',{name:'อัปเดตตะกร้า',exact:true}).click();
   await shopperB.getByRole('status').filter({hasText:'เชื่อมต่อแล้ว'}).waitFor();
   await total(shopperB,'฿45');assert.equal(await subscribers(),1);
-  await shopperB.getByRole('link',{name:'ดู UI preview ด้วยข้อมูลตัวอย่าง',exact:true}).click();
+  await shopperB.goto(frontend+'/shopper/preview');
   await shopperB.getByText('Preview screen states',{exact:false}).waitFor();
   await shopperB.clock.runFor(1); // Run the store's deferred Strict Mode cleanup.
   assert.equal(await subscribers(),0,'Navigating to fixture preview must close SSE');

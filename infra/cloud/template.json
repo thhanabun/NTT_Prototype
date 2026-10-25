@@ -453,9 +453,17 @@
               {
                 "Effect": "Allow",
                 "Action": "iot:Publish",
-                "Resource": {
-                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/acks"
-                }
+                "Resource": [
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-01/acks"
+                  },
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-02/acks"
+                  },
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-03/acks"
+                  }
+                ]
               }
             ]
           }
@@ -1495,9 +1503,21 @@
     "ShelfThing": {
       "Type": "AWS::IoT::Thing",
       "Properties": {
-        "ThingName": {
-          "Ref": "ShelfId"
-        }
+        "ThingName": "SHELF-01"
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "ShelfThing02": {
+      "Type": "AWS::IoT::Thing",
+      "Properties": {
+        "ThingName": "SHELF-02"
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "ShelfThing03": {
+      "Type": "AWS::IoT::Thing",
+      "Properties": {
+        "ThingName": "SHELF-03"
       },
       "Condition": "ProvisionIoT"
     },
@@ -1510,76 +1530,74 @@
             {
               "Effect": "Allow",
               "Action": "iot:Connect",
-              "Resource": {
-                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:client/${ShelfId}"
-              }
+              "Resource": [
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:client/SHELF-01"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:client/SHELF-02"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:client/SHELF-03"
+                }
+              ]
             },
             {
               "Effect": "Allow",
               "Action": "iot:Publish",
               "Resource": [
                 {
-                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/events"
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-01/events"
                 },
                 {
-                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/telemetry"
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-01/telemetry"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-02/events"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-02/telemetry"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-03/events"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-03/telemetry"
                 }
               ]
             },
             {
               "Effect": "Allow",
               "Action": "iot:Subscribe",
-              "Resource": {
-                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smartbasket/shelf/${ShelfId}/acks"
-              }
+              "Resource": [
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smartbasket/shelf/SHELF-01/acks"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smartbasket/shelf/SHELF-02/acks"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smartbasket/shelf/SHELF-03/acks"
+                }
+              ]
             },
             {
               "Effect": "Allow",
               "Action": "iot:Receive",
-              "Resource": {
-                "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/${ShelfId}/acks"
-              }
-            }
-          ]
-        }
-      },
-      "Condition": "ProvisionIoT"
-    },
-    "IoTErrorRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "iot.amazonaws.com"
-              },
-              "Action": "sts:AssumeRole"
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": "FailureQueue",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
+              "Resource": [
                 {
-                  "Effect": "Allow",
-                  "Action": "sqs:SendMessage",
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "FailureQueue",
-                      "Arn"
-                    ]
-                  }
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-01/acks"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-02/acks"
+                },
+                {
+                  "Fn::Sub": "arn:${AWS::Partition}:iot:${AWS::Region}:${AWS::AccountId}:topic/smartbasket/shelf/SHELF-03/acks"
                 }
               ]
             }
-          }
-        ]
+          ]
+        }
       },
       "Condition": "ProvisionIoT"
     },
@@ -1588,9 +1606,7 @@
       "Properties": {
         "TopicRulePayload": {
           "AwsIotSqlVersion": "2016-03-23",
-          "Sql": {
-            "Fn::Sub": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId FROM 'smartbasket/shelf/${ShelfId}/+' WHERE topic(4) = 'events' OR topic(4) = 'telemetry'"
-          },
+          "Sql": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId FROM 'smartbasket/shelf/+/+' WHERE (topic(4) = 'events' OR topic(4) = 'telemetry') AND (topic(3) = 'SHELF-01' OR topic(3) = 'SHELF-02' OR topic(3) = 'SHELF-03')",
           "RuleDisabled": false,
           "Actions": [
             {
@@ -1603,20 +1619,7 @@
                 }
               }
             }
-          ],
-          "ErrorAction": {
-            "Sqs": {
-              "QueueUrl": {
-                "Ref": "FailureQueue"
-              },
-              "RoleArn": {
-                "Fn::GetAtt": [
-                  "IoTErrorRole",
-                  "Arn"
-                ]
-              }
-            }
-          }
+          ]
         }
       },
       "Condition": "ProvisionIoT"
@@ -2344,6 +2347,18 @@
       "Condition": "ProvisionIoT",
       "Value": {
         "Ref": "ShelfThing"
+      }
+    },
+    "Shelf02ThingName": {
+      "Condition": "ProvisionIoT",
+      "Value": {
+        "Ref": "ShelfThing02"
+      }
+    },
+    "Shelf03ThingName": {
+      "Condition": "ProvisionIoT",
+      "Value": {
+        "Ref": "ShelfThing03"
       }
     },
     "AgentFunctionArn": {
