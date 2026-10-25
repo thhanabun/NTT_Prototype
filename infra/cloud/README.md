@@ -130,7 +130,7 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 4. ก่อนซ้อมรัน `.\.venv-cloud\Scripts\python.exe scripts/warm-cloud-agent.py` เพื่อ warm Laya/YOLO ผ่าน private Lambda health route โดยไม่แตะ cart/case (cold start ที่วัดได้ประมาณ 176 วินาที) คำสั่งนี้ไม่ยืนยันสิทธิ์ Bedrock
 5. เปิด HTTPS Shopper ด้วย QR และ Staff login ใช้ simulator ใน Admin เพื่อส่ง PICK/PUT_BACK โดยยังไม่ต่อ ESP และเปิดกล้องบนอุปกรณ์ที่ใช้ Admin ได้จาก “กล้องสด”
 6. เมื่อเปิด IoT แล้ว provision แยกทีละบอร์ดด้วย `powershell -NoProfile -File scripts/provision-cloud-device.ps1 -ShelfId SHELF-01` (เปลี่ยน ID เป็น `SHELF-02` หรือ `SHELF-03`); private key และ header อยู่ใน ignored `data/aws-device/`
-7. Compile/flash sketch ที่ตรงกับ shelf: `aws_shelf`, `aws_shelf_02` หรือ `aws_shelf_03`; Shelf 3 ใช้ GPIO 18/21 ตาม wiring ของบอร์ดนั้น
+7. Compile/flash sketch ที่ตรงกับ shelf: `aws_shelf`, `aws_shelf_02` หรือ `aws_shelf_03`; Shelf 3 sketch ปัจจุบันกำหนด GPIO 4/5 และต้องตรวจรุ่นบอร์ด/FQBN จริงก่อน flash
 
 ## Guarantees และการ recover
 
@@ -201,4 +201,4 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 - Image Lambda amd64 ของ Web/Agent build และ push ECR ผ่านแล้ว รอบแรกของ Lambda พบ memory quota สูงสุด 3,008 MB จึงปรับ Agent ให้ตรง quota; ดูสถานะล่าสุดและหลักฐานใน [รายงาน deployment](../../docs/cloud-deployment-status.md) ยังไม่ถือว่าผ่าน cloud acceptance จนกว่าจะตรวจ flow จริง
 - Failed stack ถูก rollback แล้วลบเฉพาะ stack container เพื่อ retry เก็บ retained DB/archive/secret ของแต่ละรอบใน ignored `data/cloud-recovery-retained.json` โดยไม่ลบข้อมูล retained
 
-- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, IoT rule/policy รองรับสาม shelf; physical flash และ IoT acceptance ของ Shelf 2/3 ยังต้องทำบนบอร์ดจริง ดูรายงาน deployment ด้านบน
+- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, IoT rule/policy และ Things รองรับสาม shelf; ผู้ใช้รายงานว่า signal flow ผ่านแล้ว แต่ไม่มีผลทดสอบแยกตามบอร์ดแนบอยู่ในรายงานนี้ ดู [รายงาน deployment](../../docs/cloud-deployment-status.md) และ [คู่มือ replicate](../../docs/replicate-fast.md)

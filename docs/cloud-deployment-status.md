@@ -6,7 +6,7 @@
 - Stack: `fast-prototype`; image bootstrap: `fast-prototype-images`
 - Runtime: Next.js Lambda Function URL; private Agent Lambda with Laya typed-decisions and YOLO11n; Bedrock Converse `apac.amazon.nova-lite-v1:0`
 - API Gateway HTTP/WebSocket, Lambda FSM/tools, DynamoDB, Step Functions Standard, Cognito STAFF, S3, CloudWatch, CloudTrail and monthly budget alert US$50
-- IoT disabled; authenticated Admin simulator is enabled. Local demo DB, services and ESP firmware are preserved.
+- IoT was disabled at initial deployment and enabled in a later stack update. Read-only CloudFormation check on 25 Oct 2026 found `EnableIoT=true`, three IoT Things, one device policy and one topic rule. The user reported the IoT signal path passed; this report does not retain per-device acceptance artifacts. Authenticated Admin simulator remains enabled. Local demo DB, services and ESP firmware are preserved.
 
 ## Deployment record
 
@@ -56,7 +56,7 @@ This checks actual model access and the tool-selection contract from the deploym
 - Private Agent `/ping`: HTTP 200 `Healthy` with both Laya/YOLO loaded after the cache permission fix. Measured cold invocation: **176.01 seconds**. This is startup readiness, not a model accuracy or full flow result.
 - Anonymous `/api/state` returns an empty public scaffold by design; `/api/audit` returned 403. Source `scopedState()` controls that separation. Full cross-basket acceptance is still pending.
 - Cognito callback exactly matches the deployed HTTPS origin.
-- No `AWS::IoT::*` resources exist in this stack; all 12 Lambda log groups have 14-day retention, retention handler returned `{ "ok": true }`.
+- Current read-only inventory: three `AWS::IoT::Thing` resources, one `AWS::IoT::Policy` and one `AWS::IoT::TopicRule`; stack `EnableIoT=true`. CloudFormation status does not itself verify physical firmware flashing or per-shelf end-to-end acceptance. All 12 Lambda log groups have 14-day retention; retention handler returned `{ "ok": true }`.
 - Release tag: `fast-lambda-cachefix-20261025`; Web digest `sha256:8a06cc0af896e13b8446906c7d74bb987fee93dae45402e29b8b82d46fd041d5`, Agent digest `sha256:05740914a3ceb922ce8088d916922df800c1f9be2062345e142eeae75b837a87`.
 - Ignored evidence: `data/cloud-agent-cachefix-health.json`, `data/cloud-config-health.json`, `data/cloud-bedrock-readiness.json`, `data/cloud-staff-setup.json` and `tmp/cloud-ui/fast-cloud-admin.png`.
 
