@@ -35,6 +35,10 @@ function changed() { for (const socket of sockets) if (socket.readyState === 1) 
 const repository = { async read() { return structuredClone(store); }, async mutate(fn) { const next = structuredClone(store), result = fn(next); store = next; changed(); return { result, store: structuredClone(store) }; } };
 const services = {
   repository, key: async () => secret,
+  shopperEnv: { SHOPPER_AGENT_MODE: 'model', SHOPPER_AGENT_BASE_URL: 'http://fixture.invalid/v1', SHOPPER_AGENT_MODEL: 'SHOPPER_FIXTURE' },
+  shopperCompletion: async ({ tools, messages }) => ({ model: 'SHOPPER_FIXTURE', usage: { inputTokens: 10, outputTokens: 5 }, message: tools
+    ? { role: 'assistant', tool_calls: [{ id: 'shopper-fixture-call', type: 'function', function: { name: 'read_my_basket', arguments: '{}' } }] }
+    : { role: 'assistant', content: JSON.stringify({ answer: `ยอดสินค้าที่ยืนยันแล้ว ${JSON.parse(messages.find(item => item.role === 'tool').content).total} บาท`, citations: ['basket:current'], unsupported: false }) } }),
   verifyJwt: async token => { assert.equal(token, 'fixture-staff-token'); return { sub: 'staff-test', username: 'staff@test.invalid', 'cognito:groups': ['STAFF'], exp: Math.floor(Date.now() / 1000) + 3600 }; },
   get: async id => control.get(id), put: async item => control.set(item.id, item), scan: async filter => [...control.values()].filter(filter),
   async ticket() { const ticket = randomBytes(32).toString('base64url'); control.set(ticket, true); return { ticket, connectionExpiresAt: Math.floor(Date.now() / 1000) + 35 }; },
@@ -84,7 +88,7 @@ try {
   frontend = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', String(frontPort), '--hostname', '127.0.0.1'], { cwd: web, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   frontend.stdout.on('data', chunk => logs.push(chunk.toString())); frontend.stderr.on('data', chunk => logs.push(chunk.toString()));
   await until(async () => { if (frontend.exitCode !== null) throw new Error(logs.slice(-10).join('')); try { return (await fetch(origin)).ok; } catch { return false; } }, 'production Next server', 60000);
-  browser = await chromium.launch({ headless: true, args: ['--ignore-certificate-errors'] }); // Test-only local CA, not application TLS configuration.
+  browser = await chromium.launch({ headless: true, args: ['--ignore-certificate-errors'], ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {}) }); // Test-only local CA, not application TLS configuration.
   const aContext = await browser.newContext({ ignoreHTTPSErrors: true }), bContext = await browser.newContext({ ignoreHTTPSErrors: true }), staffContext = await browser.newContext({ ignoreHTTPSErrors: true });
   const a = await aContext.newPage(), b = await bContext.newPage(), admin = await staffContext.newPage();
   for (const page of [a, b, admin]) page.on('pageerror', error => errors.push(error.message));
@@ -109,6 +113,15 @@ try {
   assert.ok((await aContext.cookies()).some(cookie => cookie.name === 'basketly-shopper-A' && cookie.httpOnly && cookie.secure));
   const foreign = await a.evaluate(() => fetch('/api/state', { headers: { 'x-basket-id': 'B' } }).then(response => response.json())); assert.equal(foreign.baskets.find(item => item.basketId === 'B').session, null);
   passed('Signed QR basket pairing, scoped cookies and native WSS invalidation update A/B correctly for PICK/duplicate/PUT_BACK');
+  // Shopper chat must use the basket cookie even if this browser also has a staff login.
+  const staffCookie = (await staffContext.cookies()).find(cookie => cookie.name === 'basketly-staff');
+  await aContext.addCookies([staffCookie]);
+  const shopperChat = await a.evaluate(() => fetch('/api/shopper/query', { method: 'POST', headers: { 'content-type': 'application/json', 'x-basket-id': 'A' }, body: JSON.stringify({ message: 'ตะกร้าฉันมีอะไรบ้าง', basketId: 'A' }) }).then(async response => ({ status: response.status, body: await response.json() })));
+  assert.equal(shopperChat.status, 200); assert.equal(shopperChat.body.sources[0].data.basketId, 'A'); assert.equal(shopperChat.body.modelCalls, 2);
+  const foreignChat = await a.evaluate(() => fetch('/api/shopper/query', { method: 'POST', headers: { 'content-type': 'application/json', 'x-basket-id': 'B' }, body: JSON.stringify({ message: 'my cart', basketId: 'B' }) }).then(response => response.status));
+  assert.equal(foreignChat, 401);
+  await aContext.clearCookies({ name: 'basketly-staff' });
+  passed('Production Shopper chat BFF preserves signed basket ownership despite staff cookies; fixture model only');
   await signal('cloud-browser-ambiguous', { A: -55, B: -57 });
   await handlers.investigate({ caseId: 'CASE-001', investigate: true });
   await handlers.handoff({ caseId: 'CASE-001', stage: 'CUSTOMER', taskToken: 'fixture-private-token' });

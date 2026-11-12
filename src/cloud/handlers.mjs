@@ -3,6 +3,7 @@ import { addAuditEntry, customerDecision, processShelfEvent, staffDecision, star
 import { ingestTelemetry } from "../evidence.mjs";
 import { completeCaseInvestigation } from "../agent/case-manager.mjs";
 import { queryStatistics } from "../stats-query.mjs";
+import { createShopperAgent } from "../shopper-agent/index.mjs";
 import { authenticate, basketId, httpError, requireOwner, requireStaff, scopedState, signShopper, verifyPairing } from "./auth.mjs";
 import { createCloudServices } from "./services.mjs";
 import { SHELF_IDS } from "../shelves.mjs";
@@ -18,6 +19,7 @@ const tokenKey = (id, actor) => `HITL#${id}#${actor.toUpperCase()}`;
 
 export function createCloudHandlers(services) {
   const { repository } = services;
+  const queryShopper = createShopperAgent({ repository, env: services.shopperEnv || process.env, complete: services.shopperCompletion });
   async function launch(item) {
     if (!item || item.status === "CLOSED") return;
     await services.startWorkflow(item);
@@ -47,6 +49,9 @@ export function createCloudHandlers(services) {
           return reply(200, await services.invokeAgent({ type: "LIVE_VISION", cameraSession: frame.cameraSession, jpeg: frame.jpeg }));
         }
         const body = bodyOf(event);
+        if (method === "POST" && path === "/api/shopper/query") {
+          return reply(200, await queryShopper(body, { principal, clientKey: event.requestContext?.http?.sourceIp || "anonymous" }));
+        }
         if (method === "POST" && path === "/api/events") {
           requireStaff(principal);
           if (!services.demoSignalsEnabled) throw httpError(403, "Cloud demo signals are disabled");

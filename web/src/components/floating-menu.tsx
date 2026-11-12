@@ -25,7 +25,8 @@ export function FloatingMenu() {
   const pathname = usePathname();
   const auth = useAdminSession();
   const signedIn = adminAuthEnabled && auth.status === "signed-in";
-  const chatAvailable = signedIn && pathname.startsWith("/admin") && !pathname.startsWith("/admin/login");
+  const shopperChat = pathname === "/shopper";
+  const chatAvailable = shopperChat || (signedIn && pathname.startsWith("/admin") && !pathname.startsWith("/admin/login"));
   const [position, setPosition] = useState<Point | null>(null);
   const [open, setOpen] = useState(false);
   const drag = useRef<{ start: Point; origin: Point; moved: boolean } | null>(null);
@@ -111,8 +112,8 @@ export function FloatingMenu() {
       style={point ? { left: rightHalf ? undefined : point.x, right: rightHalf ? window.innerWidth - point.x - SIZE : undefined, top: lowerHalf ? undefined : point.y + SIZE + 10, bottom: lowerHalf ? window.innerHeight - point.y + 10 : undefined } : undefined}
       role="group" aria-label="เมนูลัดและการตั้งค่า">
       <p className={styles.title}>FAST · เมนูลัด</p>
-      {chatAvailable && <button type="button" className={styles.primary} aria-label="เปิดแชทถามข้อมูลร้าน" onClick={() => { setOpen(false); window.dispatchEvent(new Event(OPEN_CHAT_EVENT)); }}>
-        <span className={styles.icon}><MessageCircle size={18} aria-hidden="true" /></span><span><b>ถามข้อมูลร้าน</b><small>แชทกับ Laya · ผลเปิดเป็นแท็บใหม่</small></span>
+      {chatAvailable && <button type="button" className={styles.primary} aria-label={shopperChat ? "เปิดแชทผู้ช่วยช้อป" : "เปิดแชทถามข้อมูลร้าน"} onClick={() => { setOpen(false); window.dispatchEvent(new Event(OPEN_CHAT_EVENT)); }}>
+        <span className={styles.icon}><MessageCircle size={18} aria-hidden="true" /></span><span><b>{shopperChat ? "ผู้ช่วยช้อป FAST" : "ถามข้อมูลร้าน"}</b><small>{shopperChat ? "ถามสินค้า ตะกร้า และวิธีใช้งาน" : "แชทกับ Laya · ผลเปิดเป็นแท็บใหม่"}</small></span>
       </button>}
       <button type="button" onClick={() => toggleTheme()}>
         <span className={styles.icon}><Moon className="icon-moon" size={18} aria-hidden="true" /><Sun className="icon-sun" size={18} aria-hidden="true" /></span>

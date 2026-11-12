@@ -1,0 +1,20 @@
+.answer { white-space: pre-wrap; }
+.identity > div { min-width: 0; }
+.identity h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.identity > div > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sources { width: 100%; display: grid; gap: 8px; font-size: 12px; color: var(--c-ink); }
+.source { min-width: 0; padding: 10px 12px; border: 1px solid var(--c-line); border-radius: 12px; background: var(--c-surface); overflow-wrap: anywhere; }
+.source summary { cursor: pointer; font-weight: 600; line-height: 1.65; }
+.source p, .source ul { margin: 7px 0 0; font-size: 12px; line-height: 1.8; }
+.source li { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.source strong { flex-shrink: 0; }
+.source small { display: block; margin-top: 8px; color: var(--c-soft); }
+.note { font-size: 11px; line-height: 1.7; padding: 0 16px 10px; margin: 0; color: var(--c-soft); }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.retry { border: 1px solid var(--c-line); color: var(--c-ink); background: var(--c-surface); border-radius: 10px; min-height: 36px; padding: 7px 12px; cursor: pointer; font: inherit; font-size: 12px; }
+.retry:disabled { opacity: .5; cursor: not-allowed; }
+.status { margin: 0 16px 10px; font-size: 12px; line-height: 1.7; color: var(--c-soft); }
+.facts { margin-top: 5px; }
+.entryError { display: grid; gap: 8px; }
+@media (max-width: 600px) { .note { padding-bottom: 6px; } }
+@media (max-width: 360px) { .identity { padding-inline: 8px; } .identity > span { display: none; } .identity h2 { font-size: 13px; } }
