@@ -46,6 +46,11 @@ test("layout and camera saves are persisted and do not overwrite each other", as
     const saved = JSON.parse(await readFile(path, "utf8"));
     assert.equal(saved.metresPerUnit, 0.08);
     assert.deepEqual(saved.cameras["CAM-01"].h, H);
+    const outline = [{ x: .1, y: .5 }, { x: .4, y: .5 }, { x: .45, y: .7 }, { x: .05, y: .7 }];
+    await file.saveCamera("CAM-02", { width: 640, height: 360, h: H, quads: { "shelf-1": outline } });
+    assert.deepEqual(file.get().cameras["CAM-02"].quads["shelf-1"], outline);
+    await assert.rejects(file.saveCamera("CAM-02", { width: 640, height: 360, h: H, quads: { "shelf-1": outline.slice(0, 3) } }), /outline/);
+    await file.saveCamera("CAM-02", null);
     await file.saveCamera("CAM-01", null);
     const reloaded = createStoreMapFile(path);
     assert.deepEqual((await reloaded.load()).cameras, {});

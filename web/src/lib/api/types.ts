@@ -275,6 +275,8 @@ export interface StoreShape {
 export interface CameraMapping {
   width: number;
   height: number;
+  /** Outlines staff drew on the camera image, by shape ID (normalized 0–1 points). */
+  quads?: Record<string, { x: number; y: number }[]>;
   /** Homography from normalized image coordinates (0–1) to store-map units. */
   h: number[];
   updatedAt: string;

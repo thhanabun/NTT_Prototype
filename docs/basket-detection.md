@@ -452,3 +452,17 @@ Differences from sections 7–8 (all ponytail cuts or fixes found while building
 - **Snapshot time** is the moment the server receives the shelf event (shelf events have no trusted capture time today).
 
 Verified: backend `npm test` 80/80; web typecheck, lint and `test:unit` 3/3; web `test:e2e` (auth, Shopper, Admin, native SSE) all pass; map editor drag-and-save and the live store map checked in the browser with scripted tracks and BLE telemetry; water-buyer rehearsal through the live API recorded `presenceCheck: WOULD_BLOCK` with the cart updated as before (guard off). Drag-to-fit was checked with real YOLO11n on the demo video (`web/public/demos/customer-walk.webm`): fitting Shelf 2 alone brought the Shelf 1 and Shelf 3 outlines onto the drawn shelves. **Not yet verified**: real webcams/phones with real people, and the mouse drag in a visible browser window (checked here through the keyboard path).
+
+---
+
+## 16. Next: side-by-side camera + map setup (agreed 2026-11-13, in progress)
+
+Drag-to-fit (7.2) still did not work well enough in practice. Agreed replacement:
+
+- **Side by side**: one setup window per camera, camera picture on the left and the editable store map on the right.
+- **Draw either side first**: draw a shelf/area on the map, or click its 4 floor corners on the camera picture (any order; points are sorted clockwise and the corner pairing can be turned with a ↻ button).
+- **Sync buttons**: "use camera to adjust the map" or "use map to adjust the camera outlines". The mapping is a least-squares fit over every shape drawn on both sides; each shape shows its mismatch in metres until synced.
+- **Check tool**: click a spot on the map and a 0.6 m box appears at that spot on the camera picture (and click on the camera to see the spot on the map), to confirm positions by eye.
+- **One undo history** (Ctrl+Z / Ctrl+Y) across both sides.
+
+Done so far: the server stores the camera outlines with each mapping (`quads` in `data/store-map.json`, validated; test in `tests/store-map.test.mjs`). Still to build: shared undo history + editor refactor, the side-by-side setup window with sync, the check tool, then browser check and docs.

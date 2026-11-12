@@ -29,7 +29,16 @@ export function validateCameraMapping(input) {
   if (!input || typeof input !== "object") throw new Error("Invalid camera mapping");
   const width = finite(input.width, 32, 4096, "camera width"), height = finite(input.height, 32, 4096, "camera height");
   if (!Array.isArray(input.h) || input.h.length !== 9 || !input.h.every(Number.isFinite)) throw new Error("Camera mapping must be 9 numbers");
-  return { width: Math.round(width), height: Math.round(height), h: input.h.map(Number), updatedAt: new Date().toISOString() };
+  // Outlines staff drew on the camera image (normalized 0–1 points), kept so the setup can be reopened and adjusted.
+  const quads = {};
+  const entries = Object.entries(input.quads ?? {});
+  if (entries.length > MAX_SHAPES) throw new Error("Too many camera outlines");
+  for (const [shapeId, points] of entries) {
+    if (!/^[a-z0-9-]{1,40}$/.test(shapeId) || !Array.isArray(points) || points.length !== 4 ||
+        !points.every(p => p && finite(p.x, -1, 2, "outline point") !== undefined && finite(p.y, -1, 2, "outline point") !== undefined)) throw new Error("Invalid camera outline");
+    quads[shapeId] = points.map(p => ({ x: p.x, y: p.y }));
+  }
+  return { width: Math.round(width), height: Math.round(height), h: input.h.map(Number), quads, updatedAt: new Date().toISOString() };
 }
 
 export function validateStoreMap(input) {
