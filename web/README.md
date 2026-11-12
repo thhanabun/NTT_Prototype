@@ -40,6 +40,8 @@ For Phase 7B, agree on staff roles, the identity provider, login/logout/session-
 
 ## Routes and API layer
 
+The Shopper floating FAST menu now includes **ผู้ช่วยช้อป FAST**. Its chat follows the Admin ChatDock UI, keeps history only in page memory, and resets/aborts on basket/session changes. It reads through `/api/shopper/query`; it never edits cart/checkout. Set backend `SHOPPER_AGENT_MODE=demo` for explicit local templates; real OpenAI-compatible endpoint settings belong only to the backend. See [Shopper Agent review and setup](../docs/shopper-agent.md). `npm run test:shopper-agent` runs isolated demo/browser checks without a real model or AWS.
+
 - `/shopper` is the starting route for the shopper workflow.
 - `/admin` is the starting route for the operations dashboard.
 - `/admin/login` is the development mock login form when explicitly enabled.
