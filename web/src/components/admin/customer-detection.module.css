@@ -63,3 +63,17 @@
 .shopperList select { min-height: 34px; border: 1px solid var(--c-line); border-radius: 10px; background: var(--c-surface2); color: var(--c-ink); font: inherit; font-size: 12px; }
 .shopperList small { color: var(--c-soft); width: 100%; }
 @media (max-width: 600px) { .wizard { grid-template-columns: 1fr; } .cameraControls input { max-width: 100%; } }
+.setupOverlay { position: fixed; inset: 0; z-index: 60; overflow: auto; padding: 18px 20px 28px; background: var(--c-bg); color: var(--c-ink); }
+.setupHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.setupHeader h2 { font: 700 19px/1.4 var(--c-display); }
+.setupOverlay .cameraControls button, .setupOverlay .calibrationPrompt button, .setupOverlay .calibrationPrompt select { min-height: 40px; padding: 7px 12px; border: 1px solid var(--c-line); border-radius: 12px; background: var(--c-surface2); color: var(--c-ink); font: inherit; font-size: 13px; }
+.setupOverlay button[aria-pressed="true"] { background: var(--c-ai); color: var(--c-ai-ink); border-color: var(--c-hi); }
+.setupOverlay button:disabled { opacity: .5; cursor: not-allowed; }
+.setupOverlay button:focus-visible, .setupOverlay select:focus-visible, .setupCanvas:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 2px; }
+.toolSep { width: 1px; align-self: stretch; background: var(--c-line); margin: 0 4px; }
+.setupGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.setupPaneTitle { font-size: 14px; font-weight: 650; margin-bottom: 8px; }
+.setupCanvas { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--c-line); background: #232c2a; touch-action: none; user-select: none; }
+.setupStatus { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--c-line); border-radius: 14px; background: var(--c-surface); font-size: 13px; line-height: 1.7; }
+.errorList { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { .setupGrid { grid-template-columns: 1fr; } }

@@ -18,9 +18,8 @@ Typing Approve does **not** mutate a cart. The staff member must inspect the car
 > **Updated by basket detection** ([design](basket-detection.md)): the live camera tab now supports several cameras and test videos on one shared store map. Steps:
 > 1. **แผนที่ร้าน** tab: drag boxes for Shelf 1–3 and any areas (entrance, cashier); drag a corner to resize, the round handle to turn; Ctrl+Z / Ctrl+Y undo and redo; then **บันทึกแผนที่**. Real sizes are optional: select a box, type its real length in metres, **ตั้งสเกล**, save.
 > 2. **กล้องสด** tab: give the camera a name (`CAM-01`…), pick a camera or a video file, **+ เพิ่มกล้อง / + เพิ่มวิดีโอ** (up to 4).
-> 3. **จับคู่กล้องกับแผนที่**: the frame freezes and every map shape appears as an outline. Drag the outline corners onto the real floor corners of the shelves; all outlines follow as you drag. Fix one shelf fully, then any others still off; Ctrl+Z undoes; **บันทึก**. The mapping is saved on the server under the camera name, so a reload or another device using the same name reuses it.
+> 3. **จับคู่กล้องกับแผนที่** opens a side-by-side window: camera picture left, map right. Draw shelves on either side first (camera: tool วาดในกล้อง, click 4 floor corners, pick the shape). Press a **Sync** button to make the two sides agree; each shape shows its mismatch in metres. Tool 🎯 ตรวจตำแหน่ง: click the map to see a 60 cm box at that spot on the camera (or click the camera). Ctrl+Z works across both sides. **บันทึกทั้งหมด** saves the map and the camera mapping. See [basket detection §16](basket-detection.md).
 > 4. People seen by any mapped camera appear on the store map as shoppers. A shopper alone at a shelf with a basket tag for 3 s becomes Basket A/B; others stay Anonymous. Staff can change the basket in the shopper list.
-> 5. **วาดพื้นที่จากกล้องนี้** adds a missing area by clicking its 4 floor corners on a mapped camera image.
 >
 > The sections below describe the original single-camera flow; its manual Basket A/B binding and 4-corner floor calibration are replaced by the steps above.
 

@@ -8,6 +8,9 @@ import type { MapView } from "@/lib/admin-commands";
 import { LiveCustomerDetection } from "./live-customer-detection";
 import { StoreMapEditor } from "./store-map-editor";
 import { useStoreMap } from "@/lib/use-store-map";
+import { useHistory, useUndoKeys } from "@/lib/use-history";
+import { saveStoreMapLayout } from "@/lib/api/client";
+import type { StoreMap } from "@/lib/api/types";
 
 const clock = (value: number) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(Math.floor(value % 60)).padStart(2, "0")}`;
 const mapPoint = ({ x, y }: { x: number; y: number }) => ({ x: 40 + x * 480, y: 28 + y * 320 });
@@ -127,6 +130,26 @@ function RecordedCustomerDetection({ view, onViewChange, active }: { view: MapVi
 function MapEditorPanel() {
   const { map, setMap, error } = useStoreMap();
   if (!map) return <p className={styles.calibration}>{error || "กำลังโหลดแผนที่ร้าน…"}</p>;
-  // Remount the editor when the server map changes, so it starts from the latest saved version.
-  return <StoreMapEditor key={JSON.stringify({ ...map, cameras: {} })} map={map} onSaved={setMap} />;
+  // Remount when the saved map changes elsewhere, so the editor starts from the latest version.
+  return <MapEditorTab key={layoutKey(map)} map={map} onSaved={setMap} />;
+}
+
+const layoutKey = (map: StoreMap) => JSON.stringify({ ...map, cameras: {} });
+
+function MapEditorTab({ map, onSaved }: { map: StoreMap; onSaved: (map: StoreMap) => void }) {
+  const editing = useHistory(map);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  useUndoKeys(editing.undo, editing.redo);
+  async function save() {
+    try {
+      const { version, width, height, metresPerUnit, shapes } = editing.value;
+      onSaved(await saveStoreMapLayout({ version, width, height, metresPerUnit, shapes }));
+    } catch (cause) { setStatus(cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ"); }
+  }
+  return <>
+    <StoreMapEditor editing={{ ...editing, draft: editing.value }} selectedId={selectedId} onSelect={setSelectedId}
+      dirty={layoutKey(editing.value) !== layoutKey(map)} onSave={() => void save()} onRevert={() => editing.change(() => map)} />
+    {status && <p role="alert" className={styles.error}>{status}</p>}
+  </>;
 }

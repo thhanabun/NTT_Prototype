@@ -125,7 +125,7 @@ export function saveStoreMapLayout(map: Omit<StoreMap, "cameras">): Promise<Stor
   return request("/api/store-map", { method: "PUT", body: JSON.stringify(map) });
 }
 
-export function saveCameraMapping(cameraId: string, mapping: Pick<CameraMapping, "width" | "height" | "h">): Promise<StoreMap> {
+export function saveCameraMapping(cameraId: string, mapping: Pick<CameraMapping, "width" | "height" | "h" | "quads">): Promise<StoreMap> {
   return request(`/api/store-map/cameras/${encodeURIComponent(cameraId)}`, { method: "PUT", body: JSON.stringify(mapping) });
 }
 

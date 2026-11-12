@@ -45,6 +45,23 @@ export function invert(h: number[]) {
   return [e * j - f * i, c * i - b * j, b * f - c * e, f * g - d * j, a * j - c * g, c * d - a * f, d * i - e * g, b * g - a * i, a * e - b * d].map(v => v / det);
 }
 
+/** Sorts 4 clicked points into one consistent turning order (clockwise on screen), starting nearest the top-left. */
+export function sortCorners(points: Point[]) {
+  const cx = points.reduce((s, p) => s + p.x, 0) / points.length, cy = points.reduce((s, p) => s + p.y, 0) / points.length;
+  const sorted = [...points].sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+  const start = sorted.reduce((best, p, i) => p.x + p.y < sorted[best].x + sorted[best].y ? i : best, 0);
+  return [...sorted.slice(start), ...sorted.slice(0, start)];
+}
+
+/** The turned box (x, y, w, h, angle°) that best matches 4 corners given as top-left, top-right, bottom-right, bottom-left. */
+export function boxFromCorners([a, b, c, d]: Point[]) {
+  const top = { x: (b.x - a.x + c.x - d.x) / 2, y: (b.y - a.y + c.y - d.y) / 2 };
+  const w = (Math.hypot(b.x - a.x, b.y - a.y) + Math.hypot(c.x - d.x, c.y - d.y)) / 2;
+  const h = (Math.hypot(d.x - a.x, d.y - a.y) + Math.hypot(c.x - b.x, c.y - b.y)) / 2;
+  const cx = (a.x + b.x + c.x + d.x) / 4, cy = (a.y + b.y + c.y + d.y) / 4;
+  return { x: cx - w / 2, y: cy - h / 2, w, h, angle: Math.round(Math.atan2(top.y, top.x) * 180 / Math.PI) };
+}
+
 /** Best homography for 4+ point pairs (exact for 4, least squares for more). Any order; rejects nearly-collinear sets. */
 export function fitHomography(source: Point[], target: Point[]) {
   if (source.length < 4 || source.length !== target.length) throw new Error("ต้องมีอย่างน้อย 4 จุด");

@@ -455,14 +455,24 @@ Verified: backend `npm test` 80/80; web typecheck, lint and `test:unit` 3/3; web
 
 ---
 
-## 16. Next: side-by-side camera + map setup (agreed 2026-11-13, in progress)
+## 16. Side-by-side camera + map setup (replaces 7.2 drag-to-fit)
 
-Drag-to-fit (7.2) still did not work well enough in practice. Agreed replacement:
+Drag-to-fit (7.2) still did not work well enough in practice, so each camera now has a **setup window**: the camera picture on the left, the editable store map on the right (`web/src/components/admin/camera-map-setup.tsx`, opened by **จับคู่กล้องกับแผนที่ / ตั้งค่ากล้องกับแผนที่** on a camera card).
 
-- **Side by side**: one setup window per camera, camera picture on the left and the editable store map on the right.
-- **Draw either side first**: draw a shelf/area on the map, or click its 4 floor corners on the camera picture (any order; points are sorted clockwise and the corner pairing can be turned with a ↻ button).
-- **Sync buttons**: "use camera to adjust the map" or "use map to adjust the camera outlines". The mapping is a least-squares fit over every shape drawn on both sides; each shape shows its mismatch in metres until synced.
-- **Check tool**: click a spot on the map and a 0.6 m box appears at that spot on the camera picture (and click on the camera to see the spot on the map), to confirm positions by eye.
-- **One undo history** (Ctrl+Z / Ctrl+Y) across both sides.
+How it works:
 
-Done so far: the server stores the camera outlines with each mapping (`quads` in `data/store-map.json`, validated; test in `tests/store-map.test.mjs`). Still to build: shared undo history + editor refactor, the side-by-side setup window with sync, the check tool, then browser check and docs.
+- **Draw either side first.**
+  - *Camera first*: tool **วาดในกล้อง**, click the 4 floor corners of a shelf/area in the picture (any order; `sortCorners` puts them in one turning order), choose which map shape it is, or "+ Shelf ใหม่ / + พื้นที่ใหม่". Once one shape exists on both sides, new shapes drawn on the camera are **placed on the map automatically** at the computed position (`boxFromCorners`).
+  - *Map first*: draw/drag boxes on the map (same editor as the map tab: resize, turn, Ctrl+Z). Map shapes with no camera outline show on the camera as **dashed** outlines from the current mapping; drag one of their corners to make it a real camera outline.
+- **The maths.** The mapping (image → map) is a least-squares homography over every corner of every shape that exists on both sides (`fitHomography`). Each such shape shows its **mismatch in metres** (✅ ≤ 0.15 m, ⚠️ ≤ 0.4 m, ❌ above). With one shape the fit is always exact, so draw a second to check accuracy. On the map, a dotted green outline shows where the camera outline lands.
+- **Sync buttons.**
+  - **⟵ ซิงก์: ใช้กล้องปรับแผนที่** — each map box becomes the nearest real rectangle to its camera outline, then the camera outline is squared to that box; afterwards both sides agree (0.00 m).
+  - **ซิงก์: ใช้แผนที่ปรับกล้อง ⟶** — every camera outline (including map-only shapes) is redrawn from the map.
+  - Nothing propagates between the sides until a Sync is pressed (except the live mismatch numbers and dashed previews).
+- **Check tool (🎯 ตรวจตำแหน่ง).** Click a spot on the map: a pink 60 cm square appears at that spot on the camera picture (and on the map). Click on the camera: the spot shows on the map. The status line gives the spot in metres and the nearest shape.
+- **Corner pairing.** When a camera outline is given to an existing map shape, the turn of its corners that best agrees with the other shapes is chosen; with no other shapes yet, use **↻ หมุนมุม** if the outline is matched to the wrong corners.
+- **One undo history** across both sides (Ctrl+Z / Ctrl+Y or ↶ ↷). **📷 ถ่ายภาพใหม่** takes a new still. **บันทึกทั้งหมด** saves the map layout (if changed) and the camera mapping with its outlines (`quads`), then closes; **ปิด** asks before discarding changes.
+
+Code: `web/src/lib/use-history.ts` (shared undo), `StoreMapEditor` is now controlled by its caller, `sortCorners` / `boxFromCorners` in `camera-calibration.ts` (unit tests), server stores `quads` per camera mapping (validated in `src/store-map.mjs`).
+
+Verified in the browser with real YOLO11n and the demo video: camera-first (second shelf placed on the map automatically, 0.00 m), map-first (dashed outline, then Sync), the check tool (pink box on the camera below the chosen shelf), undo/redo across both sides, and Sync from camera bringing a nudged outline from 0.20 m to 0.00 m. Backend 81/81, web unit 4/4, web e2e all pass. Not verified: a real webcam in a real store, and mouse dragging in a visible browser window (tested here with keyboard and scripted pointer events).

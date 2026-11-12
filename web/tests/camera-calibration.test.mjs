@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fitHomography, homography, invert, project } from "../src/lib/camera-calibration.ts";
+import { boxFromCorners, fitHomography, homography, invert, project, sortCorners } from "../src/lib/camera-calibration.ts";
 
 const near = (a, b) => assert.ok(Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6, JSON.stringify([a, b]));
 // A camera looking at a 20x8 shelf box at map (40,10): its corners appear as a trapezoid.
@@ -28,4 +28,11 @@ test("least-squares fit matches the exact mapping and works with corners in any 
 
 test("crossed clicks are rejected", () => {
   assert.throws(() => homography([image[0], image[2], image[1], image[3]], map), /ไขว้กัน/);
+});
+
+test("clicked corners sort into one turning order, and a box is rebuilt from its turned corners", () => {
+  const shuffled = [image[2], image[0], image[3], image[1]];
+  assert.deepEqual(sortCorners(shuffled), image);
+  const box = boxFromCorners([{ x: 3, y: -1 }, { x: 3, y: 3 }, { x: 1, y: 3 }, { x: 1, y: -1 }]); // 4×2 box turned 90°
+  assert.deepEqual([box.x, box.y, box.w, box.h, box.angle].map(v => Math.round(v * 1000) / 1000), [0, 0, 4, 2, 90]);
 });
