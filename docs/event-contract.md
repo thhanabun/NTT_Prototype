@@ -38,8 +38,11 @@ Example payload:
 | Clear zone but no basket session | Not called | No mutation | Staff HITL |
 | PUT_BACK with no confirmed quantity | Not called | No negative quantity | Conflict case to staff |
 | Duplicate eventId | Not called | No mutation | Return duplicate |
+| Clear zone, `PRESENCE_GUARD=on`, live camera shows an Anonymous shopper nearer the shelf than the chosen basket | Not called | No mutation | `PRESENCE_CONFLICT` case to staff |
 
 All cart mutations run through the same validator. A case can close as rejected without changing a cart. Only confirmed cart lines contribute to subtotal, total and mock checkout.
 
+
+Camera presence: the server adds `presence` (who was in the shelf zone when the event arrived) to each new event and copies it into case evidence. A `presence` field sent in the event payload is ignored; devices and the simulator cannot supply it. With the default `PRESENCE_GUARD=off`, presence never changes the decision; the `CART_UPDATED` audit records `presenceCheck` (`OK`, `WOULD_BLOCK` or `NO_DATA`). See [basket detection](basket-detection.md).
 
 Hardware integration: rssi.HV01 optionally carries high-value tag proximity and is preserved in the event/evidence tools. It never substitutes for missing A/B tags or adds/removes an asset in a cart. Only PICK and PUT_BACK enter /api/events; telemetry is a separate MQTT diagnostic topic and is not ingested as a cart event. Device delivery uses the events topic and plain-eventId application ACK on the matching shelf /acks topic. Retries/backlog carry delayed:true; deduplication runs before delayed quarantine.

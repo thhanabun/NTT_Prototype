@@ -130,6 +130,14 @@ export function getCameraEvidence(store, { eventId } = {}) {
   return { status: observations.length ? "AVAILABLE" : "NO_DATA", eventId, observations, limitation: "Reported observations only; this tool does not capture RTSP or run vision inference. MOCK observations remain labelled." };
 }
 
+const PRESENCE_LIMITATION = "Camera proximity when the shelf event arrived, not proof of who picked. A basket tag link is a shelf-zone association; tag null means Anonymous (no linked basket).";
+
+export function getShopperPresence(store, { eventId } = {}) {
+  const event = sourceEvent(store, eventId);
+  if (!event.presence) return { status: "NO_DATA", eventId, inZone: [], limitation: PRESENCE_LIMITATION };
+  return { ...event.presence, eventId, limitation: PRESENCE_LIMITATION };
+}
+
 export function runEvidenceAnalysis(store, { eventId, scriptId } = {}) {
   const script = Object.hasOwn(ANALYSIS_SCRIPTS, scriptId) ? ANALYSIS_SCRIPTS[scriptId] : null;
   if (!script) throw new Error("Unknown evidence analysis script");
@@ -147,6 +155,7 @@ export const TOOL_DESCRIPTIONS = Object.freeze({
   get_event_neighbors: "Read nearby same-lane events to investigate bounce or rapid returns.",
   get_camera_evidence: "Read camera observation records if available; no RTSP capture or image analysis.",
   inspect_vision_evidence: "Run real YOLO11n on registered image frames linked to this event. Returns generic objects and boxes; MOCK stays labelled. Cannot prove SKU, basket ownership or PICK/PUT_BACK.",
+  get_shopper_presence: "Read which camera-tracked shoppers were in this shelf's zone when the event arrived, nearest first, with linked basket tag or Anonymous. Proximity only; cannot prove who picked.",
   run_evidence_analysis: "Run one allowlisted read-only analysis: " + Object.keys(SCRIPT_DESCRIPTIONS).join(", "),
 });
 
@@ -160,6 +169,7 @@ export const AGENT_TOOLS = Object.freeze({
   get_event_neighbors: getEventNeighbors,
   get_camera_evidence: getCameraEvidence,
   inspect_vision_evidence: inspectVisionEvidence,
+  get_shopper_presence: getShopperPresence,
   run_evidence_analysis: runEvidenceAnalysis,
 });
 

@@ -1,6 +1,6 @@
 # Basket detection: camera + BLE shopper tracking
 
-Status: **design agreed, not built yet**. Branch: `basketdetection` (from `main` at `c9f5c64`).
+Status: **P1–P4 built locally** (see section 15 for what was built and where it differs from this design). P5 cloud and P6 measurement are not started. Branch: `basketdetection` (from `main` at `c9f5c64`).
 This document records every idea and decision from the design discussion so the whole team works from the same picture. Read sections 1–4 for the idea, 5–8 for how it plugs into the existing system, 9–12 for the delivery plan.
 
 ---
@@ -112,7 +112,7 @@ Data rules:
 
 - **Images never leave the vision path.** The browser sends JPEGs to YOLO (as today) and sends only floor positions to the API.
 - **Presence lives in memory, not in the repository.** `LocalJsonRepository.mutate` rewrites the whole JSON file; 2 fps × N cameras would thrash it. Only the small presence snapshot attached to a shelf event is persisted, inside the event/case like other evidence.
-- **Presence has its own SSE event.** The `state` snapshot is large and is rebuilt per change; presence updates go out as a separate `presence` event, at most 2 per second.
+- **Presence has its own stream.** The `state` snapshot is large and is rebuilt per change; store-map and presence updates go out on a separate SSE stream, `/api/vision/stream`, at most 2 presence updates per second. (A separate stream, not a new event name on `/api/stream`, because existing readers of `/api/stream` treat every message as a full state snapshot.)
 
 ---
 
@@ -143,7 +143,7 @@ The store map is **drawn by staff on screen**, not typed into a file. No tape me
 ```
 
 - `metresPerUnit: null` means "not measured yet" (the assumed 10 m width applies).
-- A shelf's **zone** (where a shopper counts as "at the shelf") is the floor strip in front of the shelf shape, 1 m deep by default.
+- A shelf's **zone** (where a shopper counts as "at the shelf") is the shelf box grown by 1 m on every side (simpler than "in front of", and works whichever side shoppers stand).
 - The `feat/indoor-positioning` branch also has a layout editor (`src/store-layout.mjs`). If it is merged later, the two editors should become one.
 
 ### 7.2 Mapping each camera: click the shapes you can see
@@ -423,3 +423,28 @@ The first draft of this design was reviewed with the `ponytail` rules ("does it 
 | `PRESENCE_TEST_MODE` flag | A `TEST_VIDEO` label is enough because evidence never changes carts; the guard ignores test video. | Never, unless the guard needs testing on video. |
 
 Kept on purpose (ponytail never cuts these): input validation and size limits on the new routes, the staff override, the audit of link changes, the guard staying off by default, and per-camera calibration.
+
+---
+
+## 15. What was built (P1–P4) and where it differs
+
+| Part | Files |
+| --- | --- |
+| Store map (server) | `src/store-map.mjs`, routes in `src/server.mjs`: `GET/PUT /api/store-map`, `PUT/DELETE /api/store-map/cameras/:id`; saved to `data/store-map.json` |
+| Presence (server) | `src/presence.mjs`; `src/application.mjs` (`ingestVisionTracks`, `setPresenceLink`, telemetry feed, snapshot on shelf events); routes `POST /api/vision/tracks`, `GET /api/presence`, `POST /api/presence/links`, SSE `/api/vision/stream` |
+| Domain | `src/domain.mjs`: `processShelfEvent(store, input, { presence })`, `presenceCheck`, `PRESENCE_GUARD`, case type `PRESENCE_CONFLICT` |
+| Agent | `src/agent/tools.mjs` (`get_shopper_presence`), `src/agent/agent-loop.mjs`, `infra/bedrock/agent-functions.json`, `agent-instructions.md` |
+| Web | `store-map-view.tsx`, `store-map-editor.tsx`, `camera-feed.tsx`, `live-customer-detection.tsx` (multi-camera board), `customer-detection.tsx` (new "แผนที่ร้าน" tab), `case-details.tsx`; `lib/camera-calibration.ts`, `lib/use-store-map.ts`, `lib/api/vision-stream.ts` |
+| Tests | `tests/store-map.test.mjs`, `tests/presence.test.mjs`, `tests/presence-evidence.test.mjs`, `web/tests/camera-calibration.test.mjs` (`npm --prefix web run test:unit`) |
+
+Differences from sections 7–8 (all ponytail cuts or fixes found while building):
+
+- **Presence keeps current state only**, not 2 minutes of history. Trails and the heatmap are drawn by the browser from the live updates.
+- **No 10 s memory of closed shoppers**: the 5 s / 1 m re-join already covers short gaps.
+- **Separate SSE stream** (`/api/vision/stream`) instead of a `presence` event on `/api/stream` (see section 6).
+- **Snapshot status**: `NO_CAMERA` = no camera has sent tracks in the last 2 minutes (or the shelf is not on the map); `STALE` = none in the last 1.5 s. Per-shelf camera coverage is not tracked.
+- **Add shape from a camera** creates areas only; shelves keep their fixed IDs and are placed in the map editor.
+- **Camera names** are typed by staff (`CAM-01`…); reusing a name reuses its saved mapping if the resolution matches.
+- **Snapshot time** is the moment the server receives the shelf event (shelf events have no trusted capture time today).
+
+Verified: backend `npm test` 80/80; web typecheck, lint and `test:unit` 3/3; map editor drag-and-save and the live store map checked in the browser with scripted tracks and BLE telemetry; water-buyer rehearsal through the live API recorded `presenceCheck: WOULD_BLOCK` with the cart updated as before (guard off). **Not yet verified**: real webcams/phones and real YOLO tracks (YOLO was still installing), the camera mapping wizard with a real image, and the web end-to-end suites.

@@ -29,6 +29,8 @@ The integrated frontend is in `web/` on port 3001; the API remains on port 3000.
 
 ## Safety policy
 
+Basket detection (camera + BLE shopper tracking) records who was at the shelf for every shelf event; it never adds to a cart by itself, and its optional guard (`PRESENCE_GUARD=on`, off by default) can only send a clear pick to staff. See [basket detection design](docs/basket-detection.md).
+
 The HTTP server now uses a model-directed evidence loop for ambiguous cases: Laya chooses tools/allowlisted analysis scripts, observes their results and chooses again. Admin displays the selection trace and tool results. See [Agentic investigation and mock evidence scenarios](docs/agentic-investigation.md). Set `AGENT_MODE=workflow` to compare the previous fixed-tool path.
 
 Optional real CPU **YOLO11n** is available as `inspect_vision_evidence`. Start `npm run model:vision` in another terminal, then `npm run mock:evidence -- vision` with API, broker, Laya and Basket A/B sessions running. See [vision setup, mock-frame provenance and limits](docs/vision-evidence.md).

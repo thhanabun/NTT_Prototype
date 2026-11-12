@@ -119,6 +119,17 @@
           "required": true
         }
       }
+    },
+    {
+      "name": "get_shopper_presence",
+      "description": "Read which camera-tracked shoppers were in the shelf zone when the event arrived, nearest first, with linked basket tag (A/B) or Anonymous. Proximity only; never proof of who picked and never changes a cart.",
+      "parameters": {
+        "eventId": {
+          "description": "Shelf event ID attached to the case.",
+          "type": "string",
+          "required": true
+        }
+      }
     }
   ]
 }

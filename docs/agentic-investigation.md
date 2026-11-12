@@ -25,6 +25,7 @@ All tools are read-only. Local tool arguments are bound to the current case's ev
 | `get_event_neighbors` | Up to 12 nearby same-lane events, with receipt-time provenance |
 | `get_camera_evidence` | Camera observation records linked to the event, including source and alignment |
 | `inspect_vision_evidence` | Real CPU YOLO11n detections on registered event-linked frames; class/confidence/boxes and MOCK provenance |
+| `get_shopper_presence` | Camera-tracked shoppers in the shelf zone when the event arrived, nearest first, each with basket tag A/B or Anonymous. Offered only when the event has an `AVAILABLE` presence snapshot. Proximity only; see [basket detection](basket-detection.md) |
 | `run_evidence_analysis` | Run one allowlisted read-only analysis script |
 
 Scripts selectable after reading their supporting evidence:

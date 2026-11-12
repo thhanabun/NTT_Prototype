@@ -5,10 +5,11 @@ import { SCRIPT_DESCRIPTIONS } from "./analysis-scripts.mjs";
 const REQUIRED = ["get_shelf_event", "get_basket_evidence", "get_cart_history"];
 const SCRIPT_DEPENDENCIES = { rssi_stability: "get_signal_window", switch_bounce: "get_event_neighbors", cart_consistency: "get_cart_history" };
 
-function availableActions(completed, cameraEvidence) {
+function availableActions(completed, cameraEvidence, presenceAvailable = false) {
   const actions = Object.entries(TOOL_DESCRIPTIONS).filter(([name]) => name !== "run_evidence_analysis" && !completed.has(name))
     .filter(([name]) => name !== "inspect_vision_evidence" || cameraEvidence.some(frame => frame.frameId))
     .filter(([name]) => name !== "get_camera_evidence" || cameraEvidence.length > 0)
+    .filter(([name]) => name !== "get_shopper_presence" || presenceAvailable)
     .map(([id, description]) => ({ id, description, tool: id }));
   for (const [scriptId, description] of Object.entries(SCRIPT_DESCRIPTIONS)) {
     const id = "analyze_" + scriptId;
@@ -26,6 +27,7 @@ function observationSummary(name, result) {
   if (name === "get_event_neighbors") return JSON.stringify({ eventCount: result.events.length, events: result.events.slice(0, 4).map(item => ({ type: item.eventType, receivedAt: item.receivedAt })), windowMs: result.windowMs });
   if (name === "get_camera_evidence") return JSON.stringify({ status: result.status, observations: result.observations.map(item => ({ source: item.source, aligned: item.aligned, observations: item.observations })) });
   if (name === "get_basket_evidence") return JSON.stringify({ zone: result.zone, rssi: result.rssi, candidate: result.candidate, active: result.activeSessions });
+  if (name === "get_shopper_presence") return JSON.stringify({ status: result.status, source: result.source, inZone: result.inZone.map(item => ({ basket: item.tag ?? "ANONYMOUS", distanceM: item.distanceM })) });
   if (name === "inspect_vision_evidence") return JSON.stringify({ status: result.status, ownership: "UNKNOWN", action: "UNKNOWN", frames: result.frames.map(frame => ({ source: frame.source, model: frame.model, objects: frame.detections.slice(0, 5).map(item => item.label) })) });
   return JSON.stringify(result).slice(0, 360);
 }
@@ -79,7 +81,8 @@ export async function runAgentInvestigation(repository, caseId, {
       const missingCoreEvidence = REQUIRED.filter(name => !completed.has(name));
       const remainingTimeMs = Math.max(0, Math.floor(deadlineAt - performance.now()));
       const remainingSteps = maxSteps - number + 1;
-      let actions = availableActions(completed, cameraEvidence);
+      const presenceAvailable = store.events.find(event => event.eventId === item.eventId)?.presence?.status === "AVAILABLE";
+      let actions = availableActions(completed, cameraEvidence, presenceAvailable);
       // Reserve calls for missing core evidence and the final basket model, without fixing tool order.
       if (missingCoreEvidence.length && (remainingSteps <= missingCoreEvidence.length + 1 || remainingTimeMs <= (missingCoreEvidence.length + 2) * estimatedModelMs + 500)) {
         actions = actions.filter(action => missingCoreEvidence.includes(action.id) || action.id === "STOP_STAFF");

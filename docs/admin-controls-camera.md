@@ -15,6 +15,15 @@ Screen commands use a small explicit client-side command parser, labelled `ค�
 
 Typing Approve does **not** mutate a cart. The staff member must inspect the card, choose a basket and click the existing StaffActions button. Those buttons keep the active-session, return-quantity, Agent-running and stale-state checks. The existing staff API performs the final validation and records its normal audit. Case cards read the same latest snapshot as Dashboard (up to 30 loaded cases), and completed/stale cases cannot silently be approved again.
 
+> **Updated by basket detection** ([design](basket-detection.md)): the live camera tab now supports several cameras and test videos on one shared store map. Steps:
+> 1. **แผนที่ร้าน** tab: drag boxes for Shelf 1–3 and any areas (entrance, cashier), then **บันทึกแผนที่**. Real sizes are optional: select a box, type its real width in metres, **ตั้งสเกล**, save.
+> 2. **กล้องสด** tab: give the camera a name (`CAM-01`…), pick a camera or a video file, **+ เพิ่มกล้อง / + เพิ่มวิดีโอ** (up to 4).
+> 3. **จับคู่กล้องกับแผนที่**: the frame freezes; pick a shape and click its 4 floor corners in the order shown on the small map (orange dot = next corner). Add a second shape for better accuracy, **คำนวณ**, check the outlines drawn on the image, **บันทึก**. The mapping is saved on the server under the camera name, so a reload or another device using the same name reuses it.
+> 4. People seen by any mapped camera appear on the store map as shoppers. A shopper alone at a shelf with a basket tag for 3 s becomes Basket A/B; others stay Anonymous. Staff can change the basket in the shopper list.
+> 5. **วาดพื้นที่จากกล้องนี้** adds a missing area by clicking its 4 floor corners on a mapped camera image.
+>
+> The sections below describe the original single-camera flow; its manual Basket A/B binding and 4-corner floor calibration are replaced by the steps above.
+
 ## Live camera on the device opening Admin
 
 1. Keep API, Laya, MQTT and Web running as usual.

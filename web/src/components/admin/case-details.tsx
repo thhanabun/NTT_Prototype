@@ -30,6 +30,11 @@ export function CaseDetails({ item, product, actions }: { item: BasketCase; prod
         {rssi?.HV01 !== undefined && <div><dt>Reference beacon HV01</dt><dd>{rssi.HV01 ?? "—"} dBm · reference only</dd></div>}
         {item.evidence.marginDb !== undefined && <div><dt>Signal margin</dt><dd>{item.evidence.marginDb} dB</dd></div>}
         {item.evidence.cartQuantity !== undefined && <div><dt>Confirmed quantity at event</dt><dd>{item.evidence.cartQuantity}</dd></div>}
+        {item.evidence.presence && <div><dt>ใครอยู่ที่ Shelf ตอนเกิดเหตุการณ์ (กล้อง)</dt><dd>{item.evidence.presence.status !== "AVAILABLE"
+          ? (item.evidence.presence.status === "NO_CAMERA" ? "ไม่มีกล้องที่จับคู่" : "ข้อมูลกล้องเก่าเกินไป")
+          : item.evidence.presence.inZone.length
+            ? item.evidence.presence.inZone.map(entry => `${entry.tag ? `Basket ${entry.tag}` : "Anonymous"} ${entry.distanceM} ม.`).join(" · ") + (item.evidence.presence.source === "TEST_VIDEO" ? " · TEST_VIDEO" : "")
+            : "ไม่มีใครในโซน Shelf"}</dd></div>}
       </dl>
       <div className={styles.confidence}><div><span>{confidenceLabel}</span><strong>{Math.round(item.confidence * 100)}%</strong></div><div className={styles.confidenceTrack}><span style={{width: `${Math.max(0, Math.min(100, item.confidence * 100))}%`}} /></div><p>{isMock ? "คำแนะนำจำลอง · ไม่ได้เรียกโมเดล" : hasAgent ? `สถานะ ${agent!.status}` : "ประมวลผลด้วยกฎ"}</p></div>
       {agent && <dl className={styles.details}><div><dt>Agent provider / status</dt><dd>{agent.provider} / {agent.status}</dd></div>{agent.output?.model && <div><dt>Model</dt><dd>{agent.output.model}</dd></div>}{agent.output?.requestDurationMs !== undefined && <div><dt>Inference duration</dt><dd>{agent.output.requestDurationMs} ms</dd></div>}{agent.output?.confidenceSource && <div><dt>Confidence source</dt><dd>{agent.output.confidenceSource}</dd></div>}{agent.error && <div><dt>Agent error</dt><dd>{agent.error}</dd></div>}</dl>}
