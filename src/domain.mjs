@@ -14,6 +14,16 @@ const PRODUCT_BY_LANE = {
 const BASKETS = ["A", "B"];
 const CUSTOMER_CONFIRM_THRESHOLD = 0.75;
 const AUDIT_LOG_LIMIT = 500;
+// Off by default: presence is recorded and checked, but only blocks a clear pick when set to "on".
+export const PRESENCE_GUARD = process.env.PRESENCE_GUARD === "on";
+
+/** Would camera presence contradict the basket BLE chose? Recorded on every clear cart update. */
+export function presenceCheck(presence, basketId) {
+  if (presence?.status !== "AVAILABLE") return "NO_DATA";
+  const anonymous = presence.inZone.filter(entry => entry.tag === null);
+  const linked = presence.inZone.find(entry => entry.tag === basketId);
+  return anonymous.length && (!linked || anonymous[0].distanceM < linked.distanceM) ? "WOULD_BLOCK" : "OK";
+}
 
 export function createStore() {
   return {
@@ -97,7 +107,7 @@ function createCase(store, event, details) {
     confidence: details.confidence ?? 0,
     nextAction: details.nextAction,
     proposedAction: details.proposedAction,
-    evidence: details.evidence || {},
+    evidence: { ...details.evidence, ...(event.presence ? { presence: event.presence } : {}) },
     toolCalls: details.toolCalls || [],
     reason: details.reason || "",
     createdAt: isoNow(),
@@ -123,7 +133,7 @@ function recordEvent(store, event) {
   store.shelf.rssi = event.rssi || { A: null, B: null };
 }
 
-export function processShelfEvent(store, input) {
+export function processShelfEvent(store, input, { presence } = {}) {
   if (!input || typeof input !== "object") throw new Error("Event payload must be an object");
   const eventId = String(input.eventId || "").trim();
   const eventType = String(input.eventType || "").toUpperCase();
@@ -164,6 +174,7 @@ export function processShelfEvent(store, input) {
     receivedAt: isoNow(),
     delayed: input.delayed === true,
     rssi,
+    ...(presence ? { presence } : {}),
   };
 
   store.products = productCatalog(store.products);
@@ -228,6 +239,21 @@ export function processShelfEvent(store, input) {
       return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
     }
 
+    const check = presenceCheck(event.presence, candidate);
+    if (PRESENCE_GUARD && check === "WOULD_BLOCK" && event.presence.source === "LIVE_CAMERA") {
+      const caseItem = createCase(store, event, {
+        type: "PRESENCE_CONFLICT",
+        candidate,
+        confidence: 0,
+        nextAction: "STAFF_HITL",
+        proposedAction: eventType === "PICK" ? "ADD_ITEM" : "REMOVE_ITEM",
+        evidence: { ...proximityEvidence, zone: "CLEAR" },
+        reason: "A shopper with no basket was closer to the shelf than Basket " + candidate + "; staff review is required.",
+      });
+      store.shelf.fsmState = "WAITING_STAFF";
+      return { duplicate: false, event, disposition: "PENDING", caseId: caseItem.caseId };
+    }
+
     if (!applyCartEvent(store, candidate, event)) {
       const caseItem = createCase(store, event, {
         type: "CONFLICT",
@@ -250,6 +276,8 @@ export function processShelfEvent(store, input) {
       eventType: event.eventType,
       selectionBasis,
       ...(selectionBasis === "SINGLE_ACTIVE_BASKET" ? { singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI } : {}),
+      presenceCheck: check,
+      ...(event.presence?.source ? { presenceSource: event.presence.source } : {}),
     });
     return { duplicate: false, event, disposition: "CONFIRMED", basketId: candidate };
   }
@@ -444,6 +472,6 @@ export function snapshot(store, now = Date.now()) {
     recentEvents: store.events.slice(0, 20),
     recentOrders: store.orders.slice(0, 10),
     auditLog: (store.auditLog || []).slice(0, 100),
-    policy: { clearMarginDb: RSSI_CLEAR_MARGIN_DB, customerConfirmThreshold: CUSTOMER_CONFIRM_THRESHOLD, singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI },
+    policy: { clearMarginDb: RSSI_CLEAR_MARGIN_DB, customerConfirmThreshold: CUSTOMER_CONFIRM_THRESHOLD, singleBasketMinRssi: SINGLE_BASKET_MIN_RSSI, presenceGuard: PRESENCE_GUARD },
   };
 }

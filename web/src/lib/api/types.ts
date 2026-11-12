@@ -33,7 +33,8 @@ export type CaseType =
   | "ZONE_UNKNOWN"
   | "MISSING_SESSION"
   | "DELAYED_EVENT"
-  | "CONFLICT";
+  | "CONFLICT"
+  | "PRESENCE_CONFLICT";
 export type NextAction = "CUSTOMER_CONFIRM" | "STAFF_HITL" | "CLOSE";
 export type ProposedAction = "ADD_ITEM" | "REMOVE_ITEM" | "REVIEW_CART";
 
@@ -106,6 +107,7 @@ export interface Evidence {
   session?: Session | null;
   cartQuantity?: number;
   delayed?: boolean;
+  presence?: PresenceSnapshot;
 }
 
 export interface ToolCall {
@@ -194,6 +196,7 @@ export interface ShelfEvent {
   timestamp: string;
   receivedAt: string;
   rssi: RssiReadings;
+  presence?: PresenceSnapshot;
 }
 
 export interface OrderLine {
@@ -226,6 +229,7 @@ export interface ApiState {
     clearMarginDb: number;
     singleBasketMinRssi?: number;
     customerConfirmThreshold: number;
+    presenceGuard?: boolean;
   };
 }
 
@@ -254,3 +258,70 @@ export type ProcessShelfEventResult =
       disposition: "PENDING" | "CONFLICT";
       caseId: string;
     };
+
+export interface StoreShape {
+  id: string;
+  kind: "shelf" | "area";
+  shelfId?: string;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface CameraMapping {
+  width: number;
+  height: number;
+  /** Homography from normalized image coordinates (0–1) to store-map units. */
+  h: number[];
+  updatedAt: string;
+}
+
+export interface StoreMap {
+  version: 1;
+  width: number;
+  height: number;
+  /** null until staff type one real length; the server then assumes a 10 m wide map. */
+  metresPerUnit: number | null;
+  shapes: StoreShape[];
+  cameras: Record<string, CameraMapping>;
+}
+
+export interface PresenceShopper {
+  shopperId: string;
+  x: number;
+  y: number;
+  zone: string | null;
+  tag: BasketId | null;
+  linkedBy: "PRESENCE" | "STAFF" | null;
+  source: "LIVE_CAMERA" | "TEST_VIDEO";
+  cameras: string[];
+  tracks: { cameraId: string; trackId: number }[];
+}
+
+export interface PresenceView {
+  at: string;
+  metresPerUnit: number;
+  cameras: string[];
+  shoppers: PresenceShopper[];
+  tags: Record<BasketId, { zone: string | null; lastHeardAt: string | null }>;
+}
+
+/** Who was at the shelf when a shelf event arrived (server-made; never sent by devices). */
+export interface PresenceSnapshot {
+  status: "AVAILABLE" | "STALE" | "NO_CAMERA";
+  at: string;
+  windowMs: number;
+  shelfId: string;
+  cameras: string[];
+  source?: "LIVE_CAMERA" | "TEST_VIDEO";
+  inZone: { shopperId: string; tag: BasketId | null; linkedBy: "PRESENCE" | "STAFF" | null; distanceM: number }[];
+}
+
+export interface TracksMessage {
+  cameraId: string;
+  source: "LIVE_CAMERA" | "TEST_VIDEO";
+  capturedAt: string;
+  tracks: { trackId: number; confidence: number; box: number[]; floor: { x: number; y: number } | null; occluded: boolean }[];
+}

@@ -4,6 +4,8 @@ import { requestLayaBasketDecision } from "./agent/laya.mjs";
 import { logEvent } from "./logger.mjs";
 import { ingestTelemetry, ingestCameraEvidence } from "./evidence.mjs";
 import { queryStatistics, planStatsQuery } from "./stats-query.mjs";
+import { createStoreMapFile } from "./store-map.mjs";
+import { createPresence, validateTracksMessage } from "./presence.mjs";
 import {
   checkout,
   addAuditEntry,
@@ -24,20 +26,86 @@ export function createPrototypeApplication({
   layaDecision = requestLayaBasketDecision,
   agentPlanner,
   statsPlanner = planStatsQuery,
+  storeMapFile = createStoreMapFile(),
+  onLiveEvent = () => {},
 }) {
   if (!repository) throw new Error("repository is required");
   const selectedAgentProvider = String(agentProvider).toLowerCase();
   if (!["mock", "jev", "laya"].includes(selectedAgentProvider)) throw new Error("AGENT_PROVIDER must be mock, jev or laya");
   let store = null;
+  const presence = createPresence({ getMap: () => storeMapFile.get() });
+  let presenceTimer = null;
+  let lastPresence = "";
 
   function notifyStateChange() {
     onStateChange(snapshot(store));
   }
 
+  // Presence changes many times a second; send at most two live updates per second.
+  function publishPresence() {
+    if (presenceTimer) return;
+    presenceTimer = setTimeout(() => {
+      presenceTimer = null;
+      const view = presence.view();
+      const key = JSON.stringify({ ...view, at: null });
+      if (key !== lastPresence) { lastPresence = key; onLiveEvent("presence", view); }
+    }, 500);
+    presenceTimer.unref?.();
+  }
+
+  async function recordLinkChanges(changes, actor) {
+    if (!changes.length) return;
+    const { store: next } = await repository.mutate(draft => {
+      for (const change of changes) addAuditEntry(draft, "PRESENCE_" + change.type, actor, { shopperId: change.shopperId, tag: change.tag, reason: change.reason });
+    });
+    store = next;
+    logger("INFO", "PRESENCE_LINK_CHANGED", { changes });
+    notifyStateChange();
+  }
+
   return {
     async init() {
       store = await repository.init();
+      await storeMapFile.load();
       return snapshot(store);
+    },
+
+    getStoreMap: () => storeMapFile.get(),
+
+    getPresence: () => presence.view(),
+
+    async ingestVisionTracks(input) {
+      const message = validateTracksMessage(input, storeMapFile.get());
+      const changes = presence.ingestTracks(message);
+      publishPresence();
+      await recordLinkChanges(changes, "PRESENCE");
+      return { ok: true };
+    },
+
+    async setPresenceLink(shopperId, tag) {
+      const changes = presence.setLink(String(shopperId || ""), tag === null || tag === "" ? null : String(tag).toUpperCase());
+      publishPresence();
+      await recordLinkChanges(changes, "STAFF");
+      return presence.view();
+    },
+
+    tickPresence() {
+      presence.expire();
+      publishPresence();
+    },
+
+    async saveStoreMapLayout(input) {
+      const map = await storeMapFile.saveLayout(input);
+      logger("INFO", "STORE_MAP_SAVED", { shapes: map.shapes.length, measured: map.metresPerUnit !== null });
+      onLiveEvent("store-map", map);
+      return map;
+    },
+
+    async saveCameraMapping(cameraId, mapping) {
+      const map = await storeMapFile.saveCamera(cameraId, mapping);
+      logger("INFO", "CAMERA_MAPPING_SAVED", { cameraId, removed: mapping === null });
+      onLiveEvent("store-map", map);
+      return map;
     },
 
     getSnapshot() {
@@ -84,13 +152,21 @@ export function createPrototypeApplication({
       const { result, store: next } = await repository.mutate(draft => ingest(draft, input));
       store = next;
       logger("INFO", "EVIDENCE_RECEIVED", { kind, shelfId: result.shelfId, source: result.source });
+      if (kind === "telemetry") {
+        const changes = presence.ingestTelemetry(result);
+        publishPresence();
+        await recordLinkChanges(changes, "PRESENCE");
+      }
       if (kind === "telemetry" && result.source === "DEVICE") notifyStateChange();
       return { ok: true };
     },
 
     async processShelfEvent(input) {
+      // Presence is server evidence: never accept it from the device or simulator payload.
+      const { presence: _untrusted, ...shelfInput } = input && typeof input === "object" ? input : {};
+      const presenceSnapshot = presence.snapshotAt(String(shelfInput.shelfId || store.shelf.shelfId));
       const { result, store: next } = await repository.mutate((draft) => {
-        const result = processShelfEvent(draft, input);
+        const result = processShelfEvent(draft, shelfInput, { presence: presenceSnapshot });
         // Bind mock imagery before investigation starts, without a camera-ingestion race.
         if (!result.duplicate && input.mockVisionFrameId !== undefined) ingestCameraEvidence(draft, {
           eventId: input.eventId, cameraId: "MOCK-YOLO", source: "MOCK", frameId: input.mockVisionFrameId, observations: ["INCONCLUSIVE"],

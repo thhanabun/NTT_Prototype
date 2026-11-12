@@ -25,7 +25,7 @@ export async function startLocalApi({ corsOrigin, agentProvider = 'mock', agentM
   try {
     let source = await readFile(resolve(repository, 'src/server.mjs'), 'utf8');
     const replacements = [
-      ...['store-repository.mjs', 'application.mjs', 'logger.mjs', 'agent/laya.mjs'].map(name => [
+      ...['store-repository.mjs', 'application.mjs', 'store-map.mjs', 'logger.mjs', 'agent/laya.mjs'].map(name => [
         `from "./${name}"`, `from ${JSON.stringify(pathToFileURL(resolve(repository, 'src', name)).href)}`,
       ]),
       ['const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));', `const root = ${JSON.stringify(resolve(repository, 'public'))};`],

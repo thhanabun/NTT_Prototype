@@ -4,6 +4,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRepository } from "./store-repository.mjs";
 import { createPrototypeApplication } from "./application.mjs";
+import { createStoreMapFile } from "./store-map.mjs";
 import { logEvent } from "./logger.mjs";
 import { requestLayaToolDecision } from "./agent/laya.mjs";
 
@@ -18,6 +19,8 @@ const repository = createRepository({
   tableName: process.env.DYNAMODB_TABLE_NAME,
 });
 const subscribers = new Set();
+// Store map and presence go on their own stream so /api/stream keeps carrying only full state snapshots.
+const visionSubscribers = new Set();
 let application;
 let lastPublishedDeviceStatus;
 
@@ -27,6 +30,11 @@ function sendJson(response, status, value) {
     "cache-control": "no-store",
   });
   response.end(JSON.stringify(value));
+}
+
+function publishEvent(name, value) {
+  const message = `event: ${name}\ndata: ${JSON.stringify(value)}\n\n`;
+  for (const response of visionSubscribers) response.write(message);
 }
 
 function publish() {
@@ -40,6 +48,8 @@ application = createPrototypeApplication({
   onStateChange: publish,
   agentProvider: process.env.AGENT_PROVIDER || "laya",
   agentPlanner: process.env.AGENT_MODE === "workflow" ? undefined : requestLayaToolDecision,
+  storeMapFile: createStoreMapFile(resolve(dataDir, "store-map.json")),
+  onLiveEvent: publishEvent,
 });
 await application.init();
 lastPublishedDeviceStatus = deviceStatusKey();
@@ -51,6 +61,7 @@ function deviceStatusKey() {
 // Detect silence without writing fake heartbeat records or polling the database.
 setInterval(() => {
   if (deviceStatusKey() !== lastPublishedDeviceStatus) publish();
+  application.tickPresence();
 }, 1000).unref();
 
 async function readJson(request) {
@@ -88,6 +99,20 @@ async function handleApi(request, response, url) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/vision/stream") {
+    response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" });
+    response.write("retry: 1500\n\n");
+    response.write(`event: store-map\ndata: ${JSON.stringify(application.getStoreMap())}\n\n`);
+    response.write(`event: presence\ndata: ${JSON.stringify(application.getPresence())}\n\n`);
+    visionSubscribers.add(response);
+    const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
+    response.on("close", () => { clearInterval(heartbeat); visionSubscribers.delete(response); });
+    return;
+  }
+  if (request.method === "GET" && url.pathname === "/api/presence") {
+    return sendJson(response, 200, application.getPresence());
+  }
+
   if (request.method === "GET" && url.pathname === "/api/audit") {
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit")) || 100));
     const caseId = url.searchParams.get("caseId");
@@ -95,7 +120,27 @@ async function handleApi(request, response, url) {
     return sendJson(response, 200, await application.getAudit({ caseId, eventId, limit }));
   }
 
+  if (request.method === "GET" && url.pathname === "/api/store-map") {
+    return sendJson(response, 200, application.getStoreMap());
+  }
+  const cameraRoute = url.pathname.match(/^\/api\/store-map\/cameras\/([^/]+)$/);
+  if (request.method === "DELETE" && cameraRoute) {
+    return sendJson(response, 200, await application.saveCameraMapping(decodeURIComponent(cameraRoute[1]), null));
+  }
+
   const body = await readJson(request);
+  if (request.method === "PUT" && url.pathname === "/api/store-map") {
+    return sendJson(response, 200, await application.saveStoreMapLayout(body));
+  }
+  if (request.method === "POST" && url.pathname === "/api/vision/tracks") {
+    return sendJson(response, 200, await application.ingestVisionTracks(body));
+  }
+  if (request.method === "POST" && url.pathname === "/api/presence/links") {
+    return sendJson(response, 200, await application.setPresenceLink(body.shopperId, body.tag ?? null));
+  }
+  if (request.method === "PUT" && cameraRoute) {
+    return sendJson(response, 200, await application.saveCameraMapping(decodeURIComponent(cameraRoute[1]), body));
+  }
   if (request.method === "POST" && url.pathname === "/api/stats/query") {
     return sendJson(response, 200, await application.queryStatistics(body));
   }

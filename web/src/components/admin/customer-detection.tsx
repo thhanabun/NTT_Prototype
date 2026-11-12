@@ -6,22 +6,27 @@ import { customerRecording as recording, recordingFrameIndex, trackSegments } fr
 import styles from "./customer-detection.module.css";
 import type { MapView } from "@/lib/admin-commands";
 import { LiveCustomerDetection } from "./live-customer-detection";
+import { StoreMapEditor } from "./store-map-editor";
+import { useStoreMap } from "@/lib/use-store-map";
 
 const clock = (value: number) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(Math.floor(value % 60)).padStart(2, "0")}`;
 const mapPoint = ({ x, y }: { x: number; y: number }) => ({ x: 40 + x * 480, y: 28 + y * 320 });
 
 export function CustomerDetection({ view, onViewChange, active }: { view: MapView; onViewChange: (view: MapView) => void; active: boolean }) {
-  const [source, setSource] = useState<"recording" | "live">("recording");
+  const [source, setSource] = useState<"recording" | "live" | "map">("recording");
   return <section className={styles.panel} aria-labelledby="customer-detection-heading">
     <header className={styles.heading}>
       <div><p>STORE VISION</p><h2 id="customer-detection-heading">Object Detection</h2></div>
-      <span className={styles.sourceBadge}>YOLO11n · {source === "recording" ? "คลิปจริง" : "กล้องสด"}</span>
+      <span className={styles.sourceBadge}>YOLO11n · {source === "recording" ? "คลิปจริง" : source === "live" ? "กล้องสด" : "แผนที่ร้าน"}</span>
     </header>
     <div className={styles.sourceControls} role="group" aria-label="แหล่งภาพ Object Detection">
       <button type="button" aria-pressed={source === "recording"} onClick={() => setSource("recording")}>คลิปจริง</button>
       <button type="button" aria-pressed={source === "live"} onClick={() => setSource("live")}>กล้องสด</button>
+      <button type="button" aria-pressed={source === "map"} onClick={() => setSource("map")}>แผนที่ร้าน</button>
     </div>
-    {source === "recording" ? <RecordedCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : active ? <LiveCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : <p>กล้องหยุดเมื่อออกจาก Dashboard</p>}
+    {source === "recording" ? <RecordedCustomerDetection view={view} onViewChange={onViewChange} active={active} />
+      : source === "map" ? <MapEditorPanel />
+      : active ? <LiveCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : <p>กล้องหยุดเมื่อออกจาก Dashboard</p>}
   </section>;
 }
 
@@ -117,4 +122,11 @@ function RecordedCustomerDetection({ view, onViewChange, active }: { view: MapVi
       <p>กำหนดคนแรกเป็น Basket B และคนที่สองเป็น Basket A ตามคลิป ไม่ใช่การระบุตะกร้าด้วย BLE</p>
     </details>
   </>;
+}
+
+function MapEditorPanel() {
+  const { map, setMap, error } = useStoreMap();
+  if (!map) return <p className={styles.calibration}>{error || "กำลังโหลดแผนที่ร้าน…"}</p>;
+  // Remount the editor when the server map changes, so it starts from the latest saved version.
+  return <StoreMapEditor key={JSON.stringify({ ...map, cameras: {} })} map={map} onSaved={setMap} />;
 }

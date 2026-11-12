@@ -2,6 +2,10 @@ import type {
   ApiState,
   BasketCase,
   BasketId,
+  CameraMapping,
+  StoreMap,
+  PresenceView,
+  TracksMessage,
   Order,
   ProcessShelfEventResult,
   Session,
@@ -111,4 +115,32 @@ export function resetDemo(): Promise<{ ok: true }> {
 
 export function queryStatistics(message: string, source: "orders" | "demo", previousPlan?: StatsPlan): Promise<StatsResponse> {
   return request("/api/stats/query", { method: "POST", body: JSON.stringify({ message, source, previousPlan }), signal: AbortSignal.timeout(35_000) });
+}
+
+export function getStoreMap(): Promise<StoreMap> {
+  return request("/api/store-map");
+}
+
+export function saveStoreMapLayout(map: Omit<StoreMap, "cameras">): Promise<StoreMap> {
+  return request("/api/store-map", { method: "PUT", body: JSON.stringify(map) });
+}
+
+export function saveCameraMapping(cameraId: string, mapping: Pick<CameraMapping, "width" | "height" | "h">): Promise<StoreMap> {
+  return request(`/api/store-map/cameras/${encodeURIComponent(cameraId)}`, { method: "PUT", body: JSON.stringify(mapping) });
+}
+
+export function deleteCameraMapping(cameraId: string): Promise<StoreMap> {
+  return request(`/api/store-map/cameras/${encodeURIComponent(cameraId)}`, { method: "DELETE" });
+}
+
+export function postTracks(message: TracksMessage): Promise<{ ok: true }> {
+  return request("/api/vision/tracks", { method: "POST", body: JSON.stringify(message), signal: AbortSignal.timeout(5_000) });
+}
+
+export function getPresence(): Promise<PresenceView> {
+  return request("/api/presence");
+}
+
+export function setPresenceLink(shopperId: string, tag: BasketId | null): Promise<PresenceView> {
+  return post("/api/presence/links", { shopperId, tag });
 }
