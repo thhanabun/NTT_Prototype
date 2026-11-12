@@ -63,7 +63,7 @@
 .shopperList select { min-height: 34px; border: 1px solid var(--c-line); border-radius: 10px; background: var(--c-surface2); color: var(--c-ink); font: inherit; font-size: 12px; }
 .shopperList small { color: var(--c-soft); width: 100%; }
 @media (max-width: 600px) { .wizard { grid-template-columns: 1fr; } .cameraControls input { max-width: 100%; } }
-.setupOverlay { position: fixed; inset: 0; z-index: 60; overflow: auto; padding: 18px 20px 28px; background: var(--c-bg); color: var(--c-ink); }
+.setupOverlay { position: fixed; inset: 0; z-index: 80; /* above the floating menu (70–71) */ overflow: auto; padding: 18px 20px 28px; background: var(--c-bg); color: var(--c-ink); }
 .setupHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .setupHeader h2 { font: 700 19px/1.4 var(--c-display); }
 .setupOverlay .cameraControls button, .setupOverlay .calibrationPrompt button, .setupOverlay .calibrationPrompt select { min-height: 40px; padding: 7px 12px; border: 1px solid var(--c-line); border-radius: 12px; background: var(--c-surface2); color: var(--c-ink); font: inherit; font-size: 13px; }
@@ -77,3 +77,5 @@
 .setupStatus { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--c-line); border-radius: 14px; background: var(--c-surface); font-size: 13px; line-height: 1.7; }
 .errorList { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-variant-numeric: tabular-nums; }
 @media (max-width: 900px) { .setupGrid { grid-template-columns: 1fr; } }
+.setupOverlay:focus { outline: none; }
+@media (max-width: 600px) { .setupOverlay { padding: 14px 16px 24px; } .setupHeader h2 { font-size: 16px; } .toolSep { display: none; } }

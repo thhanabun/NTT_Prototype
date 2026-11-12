@@ -6,6 +6,7 @@ import { customerRecording as recording, recordingFrameIndex, trackSegments } fr
 import styles from "./customer-detection.module.css";
 import type { MapView } from "@/lib/admin-commands";
 import { LiveCustomerDetection } from "./live-customer-detection";
+import { CloudLiveCustomerDetection } from "./cloud-live-customer-detection";
 import { StoreMapEditor } from "./store-map-editor";
 import { useStoreMap } from "@/lib/use-store-map";
 import { useHistory, useUndoKeys } from "@/lib/use-history";
@@ -28,8 +29,10 @@ export function CustomerDetection({ view, onViewChange, active }: { view: MapVie
       <button type="button" aria-pressed={source === "map"} onClick={() => setSource("map")}>แผนที่ร้าน</button>
     </div>
     {source === "recording" ? <RecordedCustomerDetection view={view} onViewChange={onViewChange} active={active} />
-      : source === "map" ? <MapEditorPanel />
-      : active ? <LiveCustomerDetection view={view} onViewChange={onViewChange} active={active} /> : <p>กล้องหยุดเมื่อออกจาก Dashboard</p>}
+      : source === "map" ? (cloud ? <p className={styles.calibration}>แผนที่ร้านและการจับคู่กล้องหลายตัวใช้ได้ในโหมด local ก่อน ส่วน Cloud อยู่ในแผนขั้นถัดไป (P5)</p> : <MapEditorPanel />)
+      : !active ? <p>กล้องหยุดเมื่อออกจาก Dashboard</p>
+      : cloud ? <CloudLiveCustomerDetection view={view} onViewChange={onViewChange} active={active} />
+      : <LiveCustomerDetection view={view} onViewChange={onViewChange} active={active} />}
   </section>;
 }
 
@@ -126,6 +129,9 @@ function RecordedCustomerDetection({ view, onViewChange, active }: { view: MapVi
     </details>
   </>;
 }
+
+// Store map and presence routes are local-only until P5; cloud keeps the original single-camera view.
+const cloud = process.env.NEXT_PUBLIC_CLOUD_MODE === "true";
 
 function MapEditorPanel() {
   const { map, setMap, error } = useStoreMap();

@@ -147,6 +147,9 @@ export function StoreMapEditor({ editing, selectedId, onSelect, onSave, saveLabe
         {sel.map((p, i) => <rect key={i} data-handle={i} x={p.x - handle} y={p.y - handle} width={handle * 2} height={handle * 2}
           fill="var(--c-surface)" stroke="var(--c-hi)" strokeWidth={handle / 4} style={{ cursor: "nwse-resize" }} />)}
       </g>}
+      {!draft.shapes.length && <text x={draft.width / 2} y={draft.height / 2} textAnchor="middle" fontSize={draft.width / 32} fill="var(--c-soft)" style={{ pointerEvents: "none" }}>
+        ยังไม่มีรูปทรง · กด “+ Shelf” หรือ “+ พื้นที่” {compact ? "หรือวาดในภาพกล้อง" : "หรือวาดในหน้าตั้งค่ากล้อง"}
+      </text>}
       {overlay}
     </StoreMapView>
     {outside.length > 0 && <p role="alert" className={styles.error}>{outside.map(s => s.label).join(", ")} อยู่นอกกรอบแผนที่ ย้ายเข้ามาก่อนบันทึก</p>}

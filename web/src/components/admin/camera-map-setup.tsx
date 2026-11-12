@@ -58,6 +58,15 @@ export function CameraMapSetup({ cameraId, map, saved, snapshot, onRefresh, onCl
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  // Dialog behaviour: focus moves in, the page behind stops scrolling, focus returns to the opener on close.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.current?.focus();
+    return () => { document.body.style.overflow = overflow; opener?.focus?.(); };
+  }, []);
   const dragging = useRef<{ id: string; i: number; moved: boolean } | null>(null);
 
   // Live fit for display; Sync is what makes both sides agree. Older mappings without outlines still show.
@@ -231,7 +240,7 @@ export function CameraMapSetup({ cameraId, map, saved, snapshot, onRefresh, onCl
   const unit = draft.width / 100;
 
   // A portal so no parent card's layout can clip or offset the full-screen window.
-  return createPortal(<div className={styles.setupOverlay} role="dialog" aria-modal="true" aria-labelledby="setup-title"
+  return createPortal(<div ref={dialog} tabIndex={-1} className={styles.setupOverlay} role="dialog" aria-modal="true" aria-labelledby="setup-title"
     onKeyDown={event => { if (event.key === "Escape" && (!dirty || window.confirm("ปิดโดยไม่บันทึก?"))) onClose(); }}>
     <div className={styles.setupHeader}>
       <h2 id="setup-title">ตั้งค่า {cameraId} กับแผนที่ร้าน</h2>

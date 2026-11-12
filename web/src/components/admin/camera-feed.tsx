@@ -188,7 +188,9 @@ export function CameraFeed({ cameraId, source, map, colour, labelFor, onFrame, o
     {status && <p role="status" className={styles.calibration}>{status}</p>}
     <div className={styles.cameraControls}>
       <button type="button" disabled={!running} onClick={openSetup}>{mapping ? "ตั้งค่ากล้องกับแผนที่" : "จับคู่กล้องกับแผนที่"}</button>
-      {saved && <button type="button" onClick={() => void deleteCameraMapping(cameraId).catch(() => setError("ลบการจับคู่ไม่สำเร็จ"))}>ลบการจับคู่</button>}
+      {saved && <button type="button" onClick={() => {
+        if (window.confirm(`ลบการจับคู่ของ ${cameraId}? ต้องจับคู่ใหม่ก่อนคนที่กล้องนี้เห็นจะขึ้นบนแผนที่`)) void deleteCameraMapping(cameraId).catch(() => setError("ลบการจับคู่ไม่สำเร็จ"));
+      }}>ลบการจับคู่</button>}
       <button type="button" onClick={onRemove}>ปิดกล้องนี้</button>
     </div>
     {setup && <CameraMapSetup cameraId={cameraId} map={map} saved={saved && saved.width === size.sourceWidth && saved.height === size.sourceHeight ? saved : null}

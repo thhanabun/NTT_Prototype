@@ -83,3 +83,12 @@ export function fitHomography(source: Point[], target: Point[]) {
   }
   return [...ata.map(row => row[8]), 1];
 }
+
+const SQUARE = [{ x: .05, y: .05 }, { x: .95, y: .05 }, { x: .95, y: .95 }, { x: .05, y: .95 }];
+/** Cloud-mode single camera: 4 floor corners onto a fixed 0–1 square (the original calibration). */
+export const floorHomography = (points: Point[]) => homography(points, SQUARE);
+/** Cloud-mode single camera: project onto the 0–1 square, or null outside it. */
+export function projectFloor(point: Point, h: number[]): Point | null {
+  const p = project(h, point);
+  return p && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1 ? p : null;
+}
