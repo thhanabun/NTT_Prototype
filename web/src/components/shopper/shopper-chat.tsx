@@ -98,6 +98,7 @@ export function ShopperChat({ basketId, hasSession }: { basketId: BasketId; hasS
           <div className={chat.aiCol}>
             <p className={`${chat.aiBubble} ${styles.answer}`}>{entry.response.answer}</p>
             <span className={chat.aiTag}><Sparkles size={13} aria-hidden="true" />{entry.response.kind === "blocked" ? "ขอบเขตผู้ช่วย · ไม่เรียกโมเดล" : entry.response.mode === "demo" ? "สาธิต · ไม่ได้เรียก AI" : "คำตอบจากโมเดล · ตรวจแหล่งข้อมูล"}</span>
+            {entry.response.model && <span className={chat.hint}>โมเดล: {entry.response.model} · {entry.response.modelCalls} ครั้ง</span>}
             {entry.response.sources.length > 0 && <div className={styles.sources} aria-label="แหล่งข้อมูลคำตอบ">{entry.response.sources.map(source => <Source key={source.id} source={source} />)}</div>}
           </div>
         </div>}

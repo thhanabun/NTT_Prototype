@@ -5,7 +5,7 @@ import { once } from "node:events";
 import { createStore, startSession, processShelfEvent } from "../src/domain.mjs";
 import { createShopperAgent, validateShopperInput } from "../src/shopper-agent/index.mjs";
 import { loadShopperGuide, searchShopperGuide } from "../src/shopper-agent/knowledge.mjs";
-import { createShopperTools } from "../src/shopper-agent/tools.mjs";
+import { createShopperTools, shopperTools } from "../src/shopper-agent/tools.mjs";
 import { requestShopperCompletion } from "../src/shopper-agent/model.mjs";
 import { createLocalShopperSession } from "../src/shopper-agent/local-session.mjs";
 import { createCloudHandlers } from "../src/cloud/handlers.mjs";
@@ -81,7 +81,7 @@ test("Model tool round-trip is bounded, grounded and accounts for both calls", a
   const before = structuredClone(f.store);
   const response = await f.query({ ...f.input("ยอดรวมเท่าไร"), history: ["มีอะไรในตะกร้า"] }, { principal: f.principal });
   assert.equal(response.modelCalls, 2); assert.deepEqual(response.usage, { inputTokens: 20, outputTokens: 10 });
-  assert.equal(requests[0].tools.length, 4); assert.equal(requests[1].tools, undefined);
+  assert.equal(requests[0].tools.length, 5); assert.equal(requests[1].tools, undefined);
   const sent = requests[1].messages;
   assert.ok(sent.findIndex(item => item.role === "assistant") < sent.findIndex(item => item.role === "tool"));
   assert.ok(!JSON.stringify(requests).includes("WATER"));
@@ -154,6 +154,22 @@ test("Global concurrency is capped across the asynchronous guide/model boundary 
   assert.ok(results.every(result => result.modelCalls === 2 && result.usage === null));
 });
 
+test("Direct unsupported-topic refusals cost one completion but direct uncited factual answers fail closed", async () => {
+  const f = fixture("model", async () => ({ model: "fixture", usage: { inputTokens: 5, outputTokens: 4 }, message: {
+    role: "assistant", content: JSON.stringify({ answer: "untrusted refusal text", citations: [], unsupported: true }),
+  } }));
+  const response = await f.query(f.input("write a game"));
+  assert.equal(response.kind, "unsupported"); assert.equal(response.modelCalls, 1); assert.equal(response.sources.length, 0);
+  assert.ok(!response.answer.includes("untrusted"));
+  const factual = fixture("model", async () => ({ message: { role: "assistant", content: JSON.stringify({ answer: "Everything is free", citations: [], unsupported: false }) } }));
+  await assert.rejects(factual.query(factual.input("Cola price")), error => error.status === 502);
+  const decline = fixture("model", async () => ({ message: { tool_calls: [call("decline_unsupported")] } }));
+  const declined = await decline.query(decline.input("write a game"));
+  assert.equal(declined.kind, "unsupported"); assert.equal(declined.modelCalls, 1); assert.equal(declined.sources.length, 0);
+  const mixed = fixture("model", async () => ({ message: { tool_calls: [call("decline_unsupported"), call("read_my_basket", {}, "call-2")] } }));
+  await assert.rejects(mixed.query(mixed.input("write a game")), error => error.status === 502);
+});
+
 test("OpenAI-compatible HTTP adapter sends bounded tools and never follows endpoint redirects", async () => {
   const received = [];
   let bad = false;
@@ -171,9 +187,13 @@ test("OpenAI-compatible HTTP adapter sends bounded tools and never follows endpo
     assert.equal(received[0].path, "/v1/chat/completions"); assert.equal(received[0].body.model, "test-model");
     assert.equal(received[0].body.max_tokens, 384); assert.equal(received[0].body.stream, false);
     assert.equal(received[0].auth, "Bearer test-key-not-real"); assert.equal(result.usage.outputTokens, 3);
+    await requestShopperCompletion({ messages: [], env: { ...env, SHOPPER_AGENT_JSON_MODE: "true" }, signal: AbortSignal.timeout(5000) });
+    assert.deepEqual(received[1].body.response_format, { type: "json_object" });
+    await requestShopperCompletion({ messages: [], tools: shopperTools, env: { ...env, SHOPPER_AGENT_JSON_MODE: "true", SHOPPER_AGENT_REQUIRE_TOOLS: "true" }, signal: AbortSignal.timeout(5000) });
+    assert.equal(received[2].body.tool_choice, "required"); assert.equal(received[2].body.response_format, undefined);
     bad = true;
     await assert.rejects(requestShopperCompletion({ messages: [], env, signal: AbortSignal.timeout(5000) }), error => error.status === 503);
-    assert.equal(received.length, 2, "No follow-up requests or automatic retry");
+    assert.equal(received.length, 4, "No follow-up requests or automatic retry");
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
 

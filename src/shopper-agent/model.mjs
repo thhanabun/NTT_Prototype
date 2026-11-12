@@ -36,7 +36,8 @@ export async function requestShopperCompletion({ messages, tools, signal, env = 
       method: "POST", redirect: "error", signal,
       headers: { "content-type": "application/json", ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}) },
       body: JSON.stringify({ model: config.model, messages, stream: false, max_tokens: 384,
-        ...(tools ? { tools, tool_choice: "auto" } : {}) }),
+        ...(tools ? { tools, tool_choice: env.SHOPPER_AGENT_REQUIRE_TOOLS === "true" ? "required" : "auto" } : {}),
+        ...(!tools && env.SHOPPER_AGENT_JSON_MODE === "true" ? { response_format: { type: "json_object" } } : {}) }),
     });
   } catch {
     if (signal?.aborted) throw problem(504, "Shopper Agent ใช้เวลานานเกินไป กรุณาลองใหม่");
