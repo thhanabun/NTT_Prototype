@@ -13,6 +13,7 @@
     "test:e2e": "node tests/auth.e2e.mjs && node tests/shopper.e2e.mjs && node tests/admin.e2e.mjs && node tests/realtime.e2e.mjs",
     "test:auth": "node tests/auth.e2e.mjs",
     "test:admin": "node tests/admin.e2e.mjs",
+    "test:shopper-agent": "node tests/shopper-agent.e2e.mjs",
     "test:stats": "node tests/stats.e2e.mjs",
     "test:workspace": "node tests/workspace.e2e.mjs",
     "test:realtime": "node tests/realtime.e2e.mjs",
