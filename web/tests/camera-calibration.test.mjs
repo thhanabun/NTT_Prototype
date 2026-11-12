@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { homography, invert, mappingFromCorners, project } from "../src/lib/camera-calibration.ts";
+import { fitHomography, homography, invert, project } from "../src/lib/camera-calibration.ts";
 
 const near = (a, b) => assert.ok(Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6, JSON.stringify([a, b]));
 // A camera looking at a 20x8 shelf box at map (40,10): its corners appear as a trapezoid.
@@ -14,16 +14,18 @@ test("clicked shape corners map exactly onto the shape, and back", () => {
   map.forEach((point, i) => near(project(back, point), image[i]));
 });
 
-test("more than 4 corners keeps the most spread-out 4 and stays consistent", () => {
+test("least-squares fit matches the exact mapping and works with corners in any order", () => {
   const h = homography(image, map);
   const extraMap = [{ x: 10, y: 10 }, { x: 30, y: 10 }, { x: 30, y: 18 }, { x: 10, y: 18 }];
   const extraImage = extraMap.map(p => project(invert(h), p));
-  const both = mappingFromCorners([...image, ...extraImage], [...map, ...extraMap]);
-  [...map, ...extraMap].forEach((point, i) => near(project(both, [...image, ...extraImage][i]), point));
+  const order = [2, 0, 3, 1];
+  const fitted = fitHomography(order.map(i => image[i]), order.map(i => map[i]));
+  map.forEach((point, i) => near(project(fitted, image[i]), point));
+  const many = fitHomography([...image, ...extraImage], [...map, ...extraMap]);
+  [...map, ...extraMap].forEach((point, i) => near(project(many, [...image, ...extraImage][i]), point));
+  assert.throws(() => fitHomography([{ x: 0, y: 0 }, { x: .1, y: .1 }, { x: .2, y: .2 }, { x: .3, y: .3 }], map), /เส้นตรง/);
 });
 
-test("crossed or bunched clicks are rejected", () => {
+test("crossed clicks are rejected", () => {
   assert.throws(() => homography([image[0], image[2], image[1], image[3]], map), /ไขว้กัน/);
-  const tiny = image.map(p => ({ x: .5 + (p.x - .5) / 100, y: .5 + (p.y - .5) / 100 }));
-  assert.throws(() => mappingFromCorners(tiny, map), /ใกล้กันเกินไป/);
 });

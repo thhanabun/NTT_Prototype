@@ -122,10 +122,12 @@ Data rules:
 
 The store map is **drawn by staff on screen**, not typed into a file. No tape measure is needed to start.
 
-- **Map editor** (Admin page): a blank floor plan. Staff drag rectangles for:
+- **Map editor** (Admin page): a floor plan. Staff drag boxes for:
   - **Shelves**: each one picks its shelf ID (`SHELF-01`… from `SHELF_IDS` in `src/shelves.mjs`).
   - **Areas**: entrance, cashier, walkway or any named area.
-  - Move, resize, rename, delete. Undo by dragging back.
+  - Move (drag the box), resize (drag any corner square), **turn** (drag the round handle; 5° steps, Shift for any angle; or type the angle, or ↺/↻ 15°), rename, delete.
+  - **Ctrl+Z** undo, **Ctrl+Y** / **Ctrl+Shift+Z** redo (also buttons). Keyboard: arrows move, Shift+arrows resize, R turns 15°, Delete removes.
+  - Shapes store `angle` in degrees; zones and distances on the server follow the turned shape.
 - **Units without measurement**: the map uses its own units. Until it is measured, the system **assumes the whole map is 10 m wide** so the distance rules (0.75 m merge, 1 m re-link) still work approximately. The map shows "scale: assumed" in the corner.
 - **Add measurement later**: staff pick any shape edge and type its real length ("Shelf 1 is 1.6 m wide"). The whole map gets a real scale. Nothing else changes: shapes, camera mappings and positions all stay; only the metre numbers become correct.
 - **Saved on the server** so every device (PC, phones) sees the same map: `GET/PUT /api/store-map`, stored in `data/store-map.json` (outside the demo state, so Admin **Reset** does not erase the map). Loader/validator: `src/store-map.mjs` (shapes inside the floor, known shelf IDs, at most 24 shapes, size limit).
@@ -146,19 +148,20 @@ The store map is **drawn by staff on screen**, not typed into a file. No tape me
 - A shelf's **zone** (where a shopper counts as "at the shelf") is the shelf box grown by 1 m on every side (simpler than "in front of", and works whichever side shoppers stand).
 - The `feat/indoor-positioning` branch also has a layout editor (`src/store-layout.mjs`). If it is merged later, the two editors should become one.
 
-### 7.2 Mapping each camera: click the shapes you can see
+### 7.2 Mapping each camera: drag the outlines to fit
 
-Staff map a camera by **clicking the corners of shapes already on the map**, as seen in the camera image. No separate "click points on the map" step.
+Staff map a camera by **dragging outlines**, not by clicking corners in a fixed order (the first version did that; it was easy to get the order or the shelf's angle wrong, and the result did not match).
 
-1. Freeze the camera frame.
-2. Pick a shape from the list (for example Shelf 2), then click its **floor corners** in the image, in the order shown (front-left, front-right, back-right, back-left). A small picture of the shape shows which corner is next.
-3. Repeat for one or more other shapes the camera can see. **4 corners minimum**; corners from 2 shapes far apart give better accuracy across the whole view.
-4. The system computes the mapping (image → map) and **draws every shape back onto the camera image**. If the outlines sit on the real shelves and areas, press Save. If not, redo a corner.
+1. Press **จับคู่กล้องกับแผนที่**. The frame freezes and **every shape on the map is drawn on the image as an outline** with a round handle at each corner (a rough starting guess, or the saved mapping if there is one).
+2. Drag a corner handle onto the matching **floor corner** of that shelf or area in the picture. While fewer than 4 corners are placed, the other corners of that shape stay put, so it behaves like dragging one corner of a sheet. **All other outlines move with it immediately.**
+3. Finish one clearly visible shelf (4 green corners), then fix any other outline that is still off. Every placed corner counts: with more than 4 the mapping is a best fit (least squares) over all of them.
+4. **Ctrl+Z** undoes the last move. Keyboard: **N** picks the next corner, arrows move it (Shift = bigger steps).
+5. When every outline sits on the real shelves and areas, press **บันทึก**.
 
 Technical notes:
 
-- Today's `floorHomography` in `web/src/lib/camera-calibration.ts` solves exactly 4 points onto a fixed square. It gets a target-points parameter (map coordinates of the clicked corners). With more than 4 corners it uses the 4 most spread out (shortcut; least-squares only if rehearsals need it).
-- **Shape missing from the map?** Staff can draw it on the camera image instead: click its 4 floor corners on the image after the camera is already mapped, and it is added to the map in the right place.
+- `fitHomography` in `web/src/lib/camera-calibration.ts`: exact for 4 points, least squares for more, any order; nearly collinear sets are rejected.
+- **Shape missing from the map?** On a mapped camera, **วาดพื้นที่จากกล้องนี้**: click its 4 floor corners on the image and it is added to the map as an area.
 - The mapping is saved on the server with the map (`cameras` section of `data/store-map.json`, keyed by camera ID and resolution), so a reloaded page or a phone reopening Admin does not need to map again. It is dropped when the resolution changes. The browser converts each person's foot point to map units before sending, so the tracks API never needs the mapping.
 - The foot point stays "bottom-centre of the person box", as in today's code and `process-customer-clip.py`.
 
@@ -276,7 +279,7 @@ When a shelf event arrives, `application.processShelfEvent` asks the presence se
 - **Store map panel** (replaces the per-camera 0–1 map): shelf zones, shoppers as dots with label `Basket A`, `Basket B` or `Anonymous`, 6 s trails, heatmap toggle (keeps today's `MapView` points/heatmap and the chat commands that switch it).
 - **Camera panel list**: add camera (device picker or video file), per-camera status (fps, latency, calibrated or not), stop.
 - **Map editor**: drag rectangles for shelves and areas, pick shelf IDs, name areas; "Set scale" to type one real length later (7.1).
-- **Camera mapping wizard**: freeze the frame, pick a shape, click its floor corners in order (a small picture shows which corner is next), repeat for another shape, check the outlines drawn on the image, Save. "Add shape from this camera" draws a missing shape on a mapped camera image (7.2).
+- **Camera mapping**: freeze the frame, drag the map's outlines onto the real shelves, Save (7.2). "Add shape from this camera" draws a missing area on a mapped camera image.
 - **Setup status**: a checklist per camera ("not mapped / mapped") so staff see when every camera is ready.
 - **Shopper list**: shopper ID, link, how it was linked (auto/staff), cameras seeing them, link dropdown (override).
 - **Case details**: new "Presence at event" block showing `evidence.presence`.
@@ -444,7 +447,8 @@ Differences from sections 7–8 (all ponytail cuts or fixes found while building
 - **Separate SSE stream** (`/api/vision/stream`) instead of a `presence` event on `/api/stream` (see section 6).
 - **Snapshot status**: `NO_CAMERA` = no camera has sent tracks in the last 2 minutes (or the shelf is not on the map); `STALE` = none in the last 1.5 s. Per-shelf camera coverage is not tracked.
 - **Add shape from a camera** creates areas only; shelves keep their fixed IDs and are placed in the map editor.
+- **Drag-to-fit replaced click-in-order camera mapping** after the first real try did not line up (corner order and turned shelves). Shapes can now be turned; the shelf zone is "within 1 m of the shelf box" at any angle.
 - **Camera names** are typed by staff (`CAM-01`…); reusing a name reuses its saved mapping if the resolution matches.
 - **Snapshot time** is the moment the server receives the shelf event (shelf events have no trusted capture time today).
 
-Verified: backend `npm test` 80/80; web typecheck, lint and `test:unit` 3/3; web `test:e2e` (auth, Shopper, Admin, native SSE) all pass; map editor drag-and-save and the live store map checked in the browser with scripted tracks and BLE telemetry; water-buyer rehearsal through the live API recorded `presenceCheck: WOULD_BLOCK` with the cart updated as before (guard off). **Not yet verified**: real webcams/phones and real YOLO tracks (YOLO was still installing) and the camera mapping wizard with a real image.
+Verified: backend `npm test` 80/80; web typecheck, lint and `test:unit` 3/3; web `test:e2e` (auth, Shopper, Admin, native SSE) all pass; map editor drag-and-save and the live store map checked in the browser with scripted tracks and BLE telemetry; water-buyer rehearsal through the live API recorded `presenceCheck: WOULD_BLOCK` with the cart updated as before (guard off). Drag-to-fit was checked with real YOLO11n on the demo video (`web/public/demos/customer-walk.webm`): fitting Shelf 2 alone brought the Shelf 1 and Shelf 3 outlines onto the drawn shelves. **Not yet verified**: real webcams/phones with real people, and the mouse drag in a visible browser window (checked here through the keyboard path).

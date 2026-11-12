@@ -268,6 +268,8 @@ export interface StoreShape {
   y: number;
   w: number;
   h: number;
+  /** Degrees, turned around the box centre. */
+  angle?: number;
 }
 
 export interface CameraMapping {

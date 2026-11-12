@@ -45,9 +45,11 @@ export function validateStoreMap(input) {
     if (!["shelf", "area"].includes(shape.kind)) throw new Error("Shape kind must be shelf or area");
     const label = String(shape.label ?? "").trim().slice(0, 40);
     if (!label) throw new Error("Every shape needs a name");
-    const x = finite(shape.x, 0, width, "shape position"), y = finite(shape.y, 0, height, "shape position");
-    const w = finite(shape.w, 0.5, width - x, "shape size"), h = finite(shape.h, 0.5, height - y, "shape size");
-    const result = { id: shape.id, kind: shape.kind, label, x, y, w, h };
+    const x = finite(shape.x, -width, width, "shape position"), y = finite(shape.y, -height, height, "shape position");
+    const w = finite(shape.w, 0.5, width, "shape size"), h = finite(shape.h, 0.5, height, "shape size");
+    const angle = shape.angle === undefined ? 0 : finite(shape.angle, -180, 180, "shape angle");
+    const result = { id: shape.id, kind: shape.kind, label, x, y, w, h, angle };
+    if (shapeCorners(result).some(p => p.x < -1e-6 || p.y < -1e-6 || p.x > width + 1e-6 || p.y > height + 1e-6)) throw new Error(`“${label}” is outside the map`);
     if (shape.kind === "shelf") {
       if (!SHELF_IDS.includes(shape.shelfId) || shelves.has(shape.shelfId)) throw new Error("Each shelf shape needs its own shelf ID: " + SHELF_IDS.join(", "));
       shelves.add(shape.shelfId);
@@ -69,15 +71,36 @@ export function metresPerUnit(map) {
   return map.metresPerUnit ?? ASSUMED_WIDTH_M / map.width;
 }
 
-// Where a shopper counts as "at the shelf": the shelf box grown by SHELF_ZONE_M on every side.
-export function shelfZone(map, shelfId) {
-  const shape = map.shapes.find(item => item.kind === "shelf" && item.shelfId === shelfId);
-  if (!shape) return null;
-  const grow = SHELF_ZONE_M / metresPerUnit(map);
-  return { x: shape.x - grow, y: shape.y - grow, w: shape.w + 2 * grow, h: shape.h + 2 * grow };
+// A shape is the box x,y,w,h turned by `angle` degrees around its centre.
+const toLocal = (point, shape) => {
+  const a = -(shape.angle || 0) * Math.PI / 180, dx = point.x - (shape.x + shape.w / 2), dy = point.y - (shape.y + shape.h / 2);
+  return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) };
+};
+
+/** Corners in order: top-left, top-right, bottom-right, bottom-left of the unrotated box, then turned. */
+export function shapeCorners(shape) {
+  const a = (shape.angle || 0) * Math.PI / 180, cx = shape.x + shape.w / 2, cy = shape.y + shape.h / 2;
+  return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => {
+    const dx = sx * shape.w / 2, dy = sy * shape.h / 2;
+    return { x: cx + dx * Math.cos(a) - dy * Math.sin(a), y: cy + dx * Math.sin(a) + dy * Math.cos(a) };
+  });
 }
 
-export const inRect = (point, rect) => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h;
+/** Distance from a point to the shape's edge in map units; 0 inside. */
+export function distanceToShape(point, shape) {
+  const p = toLocal(point, shape);
+  return Math.hypot(Math.max(Math.abs(p.x) - shape.w / 2, 0), Math.max(Math.abs(p.y) - shape.h / 2, 0));
+}
+
+export const shelfShape = (map, shelfId) => map.shapes.find(item => item.kind === "shelf" && item.shelfId === shelfId) ?? null;
+
+/** "At the shelf" means within SHELF_ZONE_M of the shelf box, at any angle. Returns metres, or null when outside. */
+export function shelfZoneDistance(map, shelfId, point) {
+  const shape = shelfShape(map, shelfId);
+  if (!shape) return null;
+  const metres = distanceToShape(point, shape) * metresPerUnit(map);
+  return metres <= SHELF_ZONE_M ? metres : null;
+}
 
 export function createStoreMapFile(path) {
   let current = structuredClone(DEFAULT_STORE_MAP);

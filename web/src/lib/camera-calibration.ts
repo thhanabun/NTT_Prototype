@@ -45,22 +45,24 @@ export function invert(h: number[]) {
   return [e * j - f * i, c * i - b * j, b * f - c * e, f * g - d * j, a * j - c * g, c * d - a * f, d * i - e * g, b * g - a * i, a * e - b * d].map(v => v / det);
 }
 
-const area = (points: Point[]) => Math.abs(points.reduce((sum, p, i) => sum + p.x * points[(i + 1) % points.length].y - p.y * points[(i + 1) % points.length].x, 0)) / 2;
-
-/**
- * Mapping from any 4+ clicked corners. shortcut: with more than 4 it keeps the 4 most spread out in the image,
- * not a least-squares fit; upgrade if wide-angle lenses need every point.
- */
-export function mappingFromCorners(image: Point[], map: Point[]) {
-  if (image.length < 4 || image.length !== map.length) throw new Error("ต้องคลิกอย่างน้อย 4 มุม");
-  let best: number[] = [0, 1, 2, 3], bestArea = -1;
-  for (let a = 0; a < image.length; a++) for (let b = a + 1; b < image.length; b++) for (let c = b + 1; c < image.length; c++) for (let d = c + 1; d < image.length; d++) {
-    const pick = [a, b, c, d];
-    const cx = pick.reduce((s, k) => s + image[k].x, 0) / 4, cy = pick.reduce((s, k) => s + image[k].y, 0) / 4;
-    pick.sort((p, q) => Math.atan2(image[p].y - cy, image[p].x - cx) - Math.atan2(image[q].y - cy, image[q].x - cx));
-    const size = area(pick.map(k => image[k]));
-    if (size > bestArea && isConvexQuad(pick.map(k => map[k]))) { best = pick; bestArea = size; }
+/** Best homography for 4+ point pairs (exact for 4, least squares for more). Any order; rejects nearly-collinear sets. */
+export function fitHomography(source: Point[], target: Point[]) {
+  if (source.length < 4 || source.length !== target.length) throw new Error("ต้องมีอย่างน้อย 4 จุด");
+  const ata = Array.from({ length: 8 }, () => new Array(9).fill(0));
+  source.forEach(({ x, y }, i) => {
+    const { x: u, y: v } = target[i];
+    for (const [row, rhs] of [[[x, y, 1, 0, 0, 0, -u * x, -u * y], u], [[0, 0, 0, x, y, 1, -v * x, -v * y], v]] as [number[], number][]) {
+      for (let r = 0; r < 8; r++) { for (let c = 0; c < 8; c++) ata[r][c] += row[r] * row[c]; ata[r][8] += row[r] * rhs; }
+    }
+  });
+  for (let col = 0; col < 8; col++) {
+    let pivot = col;
+    for (let row = col + 1; row < 8; row++) if (Math.abs(ata[row][col]) > Math.abs(ata[pivot][col])) pivot = row;
+    [ata[col], ata[pivot]] = [ata[pivot], ata[col]];
+    if (Math.abs(ata[col][col]) < 1e-12) throw new Error("จุดอยู่บนเส้นตรงเดียวกันเกินไป ลากมุมให้กระจายมากขึ้น");
+    const d = ata[col][col];
+    ata[col] = ata[col].map(v => v / d);
+    for (let row = 0; row < 8; row++) if (row !== col) { const f = ata[row][col]; ata[row] = ata[row].map((v, i) => v - f * ata[col][i]); }
   }
-  if (bestArea < 0.002) throw new Error("มุมที่คลิกอยู่ใกล้กันเกินไป ลองเลือกมุมที่ห่างกันมากขึ้น");
-  return homography(best.map(k => image[k]), best.map(k => map[k]));
+  return [...ata.map(row => row[8]), 1];
 }

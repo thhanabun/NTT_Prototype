@@ -1,4 +1,4 @@
-import { CAMERA_ID, inRect, metresPerUnit, shelfZone } from "./store-map.mjs";
+import { CAMERA_ID, metresPerUnit, shelfShape, shelfZoneDistance } from "./store-map.mjs";
 import { SHELF_IDS } from "./shelves.mjs";
 
 // Rules from docs/basket-detection.md sections 7.6–7.8. Distances are metres on the store map's scale.
@@ -27,7 +27,6 @@ export function validateTracksMessage(input, map) {
 }
 
 const median = values => { const s = [...values].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-const rectDistance = (p, r) => Math.hypot(Math.max(r.x - p.x, 0, p.x - r.x - r.w), Math.max(r.y - p.y, 0, p.y - r.y - r.h));
 
 export function createPresence({ getMap, now = Date.now }) {
   const shoppers = new Map(); // shopperId -> shopper
@@ -44,10 +43,8 @@ export function createPresence({ getMap, now = Date.now }) {
     const map = getMap();
     let best = null;
     for (const shelfId of SHELF_IDS) {
-      const zone = shelfZone(map, shelfId);
-      if (!zone || !inRect(point, zone)) continue;
-      const centre = { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 };
-      if (!best || distanceM(point, centre) < best.d) best = { shelfId, d: distanceM(point, centre) };
+      const d = shelfZoneDistance(map, shelfId, point);
+      if (d !== null && (!best || d < best.d)) best = { shelfId, d };
     }
     return best?.shelfId ?? null;
   }
@@ -192,14 +189,14 @@ export function createPresence({ getMap, now = Date.now }) {
     snapshotAt(shelfId) {
       const time = now();
       const map = getMap();
-      const shape = map.shapes.find(s => s.kind === "shelf" && s.shelfId === shelfId);
-      const zone = shelfZone(map, shelfId);
+      const shape = shelfShape(map, shelfId);
       const recentCamera = [...cameraSeen.values()].some(at => time - at <= SNAPSHOT_WINDOW_MS);
       const base = { at: new Date(time).toISOString(), windowMs: SNAPSHOT_WINDOW_MS, shelfId, cameras: [...cameraSeen].filter(([, at]) => time - at <= SNAPSHOT_WINDOW_MS).map(([id]) => id) };
       if (!shape || !cameraSeen.size) return { status: "NO_CAMERA", ...base, inZone: [] };
       if (!recentCamera) return { status: "STALE", ...base, inZone: [] };
-      const inZone = [...shoppers.values()].filter(s => time - s.lastSeen <= SNAPSHOT_WINDOW_MS && inRect(s, zone))
-        .map(s => ({ shopperId: s.shopperId, tag: s.tag, linkedBy: s.linkedBy, distanceM: Math.round(rectDistance(s, shape) * scale() * 100) / 100, source: s.source }))
+      const inZone = [...shoppers.values()].filter(s => time - s.lastSeen <= SNAPSHOT_WINDOW_MS)
+        .map(s => ({ shopperId: s.shopperId, tag: s.tag, linkedBy: s.linkedBy, d: shelfZoneDistance(map, shelfId, s), source: s.source }))
+        .filter(s => s.d !== null).map(({ d, ...s }) => ({ ...s, distanceM: Math.round(d * 100) / 100 }))
         .sort((a, b) => a.distanceM - b.distanceM).slice(0, MAX_SNAPSHOT);
       return { status: "AVAILABLE", ...base, source: inZone.some(s => s.source === "TEST_VIDEO") ? "TEST_VIDEO" : "LIVE_CAMERA",
         inZone: inZone.map(({ source, ...rest }) => rest) };
