@@ -6,6 +6,7 @@ import { createRepository } from "./store-repository.mjs";
 import { createPrototypeApplication } from "./application.mjs";
 import { logEvent } from "./logger.mjs";
 import { requestLayaToolDecision } from "./agent/laya.mjs";
+import { createLocalShopperSession } from "./shopper-agent/local-session.mjs";
 
 const root = resolve(fileURLToPath(new URL("../public", import.meta.url)));
 const dataDir = resolve(root, "../data");
@@ -18,6 +19,7 @@ const repository = createRepository({
   tableName: process.env.DYNAMODB_TABLE_NAME,
 });
 const subscribers = new Set();
+const shopperSessions = createLocalShopperSession();
 let application;
 let lastPublishedDeviceStatus;
 
@@ -96,6 +98,15 @@ async function handleApi(request, response, url) {
   }
 
   const body = await readJson(request);
+  if (request.method === "POST" && url.pathname === "/api/shopper/query") {
+    const controller = new AbortController();
+    const cancel = () => { if (!response.writableEnded) controller.abort(); };
+    response.on("close", cancel);
+    try {
+      const principal = shopperSessions.principal(request, body?.basketId);
+      return sendJson(response, 200, await application.queryShopper(body, { principal, clientKey: request.socket.remoteAddress, signal: controller.signal }));
+    } finally { response.off("close", cancel); }
+  }
   if (request.method === "POST" && url.pathname === "/api/stats/query") {
     return sendJson(response, 200, await application.queryStatistics(body));
   }
@@ -107,6 +118,7 @@ async function handleApi(request, response, url) {
   }
   if (request.method === "POST" && url.pathname === "/api/sessions") {
     const session = await application.startSession(String(body.basketId || "").toUpperCase());
+    response.setHeader("set-cookie", shopperSessions.cookie(session));
     return sendJson(response, 201, { session });
   }
   if (request.method === "POST" && url.pathname === "/api/events") {
@@ -179,7 +191,7 @@ const server = createServer(async (request, response) => {
       path: request.url,
       message: error.message || "Request failed",
     });
-    const status = error instanceof SyntaxError ? 400 : 409;
+    const status = error instanceof SyntaxError ? 400 : error.status || 409;
     if (!response.headersSent) sendJson(response, status, { error: error.message || "Request failed" });
     else response.end();
   }

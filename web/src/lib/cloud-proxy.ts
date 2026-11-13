@@ -47,10 +47,11 @@ export async function cloudProxy(request: NextRequest) {
     }
     const target = path === "/api/auth/session" ? "/api/auth/me" : path;
     if (path === "/api/stream") return NextResponse.json({ error: "Cloud uses WebSocket realtime" }, { status: 404 });
-    if (!/^\/api\/(state|audit|sessions|checkout|events|realtime-ticket|stats\/query|auth\/session|cases\/CASE-\d+\/(customer|staff))$/.test(path)) return NextResponse.json({ error: "Route unavailable" }, { status: 404 });
+    if (!/^\/api\/(state|audit|sessions|checkout|events|realtime-ticket|stats\/query|shopper\/query|auth\/session|cases\/CASE-\d+\/(customer|staff))$/.test(path)) return NextResponse.json({ error: "Route unavailable" }, { status: 404 });
     const basket = request.headers.get("x-basket-id") || "A";
     if (!["A", "B"].includes(basket)) return NextResponse.json({ error: "Invalid basket" }, { status: 400 });
-    const token = request.cookies.get("basketly-staff")?.value;
+    // Shopper chat never gains staff-wide privileges from another signed-in tab.
+    const token = path === "/api/shopper/query" ? undefined : request.cookies.get("basketly-staff")?.value;
     const shopper = request.cookies.get("basketly-shopper-" + basket)?.value;
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (token) headers.authorization = "Bearer " + token;

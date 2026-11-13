@@ -4,6 +4,7 @@ import { requestLayaBasketDecision } from "./agent/laya.mjs";
 import { logEvent } from "./logger.mjs";
 import { ingestTelemetry, ingestCameraEvidence } from "./evidence.mjs";
 import { queryStatistics, planStatsQuery } from "./stats-query.mjs";
+import { createShopperAgent } from "./shopper-agent/index.mjs";
 import {
   checkout,
   addAuditEntry,
@@ -24,11 +25,14 @@ export function createPrototypeApplication({
   layaDecision = requestLayaBasketDecision,
   agentPlanner,
   statsPlanner = planStatsQuery,
+  shopperCompletion,
+  shopperEnv = process.env,
 }) {
   if (!repository) throw new Error("repository is required");
   const selectedAgentProvider = String(agentProvider).toLowerCase();
   if (!["mock", "jev", "laya"].includes(selectedAgentProvider)) throw new Error("AGENT_PROVIDER must be mock, jev or laya");
   let store = null;
+  const queryShopper = createShopperAgent({ repository, complete: shopperCompletion, env: shopperEnv, logger });
 
   function notifyStateChange() {
     onStateChange(snapshot(store));
@@ -69,6 +73,8 @@ export function createPrototypeApplication({
       notifyStateChange();
       return response;
     },
+
+    queryShopper,
 
     async startSession(basketId) {
       const { result, store: next } = await repository.mutate((draft) => startSession(draft, basketId));

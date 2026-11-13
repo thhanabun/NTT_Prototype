@@ -35,6 +35,8 @@ Optional real CPU **YOLO11n** is available as `inspect_vision_evidence`. Start `
 
 The Admin **Stat Query Chat** uses real Laya to select read-only daily-sales/product-ranking queries and bar/line/table views. It aggregates completed mock-checkout orders from the full DB, with a separately labelled demo dataset and query audit. See [examples, execution and checks](docs/stat-query.md).
 
+The new **Shopper Agent** opens from the floating FAST menu on `/shopper`. It reads catalog/guide information and the current shopper's basket/cases without changing them. Real local inference is verified with **Qwen3-4B-Instruct-2507 Q4_K_M** via llama.cpp: run `npm run model:shopper -- -Install` once, then `npm run model:shopper`, `npm run start:shopper` and the frontend in separate terminals. Explicit demo mode remains available without inference. See [Shopper Agent setup, review steps and boundaries](docs/shopper-agent.md). This does not change the existing Laya case Agent or invoke AWS/OpenAI hosted inference.
+
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
 - RSSI inside that margin is ambiguous. Laya runs a real typed decision after the evidence tools; a person must confirm before the item reaches the cart. Model errors route to staff without a mock fallback. Set AGENT_PROVIDER=mock explicitly only for a software simulation.
 - Missing RSSI, tied evidence, a missing session, or a cart conflict routes to staff review.

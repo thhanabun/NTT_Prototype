@@ -6,6 +6,7 @@ import { ArcGauge } from "@/components/arc-gauge";
 import { BasketScanner } from "./basket-scanner";
 import { ConnectionStatus } from "@/components/connection-status";
 import { useShopper } from "./use-shopper";
+import { ShopperChat } from "./shopper-chat";
 import { ProductArt } from "./product-art";
 import { SHELF_OPTIONS, SHELF_PRODUCTS, getShelfProduct } from "@/lib/shelves";
 import type { RssiReadings } from "@/lib/api/types";
@@ -54,6 +55,7 @@ export function ShopperApp() {
 
   return (
     <div className={styles.shopper} lang="th">
+      <ShopperChat key={`${shop.basketId}:${basket.session?.sessionId ?? "guest"}`} basketId={shop.basketId} hasSession={!!basket.session} />
       <div className={styles.hero}>
         <div><p className={styles.eyebrow}>SHOPPER</p><h1>ช้อปได้เลย<span>.</span></h1></div>
         <button className={styles.scanButton} disabled={loading || pending || stale} onClick={() => setScannerOpen(true)}><QrCode size={20} aria-hidden="true" /> สแกนตะกร้า</button>
