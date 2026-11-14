@@ -82,6 +82,48 @@ test("stale or misaligned receiver telemetry cannot advance entry or exit counte
   assert.equal(location.x, null);
 });
 
+test("hysteresis waits until all three readers report a new sample", () => {
+  const store = createStore();
+  const base = Date.parse("2026-11-14T04:00:00.000Z");
+  const inside = { A: -60, B: -80, HV01: -80 };
+  for (const shelfId of SHELF_IDS) {
+    ingestTelemetry(store, { shelfId, source: "DEVICE", rssi: inside }, new Date(base).toISOString());
+    updateBleLocation(store, base, config);
+  }
+  assert.equal(store.bleLocationState.A.enterCount, 1);
+
+  for (const shelfId of SHELF_IDS.slice(0, 2)) {
+    ingestTelemetry(store, { shelfId, source: "DEVICE", rssi: inside }, new Date(base + 1000).toISOString());
+    updateBleLocation(store, base + 1000, config);
+  }
+  assert.equal(store.bleLocationState.A.presence, "UNKNOWN");
+  assert.equal(store.bleLocationState.A.enterCount, 1);
+
+  ingestTelemetry(store, { shelfId: SHELF_IDS[2], source: "DEVICE", rssi: inside }, new Date(base + 1000).toISOString());
+  updateBleLocation(store, base + 1000, config);
+  assert.equal(store.bleLocationState.A.presence, "INSIDE");
+});
+
+test("delayed measurements are aligned by capture time, not delivery time", () => {
+  const store = createStore();
+  const now = Date.parse("2026-11-14T04:00:10.000Z");
+  const captureTimes = [now - 5000, now - 3000, now - 2500];
+  for (const [index, shelfId] of SHELF_IDS.entries()) {
+    ingestTelemetry(store, {
+      shelfId,
+      source: "DEVICE",
+      capturedAt: new Date(captureTimes[index]).toISOString(),
+      rssi: { A: -60, B: -80, HV01: -80 },
+    }, new Date(now).toISOString());
+    updateBleLocation(store, now, config);
+  }
+
+  const location = bleLocations(store, now, config).find(item => item.tagId === "A");
+  assert.equal(location.status, "PARTIAL");
+  assert.equal(location.x, null);
+  assert.equal(store.bleLocationState.A, undefined);
+});
+
 test("BLE position uses the calibrated three-reader fingerprint and only exposes fresh aligned readings", () => {
   const store = createStore();
   const pointA = {

@@ -28,13 +28,18 @@ function fingerprints(config) {
     SHELF_IDS.every(shelfId => validRssi(point?.rssi?.[shelfId])));
 }
 
+function sampleTime(sample) {
+  return Date.parse(sample.capturedAt || sample.receivedAt);
+}
+
 function latestDeviceSamples(store) {
   const latest = new Map();
   for (const sample of store.telemetry || []) {
     if (sample.source !== "DEVICE" || !SHELF_IDS.includes(sample.shelfId)) continue;
-    const at = Date.parse(sample.receivedAt);
-    const previousAt = latest.has(sample.shelfId) ? Date.parse(latest.get(sample.shelfId).receivedAt) : -Infinity;
-    if (!Number.isFinite(at) || at <= previousAt) continue;
+    const at = sampleTime(sample);
+    const previous = latest.get(sample.shelfId);
+    const previousAt = previous ? sampleTime(previous) : -Infinity;
+    if (!Number.isFinite(at) || at < previousAt || (at === previousAt && Date.parse(sample.receivedAt) <= Date.parse(previous.receivedAt))) continue;
     latest.set(sample.shelfId, sample);
   }
   return latest;
@@ -42,16 +47,19 @@ function latestDeviceSamples(store) {
 
 function tagReadings(store, tagId, now) {
   const latest = latestDeviceSamples(store);
-  const rssi = {}, sampleTimes = [], signalTimes = [];
+  const rssi = {}, sampleTimes = [], sampleTimesByShelf = {}, signalTimes = [];
   let lastSeenAt = null;
   for (const shelfId of SHELF_IDS) {
     const sample = latest.get(shelfId);
-    const at = sample ? Date.parse(sample.receivedAt) : NaN;
+    const at = sample ? sampleTime(sample) : NaN;
     const value = sample?.rssi?.[tagId];
     const fresh = Number.isFinite(at) && Math.max(0, now - at) <= DEVICE_TIMEOUT_MS;
-    if (fresh) sampleTimes.push(at);
+    if (fresh) {
+      sampleTimes.push(at);
+      sampleTimesByShelf[shelfId] = at;
+    }
     if (validRssi(value)) {
-      if (!lastSeenAt || at > Date.parse(lastSeenAt)) lastSeenAt = sample.receivedAt;
+      if (!lastSeenAt || Date.parse(sample.receivedAt) > Date.parse(lastSeenAt)) lastSeenAt = sample.receivedAt;
       rssi[shelfId] = fresh ? value : null;
       if (fresh) signalTimes.push(at);
     } else rssi[shelfId] = null;
@@ -59,7 +67,7 @@ function tagReadings(store, tagId, now) {
   const freshCount = signalTimes.length;
   const aligned = sampleTimes.length === SHELF_IDS.length && Math.max(...sampleTimes) - Math.min(...sampleTimes) <= MAX_SAMPLE_SKEW_MS;
   const positionReady = aligned && freshCount === SHELF_IDS.length;
-  return { rssi, sampleTimes, readerCount: sampleTimes.length, freshCount, aligned, positionReady, lastSeenAt };
+  return { rssi, sampleTimes, sampleTimesByShelf, readerCount: sampleTimes.length, freshCount, aligned, positionReady, lastSeenAt };
 }
 
 function locate(rssi, points) {
@@ -91,14 +99,13 @@ export function updateBleLocation(store, now = Date.now(), config = BLE_LOCATION
     const readings = tagReadings(store, tagId, now);
     if (!readings.aligned) continue;
     const at = Math.max(...readings.sampleTimes);
-    const window = Math.floor(at / 1000);
-    const state = store.bleLocationState[tagId] ||= { presence: "UNKNOWN", enterCount: 0, exitCount: 0, lastWindow: null, lastWindowAt: null };
-    if (state.lastWindow !== null && window <= state.lastWindow) continue;
+    const state = store.bleLocationState[tagId] ||= { presence: "UNKNOWN", enterCount: 0, exitCount: 0, lastSampleTimes: null, lastWindowAt: null };
+    if (state.lastSampleTimes && !SHELF_IDS.every(shelfId => readings.sampleTimesByShelf[shelfId] > state.lastSampleTimes[shelfId])) continue;
     if (state.lastWindowAt !== null && at - state.lastWindowAt > MAX_CONSECUTIVE_GAP_MS) {
       state.enterCount = 0;
       state.exitCount = 0;
     }
-    state.lastWindow = window;
+    state.lastSampleTimes = { ...readings.sampleTimesByShelf };
     state.lastWindowAt = at;
     const values = SHELF_IDS.map(shelfId => readings.rssi[shelfId]);
     if (values.some(value => value !== null && value >= settings.enterRssiDbm)) {
