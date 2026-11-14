@@ -10,6 +10,8 @@ This directory contains the firmware implementations for the FAST Smart Shelf pr
 | :--- | :--- | :--- |
 | [`esp32.ino`](esp32.ino) | **Main Firmware (Local & Demo - Default)** | The primary sketch in `esp32/`. Pre-configured with the 3 physical beacon MACs. Runs standalone on USB Serial Monitor without Wi-Fi, or dispatches HTTP POST events to local server (`/api/events`). |
 | [`local_shelf/local_shelf.ino`](local_shelf/local_shelf.ino) | **Local Shelf Standalone** | Local development implementation; the root esp32.ino includes this file. |
+| [`local_shelf_02/local_shelf_02.ino`](local_shelf_02/local_shelf_02.ino) | **Local Shelf 2** | Same local firmware with the `SHELF-02` receiver identity. |
+| [`local_shelf_03/local_shelf_03.ino`](local_shelf_03/local_shelf_03.ino) | **Local Shelf 3** | Same local firmware with the `SHELF-03` receiver identity. |
 | [`aws_shelf/aws_shelf.ino`](aws_shelf/aws_shelf.ino) | **AWS IoT Core Firmware — Shelf 1** | Implements the source protocol described in [`esp32-firmware-requirements.md`](../../docs/esp32-firmware-requirements.md). Uses MQTT over TLS 1.2 (Port 8883) to **AWS IoT Core** with X.509 certificates, 1 Hz telemetry, and an 8-slot outbox. The current deployment report records the IoT signal path as user-reported; it does not include per-board acceptance evidence. |
 | [`aws_shelf_02/aws_shelf_02.ino`](aws_shelf_02/aws_shelf_02.ino) | **AWS Shelf 2** | Uses the same TLS/MQTT protocol with the `SHELF-02` identity and its own certificate. Backend maps every Shelf 2 lane to Sprite Plus Tea. |
 | [`aws_shelf_03/aws_shelf_03.ino`](aws_shelf_03/aws_shelf_03.ino) | **AWS Shelf 3** | Uses the same TLS/MQTT protocol with the `SHELF-03` identity, its own certificate, and GPIO 4/5 switch wiring reported by the connected ESP32-S3 board. |
@@ -57,12 +59,22 @@ Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
 
 ### 1. Local Testing Firmware (Default)
 
+For three local ESP32 readers, build and upload one sketch per board. Use the matching directories so every board publishes under a unique shelf ID:
+
 ```powershell
-# Compile local firmware
+# Compile Shelf 1
 arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-build firmware/esp32/local_shelf
 
-# Upload to ESP32 (replace COM8 with your port)
+# Compile Shelf 2
+arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-02-build firmware/esp32/local_shelf_02
+
+# Compile Shelf 3
+arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-03-build firmware/esp32/local_shelf_03
+
+# Upload to ESP32 (replace COM ports with the ports for each board)
 arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/local-shelf-build firmware/esp32/local_shelf
+arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM9 --input-dir tmp/local-shelf-02-build firmware/esp32/local_shelf_02
+arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM10 --input-dir tmp/local-shelf-03-build firmware/esp32/local_shelf_03
 
 # Open Serial Monitor
 arduino-cli monitor --port COM8 --config baudrate=115200
@@ -109,5 +121,5 @@ arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM10 --in
 - Explicit beacon MACs are authoritative. To use UUID/major/minor matching, leave the role MAC empty and configure SHELF_PROJECT_UUID. An unrelated beacon with matching default major/minor cannot replace a configured MAC.
 - The median ages individual samples, so a new advertisement cannot revive old RSSI readings.
 - Simulation commands are disabled unless SHELF_ENABLE_TEST_COMMANDS is explicitly enabled. Exact water_pick/water_put commands use lane 2 and do not overwrite the physical switch baseline.
-- Telemetry is published/logged for diagnostics; the web backend's high-value telemetry/history/offline dashboard is not implemented by this firmware PR.
+- The Admin page shows current RSSI and BLE location; coordinates stay uncalibrated until per-tag thresholds and fingerprint data are added.
 - RAM events are lost on power loss; buffer overflow is counted. No persistent outbox or claim of physical delivery/accuracy is made.
