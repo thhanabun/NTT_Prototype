@@ -73,7 +73,11 @@ export function createShopperAgent({ repository, complete = requestShopperComple
     if (window.count >= 8 || running >= 2 || (!windows.has(key) && windows.size >= 1000)) throw fail(429, "ถามถี่เกินไปหรือผู้ช่วยกำลังทำงาน กรุณารอสักครู่แล้วส่งใหม่");
     window.count++; windows.set(key, window);
     if (shouldBlock(message, principal)) return result({ kind: "blocked", answer: blocked });
-    if (mode === "model") shopperModelConfig(env); // Fail before networking if configuration is absent.
+    if (mode === "model") {
+      const provider = env.SHOPPER_AGENT_PROVIDER || "openai";
+      if (provider === "openai") shopperModelConfig(env);
+      else if (provider !== "bedrock" || !env.BEDROCK_MODEL_ID) throw fail(503, "Shopper Agent model provider is not configured");
+    }
     const started = performance.now();
     const budget = AbortSignal.timeout(20000);
     const requestSignal = signal ? AbortSignal.any([signal, budget]) : budget;

@@ -30,6 +30,7 @@ flowchart TD
   Web --> BFF[Same-origin HTTPS BFF]
   BFF --> Gateway[API Gateway HTTP / Lambda]
   Gateway --> API
+  API -->|Shopper Agent / Converse| Model
   Cognito[Cognito staff login + PKCE] --> BFF
 ```
 
@@ -38,6 +39,8 @@ Lambda container เป็น runtime ของ agent; Bedrock Converse เล�
 เส้น ESP/IoT ใน diagram ใช้เมื่อเปิด `enableIoT` เท่านั้น เมื่อเปิดจะรับ `SHELF-01` ถึง `SHELF-03` ผ่าน topic rule เดียว โดยแต่ละบอร์ดใช้ client ID และ X.509 certificate แยกกัน ปุ่ม simulator บันทึกแหล่งที่มาเป็น `SIMULATOR` และไม่สร้าง device telemetry หรือทำให้ shelf แสดง ONLINE
 
 Agent image รวม Node agent และ Python model services สอง environment ไว้ด้วยกัน ใช้ AWS Lambda Web Adapter 1.1.0 และบริการโมเดลฟังเฉพาะ loopback ภายใน container โมเดลและภาพตัวอย่างดาวน์โหลด/ตรวจ hash ตอน build ใช้ Hugging Face cache เดียวกันและเปิด offline mode ตอน runtime จึงไม่ดาวน์โหลด weights ซ้ำตอนเริ่มระบบ Agent ไม่มี Function URL; API/Investigate Lambda เรียกผ่าน `lambda:InvokeFunction` ที่จำกัด ARN เท่านั้น Browser ไม่ได้รับ AWS credentials หรือ model endpoint
+
+Shopper Agent บน Cloud เรียก Bedrock Converse โดยตรงจาก API Lambda; ใช้ `BedrockModelId`/`BedrockInvokeResources` ชุดเดียวกับ Agent สำหรับเคส และให้ API role มี `bedrock:InvokeModel` เฉพาะ ARN ที่กำหนด Local ยังใช้ Qwen ผ่าน OpenAI-compatible endpoint ของตัวเอง ไม่มีการส่ง `localhost` หรือ API key ของโมเดลไป Cloud
 
 ## สิ่งที่สร้างเมื่อสั่ง deploy
 
@@ -156,7 +159,7 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 
 ## Cloud acceptance ที่ต้องผ่าน
 
-1. HTTPS/Staff login/logout; anonymous ไม่อ่าน cart/audit, Basket A อ่าน/แก้ Basket B ไม่ได้
+1. HTTPS/Staff login/logout; anonymous ไม่อ่าน cart/audit, Basket A อ่าน/แก้ Basket B ไม่ได้; Shopper Agent อ่านเฉพาะ catalog/guide/ตะกร้าของ session และปฏิเสธข้อมูลอ่อนไหว
 2. รอบไม่ใช้ IoT: anonymous ส่ง mock event ไม่ได้; STAFF ส่งจาก simulator ได้และ audit แสดง SIMULATOR โดยไม่สร้าง device ONLINE ทดลองกล้องสดกับสิทธิ์เข้าถึงกล้องบนอุปกรณ์จริง
 3. ทดสอบ IoT telemetry, PICK/PUT_BACK, duplicate/retry และ ACK แยกครบทั้งสาม shelf; cart ไม่ติดลบหรือเพิ่มซ้ำ
 4. Clear → cart โดยไม่เรียก model; ambiguous → **Bedrock trace/tool calls จริง** → Laya → Customer YES และ NO; missing/low-confidence → Staff

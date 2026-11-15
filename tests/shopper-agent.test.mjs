@@ -7,6 +7,7 @@ import { createShopperAgent, validateShopperInput } from "../src/shopper-agent/i
 import { loadShopperGuide, searchShopperGuide } from "../src/shopper-agent/knowledge.mjs";
 import { createShopperTools, shopperTools } from "../src/shopper-agent/tools.mjs";
 import { requestShopperCompletion } from "../src/shopper-agent/model.mjs";
+import { requestBedrockShopperCompletion } from "../src/shopper-agent/bedrock.mjs";
 import { createLocalShopperSession } from "../src/shopper-agent/local-session.mjs";
 import { createCloudHandlers } from "../src/cloud/handlers.mjs";
 import { signShopper } from "../src/cloud/auth.mjs";
@@ -197,17 +198,84 @@ test("OpenAI-compatible HTTP adapter sends bounded tools and never follows endpo
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
 
+test("Bedrock Converse adapter maps required tool calls and usage to the shared Shopper Agent contract", async () => {
+  let request;
+  const signal = AbortSignal.timeout(5000);
+  const result = await requestBedrockShopperCompletion({ env: { BEDROCK_MODEL_ID: "apac.amazon.nova-lite-v1:0", SHOPPER_AGENT_REQUIRE_TOOLS: "true" },
+    messages: [{ role: "system", content: "Ground every answer." }, { role: "user", content: "Cola price?" }], tools: shopperTools, signal,
+    client: { async send(command, options) {
+      request = command.input;
+      assert.equal(options.abortSignal, signal);
+      return { stopReason: "tool_use", output: { message: { content: [{ toolUse: { toolUseId: "tooluse_test", name: "read_catalog", input: { query: "Cola" } } }] } }, usage: { inputTokens: 42, outputTokens: 6 } };
+    } },
+  });
+  assert.equal(request.modelId, "apac.amazon.nova-lite-v1:0");
+  assert.deepEqual(request.system, [{ text: "Ground every answer." }]);
+  assert.deepEqual(request.toolConfig.toolChoice, { any: {} });
+  assert.equal(request.toolConfig.tools.length, shopperTools.length);
+  const schema = request.toolConfig.tools.find(tool => tool.toolSpec.name === "read_catalog").toolSpec.inputSchema.json;
+  assert.deepEqual(Object.keys(schema).sort(), ["properties", "required", "type"]);
+  assert.deepEqual(schema.properties.query, { type: "string" });
+  assert.equal(request.inferenceConfig.temperature, 0);
+  assert.equal(result.message.tool_calls[0].id, "tooluse_test");
+  assert.equal(result.message.tool_calls[0].function.name, "read_catalog");
+  assert.deepEqual(JSON.parse(result.message.tool_calls[0].function.arguments), { query: "Cola" });
+  assert.deepEqual(result.usage, { inputTokens: 42, outputTokens: 6 });
+});
+
+test("Bedrock Converse adapter sends tool results back as one user message and returns final text", async () => {
+  let request;
+  const result = await requestBedrockShopperCompletion({ env: { BEDROCK_MODEL_ID: "model-id" },
+    messages: [
+      { role: "system", content: "Ground answers." }, { role: "user", content: "What is Cola?" },
+      { role: "assistant", content: null, tool_calls: [call("read_catalog", { query: "Cola" })] },
+      { role: "tool", tool_call_id: "call-1", content: "{\"products\":[{\"name\":\"Cola\"}]}" },
+      { role: "user", content: "Answer from the tool result." },
+    ],
+    client: { async send(command) { request = command.input; return { stopReason: "end_turn", output: { message: { content: [{ text: "{\"answer\":\"Cola\",\"citations\":[\"catalog:current\"],\"unsupported\":false}" }] } }, usage: { inputTokens: 31, outputTokens: 9 } }; } },
+  });
+  assert.deepEqual(request.messages[1].content[0].toolUse, { toolUseId: "call-1", name: "read_catalog", input: { query: "Cola" } });
+  assert.deepEqual(request.messages[2].content[0].toolResult, { toolUseId: "call-1", content: [{ text: "{\"products\":[{\"name\":\"Cola\"}]}" }], status: "success" });
+  assert.deepEqual(request.toolConfig.toolChoice, { auto: {} });
+  assert.equal(request.messages.length, 3, "consecutive user messages are joined into valid Converse turns");
+  assert.equal(result.message.content, "{\"answer\":\"Cola\",\"citations\":[\"catalog:current\"],\"unsupported\":false}");
+  assert.equal(result.message.tool_calls, undefined);
+});
+
+test("Shopper Agent accepts configured Bedrock without a local URL and fails closed on missing or unknown providers", async () => {
+  const f = fixture("model");
+  const env = { SHOPPER_AGENT_MODE: "model", SHOPPER_AGENT_PROVIDER: "bedrock", BEDROCK_MODEL_ID: "model-id" };
+  let calls = 0;
+  const query = createShopperAgent({ repository: f.repository, env, complete: async () => ({ model: "model-id", usage: { inputTokens: 1, outputTokens: 1 }, message: ++calls === 1
+    ? { role: "assistant", tool_calls: [call("read_catalog", { query: "Cola" })] }
+    : { role: "assistant", content: JSON.stringify({ answer: "Cola is 25 THB", citations: ["catalog:current"], unsupported: false }) } }) });
+  const response = await query({ message: "Cola price?", basketId: "A" });
+  assert.equal(response.model, "model-id"); assert.equal(response.modelCalls, 2);
+  for (const invalid of [{ ...env, BEDROCK_MODEL_ID: "" }, { ...env, SHOPPER_AGENT_PROVIDER: "other" }]) {
+    const unavailable = createShopperAgent({ repository: f.repository, env: invalid, complete: async () => { throw new Error("Must not call"); } });
+    await assert.rejects(unavailable({ message: "Cola price?", basketId: "A" }), error => error.status === 503);
+  }
+});
+
 test("Cloud Shopper route authenticates the signed owner and rejects staff-wide or forged access without AWS calls", async () => {
   const f = fixture();
   const key = "fixture-secret-not-used-in-production";
-  const handlers = createCloudHandlers({ repository: f.repository, key: async () => key, shopperEnv: f.env,
+  const shopperEnv = { SHOPPER_AGENT_MODE: "model", SHOPPER_AGENT_PROVIDER: "bedrock", BEDROCK_MODEL_ID: "fixture-model" };
+  const shopperCompletion = async ({ messages }) => {
+    const previousTools = messages.find(message => message.role === "assistant")?.tool_calls;
+    if (previousTools) return { model: "fixture-model", message: { role: "assistant", content: JSON.stringify({ answer: "Grounded test answer", citations: [previousTools[0].function.name === "read_my_basket" ? "basket:current" : "catalog:current"], unsupported: false }) } };
+    const basketQuestion = /my cart/i.test(messages.at(-1).content);
+    return { model: "fixture-model", message: { role: "assistant", tool_calls: [call(basketQuestion ? "read_my_basket" : "read_catalog", basketQuestion ? {} : { query: "QR" })] } };
+  };
+  const handlers = createCloudHandlers({ repository: f.repository, key: async () => key, shopperEnv, shopperCompletion,
     verifyJwt: async () => ({ sub: "staff", "cognito:groups": ["STAFF"] }) });
   const query = async (body, authorization) => {
     const response = await handlers.api({ rawPath: "/api/shopper/query", requestContext: { http: { method: "POST", sourceIp: "127.0.0.1" } }, headers: authorization ? { authorization } : {}, body: JSON.stringify(body) });
     return { status: response.statusCode, body: JSON.parse(response.body) };
   };
   const before = structuredClone(f.store);
-  assert.equal((await query(f.input("เริ่ม QR อย่างไร"))).status, 200);
+  const publicAnswer = await query(f.input("เริ่ม QR อย่างไร"));
+  assert.equal(publicAnswer.status, 200); assert.equal(publicAnswer.body.model, "fixture-model"); assert.equal(publicAnswer.body.mode, "model");
   assert.equal((await query(f.input("my cart"))).status, 401);
   const token = "Basket " + signShopper(key, { basket: "A", sessionId: f.principal.sessionId });
   const response = await query(f.input("my cart"), token);

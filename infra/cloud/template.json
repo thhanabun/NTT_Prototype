@@ -359,6 +359,13 @@
               },
               {
                 "Effect": "Allow",
+                "Action": "bedrock:InvokeModel",
+                "Resource": {
+                  "Ref": "BedrockInvokeResources"
+                }
+              },
+              {
+                "Effect": "Allow",
                 "Action": "secretsmanager:GetSecretValue",
                 "Resource": {
                   "Ref": "SessionSecret"
@@ -386,6 +393,12 @@
                 "AgentRuntime",
                 "Arn"
               ]
+            },
+            "SHOPPER_AGENT_MODE": "model",
+            "SHOPPER_AGENT_PROVIDER": "bedrock",
+            "SHOPPER_AGENT_REQUIRE_TOOLS": "true",
+            "BEDROCK_MODEL_ID": {
+              "Ref": "BedrockModelId"
             },
             "WORKFLOW_ARN": {
               "Ref": "CaseWorkflow"

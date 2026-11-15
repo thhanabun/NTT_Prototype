@@ -10,6 +10,7 @@ import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { CloudWatchLogsClient, DescribeLogGroupsCommand, PutRetentionPolicyCommand } from "@aws-sdk/client-cloudwatch-logs";
 import { DynamoDbRecordsRepository } from "./records-repository.mjs";
+import { requestBedrockShopperCompletion } from "../shopper-agent/bedrock.mjs";
 
 const hash = value => createHash("sha256").update(value).digest("hex");
 const seconds = () => Math.floor(Date.now() / 1000);
@@ -137,6 +138,6 @@ export function createCloudServices(env = process.env) {
         } while (nextToken);
       }
     },
-    invokeAgent,
+    invokeAgent, shopperCompletion: requestBedrockShopperCompletion,
   };
 }

@@ -1,4 +1,5 @@
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cloudTemplate, bootstrapTemplate } from "../infra/cloud/template.mjs";
@@ -13,7 +14,10 @@ try {
   const recognized = contents.includes('.basketly-cloud-package') || await readFile(marker, 'utf8').then(value => value.trim() === target).catch(() => false);
   if (contents.length && !recognized) throw new Error('Refusing to replace an unrecognized directory');
   await writeFile(marker, target + '\n');
-  if (contents.length) await rm(target, { recursive: true, force: true });
+  if (contents.length && process.platform === 'win32') {
+    // OneDrive can expose this generated package as read-only cloud-file reparse points.
+    execFileSync('powershell.exe', ['-NoProfile', '-Command', "$ErrorActionPreference='Stop'; $root=[IO.Path]::GetFullPath($env:FAST_CLOUD_REPO_ROOT).TrimEnd('\\'); $target=[IO.Path]::GetFullPath($env:FAST_CLOUD_PACKAGE_TARGET); if ($target -ne [IO.Path]::GetFullPath((Join-Path $root 'data/cloud-package')) -or (Get-Content -LiteralPath (Join-Path $root 'data/cloud-package.marker') -Raw).Trim() -ne $target -or -not $target.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to replace an unrecognized cloud package path' }; Remove-Item -LiteralPath $target -Recurse -Force"], { env: { ...process.env, FAST_CLOUD_REPO_ROOT: root, FAST_CLOUD_PACKAGE_TARGET: target } });
+  } else if (contents.length) await rm(target, { recursive: true, force: true });
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
 await mkdir(target, { recursive: true });
 await writeFile(marker, target + '\n');

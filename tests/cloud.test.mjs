@@ -199,6 +199,12 @@ test("Prepared SAM infrastructure references real resources, avoids dependency c
   assert.equal(resources.StateTable.Properties.PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled, true);
   assert.equal(resources.ControlTable.Properties.TimeToLiveSpecification.AttributeName, "ttl");
   assert.equal(resources.ApiFunctionLog.Properties.RetentionInDays, 14);
+  const api = resources.ApiFunction.Properties;
+  assert.equal(api.Environment.Variables.SHOPPER_AGENT_PROVIDER, "bedrock");
+  assert.equal(api.Environment.Variables.SHOPPER_AGENT_MODE, "model");
+  assert.deepEqual(api.Environment.Variables.BEDROCK_MODEL_ID, { Ref: "BedrockModelId" });
+  const shopperInvoke = api.Policies[0].Statement.find(statement => statement.Action === "bedrock:InvokeModel");
+  assert.deepEqual(shopperInvoke.Resource, { Ref: "BedrockInvokeResources" });
   assert.ok(resources.Trail && resources.Budget && resources.FailureQueue && resources.ArchiveBucket);
   assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql, /WHERE \(topic\(4\) = 'events' OR topic\(4\) = 'telemetry'\)/);
   assert.equal(resources.ShelfRule.Properties.TopicRulePayload.ErrorAction, undefined);

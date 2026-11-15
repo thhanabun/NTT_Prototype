@@ -1,6 +1,10 @@
 # Shopper Agent
 
-Status: local UI, read-only tools, lexical retrieval and an OpenAI-compatible Chat Completions adapter are implemented. Real local inference is now verified with **Qwen3-4B-Instruct-2507 / Q4_K_M** using llama.cpp on this machine. The team's eventual endpoint can replace it through backend configuration. No AWS/OpenAI hosted inference, AWS deployment, MCP server, GitHub issue or PR is part of this local review. Fixtures and the small real-model sample do not prove general accuracy or safety.
+Status: local UI, read-only tools, lexical retrieval and an OpenAI-compatible Chat Completions adapter are implemented. Real local inference is verified with **Qwen3-4B-Instruct-2507 / Q4_K_M** using llama.cpp on this machine. The Cloud API uses Bedrock Converse through a separate adapter and the configured deployment model; it does not call the local endpoint. These Cloud code/config changes require a Cloud build and deployment before they are available in the hosted app. Fixtures and the small real-model sample do not prove general accuracy or safety.
+
+## Cloud model runtime
+
+The Cloud API Lambda calls Amazon Bedrock Converse directly for Shopper Agent queries. It uses the same `BedrockModelId` and exact `BedrockInvokeResources` deployment settings as the case Agent, with `bedrock:InvokeModel` scoped to those configured model/profile ARNs. The first inference requires an allowlisted read-only tool call; tool arguments, sources and final JSON are validated by the shared Shopper Agent code. The browser never receives AWS credentials or a model endpoint. Local development remains on the OpenAI-compatible Qwen endpoint below.
 
 ## Run the real local model
 
