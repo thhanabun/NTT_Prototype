@@ -14,6 +14,8 @@
   document.body.classList.add("camui");
   /* ?embed=1: shown inside the FAST Admin app, which draws its own menu */
   if (new URLSearchParams(location.search).has("embed")) document.body.classList.add("embed");
+  /* the Admin app switches our view by message instead of reloading us */
+  window.addEventListener("message", e => { const v = e.source === parent && e.data && e.data.fastView; if (typeof v === "string" && Object.hasOwn(VIEWS, v)) location.hash = v; });
   const shell = document.createElement("div"); shell.className = "shell";
   const nav = document.createElement("nav"); nav.setAttribute("aria-label", "เมนู");
   nav.innerHTML = `<div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 16 16" width="16" height="16"><path d="M9,1 L3,9 H7.5 L7,15 L13,7 H8.5 Z" fill="#f47b3c"/></svg></span><b>FAST<i>.</i></b><span>กล้อง</span></div>`
