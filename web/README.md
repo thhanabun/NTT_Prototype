@@ -43,6 +43,9 @@ For Phase 7B, agree on staff roles, the identity provider, login/logout/session-
 - `/shopper` is the starting route for the shopper workflow.
 - `/admin` is the starting route for the operations dashboard.
 - `/admin/login` is the development mock login form when explicitly enabled.
+- `/admin/live`, `/admin/cameras/setup`, `/admin/cameras/sync` and `/admin/cameras/map` show the multi-camera store map (`../prototypes/shelf-calibration`, run its `server.py`) inside the Admin menu. It is loaded from `NEXT_PUBLIC_STORE_MAP_URL` (default `http://127.0.0.1:8090`) with `?embed=1`, which hides its own menu.
+- `/admin/laya` opens the dashboard with the Laya chat already open.
+- Design: Admin pages share one left menu (`src/components/admin/admin-shell.tsx`); `/shopper` is a single phone-width column with full-screen questions. Both hide the top header.
 - `src/lib/api/types.ts` mirrors the local contract in `../docs/web-app-plan.md`.
 - `src/lib/api/client.ts` contains typed local HTTP requests. `src/lib/api/live-state.ts` owns the shared named `state` event stream and snapshot store.
 

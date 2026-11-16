@@ -181,6 +181,7 @@ html[data-theme="night"] .icon-sun { display: block; }
 html[data-theme="night"] .icon-moon { display: none; }
 .site-header a:focus-visible, .home a:focus-visible, .theme-toggle:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 3px; }
 .site-main { display: flex; flex-direction: column; flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+.site-main:has(.admin-shell, .shopper-flow) { max-width: none; padding: 0; }
 .home { width: 100%; max-width: 1000px; margin: auto; padding: 65px 0; }
 .home-label { display: inline-flex; align-items: center; gap: 7px; font: 700 11px/1.5 var(--c-mono); letter-spacing: .14em; color: var(--c-accent); }
 .home h1 { font: 700 clamp(36px, 6vw, 64px)/1.3 var(--c-display); letter-spacing: -.04em; margin-top: 20px; }

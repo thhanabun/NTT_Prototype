@@ -77,3 +77,7 @@ body.v-map:not(.adv) #mapBox > .row[role=toolbar] > :not([data-tool=select]):not
   body.v-live main, body.v-setup main { grid-template-columns:1fr; }
 }
 body.v-setup:not(.adv) .card .camOut { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+
+/* inside the FAST Admin app (?embed=1): its menu replaces ours */
+body.embed .shell > nav { display:none; }
+body.embed .content { padding:16px; }

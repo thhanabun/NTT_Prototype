@@ -1,4 +1,4 @@
-.panel { position: fixed; left: 24px; bottom: 104px; z-index: 59; width: 410px; max-width: calc(100vw - 32px); height: 680px; max-height: calc(100dvh - 128px); display: flex; flex-direction: column; overflow: hidden; border-radius: 30px; background: var(--c-bg); border: 1px solid var(--c-line); box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .5); color: var(--c-ink); font-family: var(--font-anuphan), sans-serif; }
+.panel { position: fixed; left: var(--dock-left, 24px); bottom: 104px; z-index: 59; width: 410px; max-width: calc(100vw - 32px); height: 680px; max-height: calc(100dvh - 128px); display: flex; flex-direction: column; overflow: hidden; border-radius: 30px; background: var(--c-bg); border: 1px solid var(--c-line); box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .5); color: var(--c-ink); font-family: var(--font-anuphan), sans-serif; }
 .wide { width: 580px; }
 .panel button:focus-visible, .panel select:focus-visible, .panel textarea:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 2px; }
 .header { display: flex; align-items: center; gap: 8px; padding: 14px 14px 10px; }

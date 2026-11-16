@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminWorkspace } from "@/components/admin/admin-workspace";
 import { adminAuthEnabled, cloudAuthEnabled } from "@/lib/auth/config";
 import { expireMockSession } from "@/lib/auth/mock-session";
@@ -10,7 +10,7 @@ import { signOutAdmin, useAdminSession } from "@/lib/auth/session";
 import { AuthUnavailable } from "./auth-unavailable";
 import styles from "./auth.module.css";
 
-export function AdminAccess() {
+export function AdminAccess({ children }: { children?: ReactNode }) {
   const auth = useAdminSession();
   const router = useRouter();
   useEffect(() => {
@@ -20,14 +20,7 @@ export function AdminAccess() {
   if (!adminAuthEnabled) return <AuthUnavailable />;
   if (auth.status !== "signed-in") return <p className={styles.status} role="status">กำลังตรวจสอบสิทธิ์…</p>;
 
-  return <>
-    <div className={styles.toolbar} aria-label="Admin session">
-      <div className={styles.identity}><span className={styles.badge}>{cloudAuthEnabled ? "พนักงาน" : "บัญชีทดสอบ"}</span><span>{auth.session.email}</span></div>
-      <div className={styles.tools}>
-        {!cloudAuthEnabled && <details><summary>เครื่องมือทดสอบ</summary><button className={styles.secondary} onClick={expireMockSession}>จำลอง session หมดอายุ</button></details>}
-        <button className={styles.secondary} onClick={() => void signOutAdmin()}><LogOut size={15} aria-hidden="true" /> ออกจากระบบ</button>
-      </div>
-    </div>
-    <AdminWorkspace />
-  </>;
+  const identity = `${cloudAuthEnabled ? "พนักงาน" : "บัญชีทดสอบ"} · ${auth.session.email}`;
+  const tools = !cloudAuthEnabled && <details className={styles.tools}><summary>เครื่องมือทดสอบ</summary><button className={styles.secondary} onClick={expireMockSession}>จำลอง session หมดอายุ</button></details>;
+  return <AdminShell identity={identity} tools={tools} onSignOut={() => void signOutAdmin()}>{children ?? <AdminWorkspace />}</AdminShell>;
 }

@@ -15,10 +15,10 @@ const MAX_RESULT_TABS = 8;
 const HOME = "dashboard";
 
 // Dashboard is always the first tab and stays mounted (hidden) so its live subscription and selected case survive tab changes.
-export function AdminWorkspace() {
+export function AdminWorkspace({ chatAtStart = false }: { chatAtStart?: boolean }) {
   const [tabs, setTabs] = useState<ResultTab[]>([]);
   const [active, setActive] = useState(HOME);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(chatAtStart);
   const [mapView, setMapView] = useState<MapView>("points");
   const list = useRef<HTMLDivElement>(null);
 

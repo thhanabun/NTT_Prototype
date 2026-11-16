@@ -211,3 +211,42 @@
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } .shopper button { transition: none; } }
 @media (max-width: 850px) { .hero { flex-direction: row; align-items: center; margin-bottom: 14px; } .grid { grid-template-columns: 1fr; } .leftColumn { display: contents; } .grid > .cartCard { grid-row: 2; } .trustNote { display: none; } .steps { gap: 12px; } .steps li > svg { margin-left: 0; } .scanButton { padding: 11px 14px; } }
 @media (max-width: 420px) { .hero h1 { font-size: 30px; } .hero .eyebrow { font-size: 10px; } .scanButton { font-size: 13px !important; gap: 6px; padding: 10px 12px; } .card { padding: 18px 14px; border-radius: 22px; } .card h2 { font-size: 17px; } .cardHeading { gap: 9px; } .iconTile { flex-basis: 40px; height: 40px; } .progress li { font-size: 11.5px; } .steps { gap: 7px; } .steps li { font-size: 10px; gap: 4px; } .steps li > span { width: 21px; height: 21px; } .steps li > svg { width: 10px; } .basketOption { padding: 10px 8px; font-size: 13px; gap: 7px; } .productRow { gap: 10px; } .productArt { width: 55px; height: 72px; } .lane { font-size: 9px; padding: 4px; } .cartLine { gap: 8px; grid-template-columns: 44px minmax(0, 1fr) auto auto; padding-right: 10px; } .cartLine .productArt { width: 44px; } .confirmedLabel { display: flex; margin-left: 0; } .confirmPanel { padding: 14px; } .confirmActions { grid-template-columns: 1fr; } .signalLine { grid-template-columns: 62px minmax(0, 1fr) 74px; gap: 7px; } .cartFooter { margin-inline: -14px; } .previewControls { padding: 14px; } .previewControls summary span { display: block; margin: 4px 0 0; } }
+
+/* New design (S1-S11): a phone-width column on every screen size */
+.flow { box-sizing: border-box; max-width: 520px; margin: 0 auto; padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 16px; }
+.topBar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 4px 0; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font: 700 18px/1 var(--c-display); }
+.brand i { font-style: normal; color: var(--c-cta); }
+.brandLogo { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--c-strong); color: var(--c-hi); }
+.topTools { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
+.livePill { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 10px; border-radius: 99px; background: var(--c-surface); border: 1px solid var(--c-line); font-size: 12px; color: var(--c-soft); }
+.basketCompact { margin: 0; gap: 6px; }
+.basketCompact .basketOption { flex: none; min-height: 44px; padding: 4px 10px 4px 4px; border-radius: 12px; font-size: 13px; }
+.basketCompact .selectedBasket { padding: 3px 9px 3px 3px; }
+.connect { display: flex; flex-direction: column; gap: 12px; padding: 28px 22px 24px; border-radius: 26px; background: var(--c-surface); border: 1px solid var(--c-line); }
+.connect h1 { margin: 0; font: 700 clamp(36px, 10vw, 48px)/1.15 var(--c-display); letter-spacing: -.03em; }
+.connect h1 span { color: var(--c-cta); }
+.lead { margin: 0 0 8px; color: var(--c-soft); font-size: 15px; line-height: 1.7; }
+.orPick { margin: 8px 0 0; font-size: 13px; color: var(--c-soft); text-align: center; }
+.connect .basketPicker { margin: 0; }
+.cartScreen { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 26px; background: var(--c-surface); border: 1px solid var(--c-line); min-width: 0; }
+.cartScreen h2 { margin: 0; font: 700 18px/1.4 var(--c-display); }
+.cartScreen .sectionHeading { margin: 0; }
+.cartScreen .activeBadge { margin-left: auto; }
+.cartScreen .checkoutArea { margin-top: 4px; }
+.offline { display: flex; gap: 14px; padding: 18px; border-radius: 22px; background: var(--c-warn-bg, var(--c-surface2)); color: var(--c-ink); }
+.offline > svg { flex-shrink: 0; color: var(--c-warn); }
+.offline h2 { margin: 0 0 4px; font: 700 20px/1.3 var(--c-display); }
+.offline p:not(.eyebrow) { margin: 0 0 12px; font-size: 14px; color: var(--c-soft); }
+.receipt .orderId dd, .receipt .orderId dt { font-size: 12px; color: var(--c-soft); }
+.receipt .primaryButton { margin-top: 16px; }
+.question { position: fixed; inset: 0; z-index: 50; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; padding: 28px max(20px, calc(50vw - 240px)); background: var(--c-bg); overflow-y: auto; }
+.questionBody { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.questionBody .productArt { width: 120px; height: 140px; border-radius: 28px; }
+.questionBody h2 { margin: 0; font: 700 clamp(26px, 7vw, 34px)/1.3 var(--c-display); }
+.questionBody .signalCompare { width: 100%; box-sizing: border-box; text-align: left; }
+.question .confirmActions { grid-template-columns: 1fr; }
+.question .yesButton, .question .noButton { min-height: 60px; font-size: 16px !important; }
+@media (max-height: 500px) { .question { justify-content: flex-start; } .questionBody .productArt { width: 64px; height: 76px; } }
+/* S11: after paying, the receipt comes first; starting again sits under it */
+.flow:has(.receipt) .connect { order: 1; }

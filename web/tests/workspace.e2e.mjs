@@ -119,7 +119,7 @@ try {
   const quick = page.getByRole('group', { name: 'เมนูลัดและการตั้งค่า' });
   await quick.getByRole('button', { name: /ออกจากระบบ Admin/ }).waitFor();
   await quick.getByRole('button', { name: /ย้ายปุ่มกลับมุมล่างซ้าย/ }).click();
-  assert.ok((await dock.boundingBox()).x < 40, 'reset returns the dock to the corner');
+  assert.ok(Math.abs((await dock.boundingBox()).x - start.x) < 2, 'reset returns the dock to its home (bottom-left, beside the Admin menu)');
   await dock.click();
   assert.equal(await page.locator('nextjs-portal [data-nextjs-toast]').isVisible(), false, 'Next.js dev badge is hidden');
   await page.keyboard.press('Escape');

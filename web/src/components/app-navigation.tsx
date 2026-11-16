@@ -9,6 +9,8 @@ const routes = [
 ];
 export function AppNavigation() {
   const pathname = usePathname();
+  /* Admin and the shopper flow draw their own header (new design); preview pages keep this one. */
+  if (pathname.startsWith("/admin") || pathname === "/shopper") return null;
   return <header className="site-header"><div className="site-header-inner">
     <Link className="fast-brand" href="/" aria-label="FAST หน้าหลัก"><span className="fast-symbol"><Zap size={21} fill="currentColor" aria-hidden="true" /></span><span>FAST<span className="brand-period">.</span></span></Link>
     <div className="header-tools">

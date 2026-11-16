@@ -1,0 +1,32 @@
+/* Admin menu from the new design (boards M1-M3, A-E): a fixed left menu, content beside it; stacks on phones. */
+.shell { display: flex; width: 100%; min-height: 100vh; background: var(--c-bg); color: var(--c-ink); }
+.nav { flex: 0 0 216px; box-sizing: border-box; position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 14px; display: flex; flex-direction: column; gap: 4px; background: var(--c-surface); border-right: 1px solid var(--c-line); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; color: var(--c-ink); text-decoration: none; }
+.brand b { font: 700 20px/1 var(--c-display); } .brand i { font-style: normal; color: var(--c-cta); } .brand small { font-size: 13px; color: var(--c-soft); }
+.logo { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--c-strong); color: var(--c-hi); }
+.item { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 12px; color: var(--c-ink); text-decoration: none; }
+.item:hover { background: var(--c-surface2); }
+.sub { margin-left: 14px; font-size: 14px; }
+.on { background: var(--c-surface2); font-weight: 600; }
+.item:focus-visible, .signOut:focus-visible, .brand:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 2px; }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 16px 8px 0; font-size: 13px; color: var(--c-soft); }
+.live { display: flex; align-items: center; gap: 8px; font-family: var(--c-mono); }
+.live span { width: 8px; height: 8px; border-radius: 4px; background: var(--c-mint); }
+.who { overflow-wrap: anywhere; }
+.footRow { display: flex; align-items: center; gap: 8px; }
+.signOut { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--c-line); background: var(--c-surface); color: var(--c-ink); font: inherit; cursor: pointer; }
+.signOut:hover { background: var(--c-surface2); }
+.content { flex: 1; min-width: 0; box-sizing: border-box; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 900px) {
+  .shell { flex-direction: column; }
+  .nav { position: static; height: auto; flex: none; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--c-line); }
+  .brand { padding: 0 8px 0 0; } .sub { margin-left: 0; }
+  .foot { margin: 0 0 0 auto; padding: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .content { padding: 16px; }
+}
+.title { margin: 0; font: 600 28px/1.25 var(--c-display); }
+.frame { flex: 1; width: 100%; min-height: 78vh; border: 1px solid var(--c-line); border-radius: 14px; background: var(--c-surface); }
+.hint { margin: 0; font-size: 13px; color: var(--c-soft); }
+.hint code { font-family: var(--c-mono); }
+/* The left menu is 216px wide: keep the floating FAST button and the chat beside it, not over it */
+@media (min-width: 901px) { :global(html):has(.shell) { --dock-left: 240px; } }
