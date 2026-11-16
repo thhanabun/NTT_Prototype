@@ -1,0 +1,6681 @@
+{
+ "runs": [
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 1,
+   "started": "2026-11-14T05:56:06",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 20.92
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 33.76
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 37.45
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 37.45
+    },
+    {
+     "order": 5,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 37.49
+    },
+    {
+     "order": 6,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 41.28
+    },
+    {
+     "order": 7,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 43.75
+    },
+    {
+     "order": 8,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 49.86
+    },
+    {
+     "order": 9,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 53.1
+    },
+    {
+     "order": 10,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 57.54
+    },
+    {
+     "order": 11,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 57.55
+    },
+    {
+     "order": 12,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 77.59
+    },
+    {
+     "order": 13,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 77.61
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 77.64
+    },
+    {
+     "order": 15,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 77.65
+    },
+    {
+     "order": 16,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 77.66
+    },
+    {
+     "order": 17,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 77.68
+    },
+    {
+     "order": 18,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 77.77
+    },
+    {
+     "order": 19,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 77.79
+    },
+    {
+     "order": 20,
+     "name": "key Escape",
+     "params": null,
+     "t": 87.58
+    },
+    {
+     "order": 21,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 89.58
+    },
+    {
+     "order": 22,
+     "name": "key Escape",
+     "params": null,
+     "t": 92.45
+    },
+    {
+     "order": 23,
+     "name": "key Escape",
+     "params": null,
+     "t": 92.45
+    },
+    {
+     "order": 24,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 97.45
+    },
+    {
+     "order": 25,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 102.21
+    },
+    {
+     "order": 26,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 131.99
+    },
+    {
+     "order": 27,
+     "name": "key Enter",
+     "params": null,
+     "t": 132
+    },
+    {
+     "order": 28,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 136.71
+    },
+    {
+     "order": 29,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 136.73
+    },
+    {
+     "order": 30,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 136.75
+    },
+    {
+     "order": 31,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 136.76
+    },
+    {
+     "order": 32,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 136.77
+    },
+    {
+     "order": 33,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 136.79
+    },
+    {
+     "order": 34,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 136.93
+    },
+    {
+     "order": 35,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 136.95
+    },
+    {
+     "order": 36,
+     "name": "key Escape",
+     "params": null,
+     "t": 144.67
+    },
+    {
+     "order": 37,
+     "name": "key Escape",
+     "params": null,
+     "t": 144.69
+    },
+    {
+     "order": 38,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 144.77
+    },
+    {
+     "order": 39,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 3
+     },
+     "t": 144.8
+    },
+    {
+     "order": 40,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 167.45
+    },
+    {
+     "order": 41,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 167.49
+    },
+    {
+     "order": 42,
+     "name": "key Escape",
+     "params": null,
+     "t": 189.68
+    },
+    {
+     "order": 43,
+     "name": "key Escape",
+     "params": null,
+     "t": 189.69
+    },
+    {
+     "order": 44,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 189.76
+    },
+    {
+     "order": 45,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 189.79
+    },
+    {
+     "order": 46,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 215.83
+    },
+    {
+     "order": 47,
+     "name": "key Enter",
+     "params": null,
+     "t": 215.84
+    },
+    {
+     "order": 48,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 215.88
+    },
+    {
+     "order": 49,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 215.9
+    },
+    {
+     "order": 50,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 215.93
+    },
+    {
+     "order": 51,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 215.94
+    },
+    {
+     "order": 52,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 215.96
+    },
+    {
+     "order": 53,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 215.97
+    },
+    {
+     "order": 54,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 216.08
+    },
+    {
+     "order": 55,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 216.1
+    },
+    {
+     "order": 56,
+     "name": "key Escape",
+     "params": null,
+     "t": 228.88
+    },
+    {
+     "order": 57,
+     "name": "key Escape",
+     "params": null,
+     "t": 228.89
+    },
+    {
+     "order": 58,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 228.98
+    },
+    {
+     "order": 59,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 3
+     },
+     "t": 229.01
+    },
+    {
+     "order": 60,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 229.06
+    },
+    {
+     "order": 61,
+     "name": "key Enter",
+     "params": null,
+     "t": 229.08
+    },
+    {
+     "order": 62,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 233.72
+    },
+    {
+     "order": 63,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 233.73
+    },
+    {
+     "order": 64,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 233.75
+    },
+    {
+     "order": 65,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 233.76
+    },
+    {
+     "order": 66,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 233.78
+    },
+    {
+     "order": 67,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 233.79
+    },
+    {
+     "order": 68,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 233.9
+    },
+    {
+     "order": 69,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 233.91
+    },
+    {
+     "order": 70,
+     "name": "button cam:fix",
+     "params": {
+      "cam": 3
+     },
+     "t": 239.32
+    },
+    {
+     "order": 71,
+     "name": "key Escape",
+     "params": null,
+     "t": 246.46
+    },
+    {
+     "order": 72,
+     "name": "key Escape",
+     "params": null,
+     "t": 246.47
+    },
+    {
+     "order": 73,
+     "name": "button play",
+     "params": null,
+     "t": 257.51
+    }
+   ],
+   "finished": "2026-11-14T05:56:06",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "zoom wheel": 3,
+    "map press": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 5,
+    "button corner bar": 16,
+    "camera press": 17,
+    "key Escape": 11,
+    "button cam:mini": 4,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "button cam:fix": 1,
+    "button play": 1
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.2562247247827113,
+     "per_cam": {
+      "0": {
+       "median_m": 1.3208637020155771,
+       "p90_m": 1.8968279979925378
+      },
+      "1": {
+       "median_m": 1.6155616424276662,
+       "p90_m": 2.3831331342962763
+      },
+      "2": {
+       "median_m": 1.351074924618392,
+       "p90_m": 3.8688703158441196
+      },
+      "3": {
+       "median_m": 1.6685747625465424,
+       "p90_m": 2.238856238393146
+      }
+     },
+     "overall_median": 1.477540761842178,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.369,
+     "1": 0.419,
+     "2": 0.917,
+     "3": 0.204
+    },
+    "count_series": {
+     "median": 12.0,
+     "max": 14,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 0.0
+    },
+    "ids": {
+     "distinct_map_ids": 118,
+     "real_people": 6.0,
+     "fragmentation_ratio": 19.666666666666668,
+     "ids_alive_in_over_half_samples": 12
+    },
+    "cam_fit": [
+     {
+      "rms": 6.321964746258059e-15,
+      "height": null
+     },
+     {
+      "rms": 1.098252062616783e-14,
+      "height": null
+     },
+     {
+      "rms": 2.4753900063060904e-14,
+      "height": null
+     },
+     {
+      "rms": 0.08867109062306769,
+      "height": 3.140212413105964
+     }
+    ]
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": false,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Corners clicked by eye on the fringed rug in all 4 cams (cam2: 2 visible corners + 2 outside guesses, then page's fix-numbering button). cam0/cam1/cam2 exact 8 values rms 0, cam3 rms 0.09."
+  },
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 2,
+   "started": "2026-11-14T06:32:15",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 4.69
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 19.97
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 20.01
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 20.01
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 20.05
+    },
+    {
+     "order": 6,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 20.16
+    },
+    {
+     "order": 7,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 23.34
+    },
+    {
+     "order": 8,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 23.41
+    },
+    {
+     "order": 9,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 30.32
+    },
+    {
+     "order": 10,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 30.33
+    },
+    {
+     "order": 11,
+     "name": "key Enter",
+     "params": null,
+     "t": 30.43
+    },
+    {
+     "order": 12,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 37.73
+    },
+    {
+     "order": 13,
+     "name": "key Enter",
+     "params": null,
+     "t": 37.8
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 41.14
+    },
+    {
+     "order": 15,
+     "name": "key Escape",
+     "params": null,
+     "t": 46.52
+    },
+    {
+     "order": 16,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 51.12
+    },
+    {
+     "order": 17,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 55.46
+    },
+    {
+     "order": 18,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 55.5
+    },
+    {
+     "order": 19,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 55.56
+    },
+    {
+     "order": 20,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 55.58
+    },
+    {
+     "order": 21,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 55.6
+    },
+    {
+     "order": 22,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 55.61
+    },
+    {
+     "order": 23,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 55.7
+    },
+    {
+     "order": 24,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 55.71
+    },
+    {
+     "order": 25,
+     "name": "key Escape",
+     "params": null,
+     "t": 64.07
+    },
+    {
+     "order": 26,
+     "name": "key Escape",
+     "params": null,
+     "t": 64.1
+    },
+    {
+     "order": 27,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 64.16
+    },
+    {
+     "order": 28,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 68.44
+    },
+    {
+     "order": 29,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 68.46
+    },
+    {
+     "order": 30,
+     "name": "key Enter",
+     "params": null,
+     "t": 68.48
+    },
+    {
+     "order": 31,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 68.5
+    },
+    {
+     "order": 32,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 68.51
+    },
+    {
+     "order": 33,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 68.53
+    },
+    {
+     "order": 34,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 68.54
+    },
+    {
+     "order": 35,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 68.56
+    },
+    {
+     "order": 36,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 68.57
+    },
+    {
+     "order": 37,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 68.67
+    },
+    {
+     "order": 38,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 68.68
+    },
+    {
+     "order": 39,
+     "name": "key Escape",
+     "params": null,
+     "t": 81.62
+    },
+    {
+     "order": 40,
+     "name": "key Escape",
+     "params": null,
+     "t": 81.64
+    },
+    {
+     "order": 41,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 81.72
+    },
+    {
+     "order": 42,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 86.38
+    },
+    {
+     "order": 43,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 86.4
+    },
+    {
+     "order": 44,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 86.43
+    },
+    {
+     "order": 45,
+     "name": "key Enter",
+     "params": null,
+     "t": 86.44
+    },
+    {
+     "order": 46,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 86.46
+    },
+    {
+     "order": 47,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 86.48
+    },
+    {
+     "order": 48,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 86.49
+    },
+    {
+     "order": 49,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 86.51
+    },
+    {
+     "order": 50,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 86.53
+    },
+    {
+     "order": 51,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 86.54
+    },
+    {
+     "order": 52,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 86.65
+    },
+    {
+     "order": 53,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 86.66
+    },
+    {
+     "order": 54,
+     "name": "key Escape",
+     "params": null,
+     "t": 96.86
+    },
+    {
+     "order": 55,
+     "name": "key Escape",
+     "params": null,
+     "t": 96.88
+    },
+    {
+     "order": 56,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 96.97
+    },
+    {
+     "order": 57,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 97.02
+    },
+    {
+     "order": 58,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 97.04
+    },
+    {
+     "order": 59,
+     "name": "key Enter",
+     "params": null,
+     "t": 97.06
+    },
+    {
+     "order": 60,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 97.08
+    },
+    {
+     "order": 61,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 97.09
+    },
+    {
+     "order": 62,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 97.13
+    },
+    {
+     "order": 63,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 97.14
+    },
+    {
+     "order": 64,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 97.16
+    },
+    {
+     "order": 65,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 97.17
+    },
+    {
+     "order": 66,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 97.27
+    },
+    {
+     "order": 67,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 97.28
+    },
+    {
+     "order": 68,
+     "name": "set camH",
+     "params": {
+      "cam": 4,
+      "value": "3"
+     },
+     "t": 108.43
+    },
+    {
+     "order": 69,
+     "name": "key Escape",
+     "params": null,
+     "t": 166.73
+    },
+    {
+     "order": 70,
+     "name": "key Escape",
+     "params": null,
+     "t": 166.75
+    },
+    {
+     "order": 71,
+     "name": "button play",
+     "params": null,
+     "t": 172.44
+    }
+   ],
+   "finished": "2026-11-14T06:36:30",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "map press": 1,
+    "zoom wheel": 2,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 6,
+    "key Enter": 5,
+    "button corner bar": 17,
+    "key Escape": 9,
+    "camera press": 16,
+    "button cam:mini": 2,
+    "set refSel": 3,
+    "button cam:zout": 2,
+    "set camH": 1,
+    "button play": 1
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.2936504795744856,
+     "per_cam": {
+      "0": {
+       "median_m": 1.5041335117196741,
+       "p90_m": 2.074950459879839
+      },
+      "1": {
+       "median_m": 1.515143963593154,
+       "p90_m": 2.2096398402795043
+      },
+      "2": {
+       "median_m": 1.4246495645268742,
+       "p90_m": 4.136895216679441
+      },
+      "3": {
+       "median_m": 1.7010291106022555,
+       "p90_m": 2.212402542413369
+      }
+     },
+     "overall_median": 1.5191459028004026,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.096,
+     "1": 0.301,
+     "2": 0.852,
+     "3": 0.036
+    },
+    "count_series": {
+     "median": 9.0,
+     "max": 10,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 0.175
+    },
+    "ids": {
+     "distinct_map_ids": 20,
+     "real_people": 6.0,
+     "fragmentation_ratio": 3.3333333333333335,
+     "ids_alive_in_over_half_samples": 6
+    },
+    "cam_fit": [
+     {
+      "rms": 0.19499943963376484,
+      "height": 4.855900497913557
+     },
+     {
+      "rms": 0.34055852459389774,
+      "height": 5.100397864360803
+     },
+     {
+      "rms": 0.22065288592642862,
+      "height": 3.795598178779427
+     },
+     {
+      "rms": 0.29249331471789675,
+      "height": 3
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 1.52,
+     "gt_people": 6,
+     "recall": 0.28,
+     "false_per_frame": 6.22,
+     "mean_ids_per_person": 5.83,
+     "total_switches": 40
+    },
+    "alignment_subsets_median_m": {
+     "cams0+1": 0.23,
+     "cams0+1+3": 0.42,
+     "cams0+3": 0.46,
+     "cams2 with any other": "1.45-1.63"
+    },
+    "typed_inputs": {
+     "ref size m": "3.2x2.0 by eye",
+     "cam3 height typed": 3
+    }
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": false,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run2 after main's fix. Same rug corner clicks by eye; cam2 only 2 visible rug corners (+2 guessed outside) -> page warns clicks don't fit a real camera; cam3 typed height 3 m (page estimated 1.6). Alignment 0.42 m for cams 0,1,3 jointly, 1.5 m with cam2."
+  },
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 3,
+   "started": "2026-11-14T06:44:15",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 9.97
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 18.38
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 18.41
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 18.41
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 18.42
+    },
+    {
+     "order": 6,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 18.53
+    },
+    {
+     "order": 7,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 21.7
+    },
+    {
+     "order": 8,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 21.79
+    },
+    {
+     "order": 9,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 34.16
+    },
+    {
+     "order": 10,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 34.16
+    },
+    {
+     "order": 11,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 37.59
+    },
+    {
+     "order": 12,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 37.64
+    },
+    {
+     "order": 13,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 37.7
+    },
+    {
+     "order": 14,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 37.73
+    },
+    {
+     "order": 15,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 37.77
+    },
+    {
+     "order": 16,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 37.78
+    },
+    {
+     "order": 17,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 37.89
+    },
+    {
+     "order": 18,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 37.9
+    },
+    {
+     "order": 19,
+     "name": "key Escape",
+     "params": null,
+     "t": 46.58
+    },
+    {
+     "order": 20,
+     "name": "key Escape",
+     "params": null,
+     "t": 46.61
+    },
+    {
+     "order": 21,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 46.72
+    },
+    {
+     "order": 22,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 46.75
+    },
+    {
+     "order": 23,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 46.8
+    },
+    {
+     "order": 24,
+     "name": "key Enter",
+     "params": null,
+     "t": 46.81
+    },
+    {
+     "order": 25,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 46.83
+    },
+    {
+     "order": 26,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.84
+    },
+    {
+     "order": 27,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 46.88
+    },
+    {
+     "order": 28,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.89
+    },
+    {
+     "order": 29,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 46.91
+    },
+    {
+     "order": 30,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.92
+    },
+    {
+     "order": 31,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 47.03
+    },
+    {
+     "order": 32,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 47.05
+    },
+    {
+     "order": 33,
+     "name": "key Escape",
+     "params": null,
+     "t": 55.66
+    },
+    {
+     "order": 34,
+     "name": "key Escape",
+     "params": null,
+     "t": 55.7
+    },
+    {
+     "order": 35,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 55.88
+    },
+    {
+     "order": 36,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 55.93
+    },
+    {
+     "order": 37,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 55.96
+    },
+    {
+     "order": 38,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 55.98
+    },
+    {
+     "order": 39,
+     "name": "key Enter",
+     "params": null,
+     "t": 56
+    },
+    {
+     "order": 40,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 56.02
+    },
+    {
+     "order": 41,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.04
+    },
+    {
+     "order": 42,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 56.07
+    },
+    {
+     "order": 43,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.09
+    },
+    {
+     "order": 44,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 56.1
+    },
+    {
+     "order": 45,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.12
+    },
+    {
+     "order": 46,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 56.23
+    },
+    {
+     "order": 47,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.24
+    },
+    {
+     "order": 48,
+     "name": "key Escape",
+     "params": null,
+     "t": 65.47
+    },
+    {
+     "order": 49,
+     "name": "key Escape",
+     "params": null,
+     "t": 65.51
+    },
+    {
+     "order": 50,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 65.65
+    },
+    {
+     "order": 51,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 65.68
+    },
+    {
+     "order": 52,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 65.73
+    },
+    {
+     "order": 53,
+     "name": "key Enter",
+     "params": null,
+     "t": 65.75
+    },
+    {
+     "order": 54,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 65.79
+    },
+    {
+     "order": 55,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.83
+    },
+    {
+     "order": 56,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 65.88
+    },
+    {
+     "order": 57,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.9
+    },
+    {
+     "order": 58,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 65.92
+    },
+    {
+     "order": 59,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.93
+    },
+    {
+     "order": 60,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 66.01
+    },
+    {
+     "order": 61,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 66.02
+    },
+    {
+     "order": 62,
+     "name": "set camH",
+     "params": {
+      "cam": 4,
+      "value": "3"
+     },
+     "t": 66.55
+    },
+    {
+     "order": 63,
+     "name": "zoom wheel",
+     "params": {
+      "cam": 4
+     },
+     "t": 73.19
+    },
+    {
+     "order": 64,
+     "name": "key Escape",
+     "params": null,
+     "t": 78.47
+    },
+    {
+     "order": 65,
+     "name": "key Escape",
+     "params": null,
+     "t": 78.49
+    },
+    {
+     "order": 66,
+     "name": "button play",
+     "params": null,
+     "t": 90.49
+    },
+    {
+     "order": 67,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 140.68
+    },
+    {
+     "order": 68,
+     "name": "button rewind",
+     "params": null,
+     "t": 147.1
+    },
+    {
+     "order": 69,
+     "name": "button play",
+     "params": null,
+     "t": 153.85
+    }
+   ],
+   "finished": "2026-11-14T09:06:01",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "map press": 1,
+    "zoom wheel": 3,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 4,
+    "button corner bar": 16,
+    "camera press": 16,
+    "key Escape": 8,
+    "button cam:mini": 2,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "set camH": 1,
+    "button play": 2,
+    "button cam:tune": 1,
+    "button rewind": 1
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 1.0065185294185948,
+     "per_cam": {
+      "0": {
+       "median_m": 0.4094635080315264,
+       "p90_m": 0.6153997176877993
+      },
+      "1": {
+       "median_m": 0.37736708499507327,
+       "p90_m": 0.6892622708228078
+      },
+      "2": {
+       "median_m": 0.2689323884915219,
+       "p90_m": 0.36722946459404004
+      },
+      "3": {
+       "median_m": 0.5690395284904963,
+       "p90_m": 0.7491064945316441
+      }
+     },
+     "overall_median": 0.37017008327864864,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.096,
+     "1": 0.301,
+     "2": 0.167,
+     "3": 0.036
+    },
+    "count_series": {
+     "median": 7.0,
+     "max": 9,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 0.8133333333333334
+    },
+    "ids": {
+     "distinct_map_ids": 10,
+     "real_people": 6.0,
+     "fragmentation_ratio": 1.6666666666666667,
+     "ids_alive_in_over_half_samples": 6
+    },
+    "cam_fit": [
+     {
+      "rms": 0.19499943963376484,
+      "height": 4.855900497913557
+     },
+     {
+      "rms": 0.34055852459389774,
+      "height": 5.100397864360803
+     },
+     {
+      "rms": 0,
+      "height": 3.1406940268528913
+     },
+     {
+      "rms": 0.29249331471789675,
+      "height": 3
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.37,
+     "gt_people": 6,
+     "recall": 0.78,
+     "false_per_frame": 1.68,
+     "mean_ids_per_person": 1.67,
+     "total_switches": 5,
+     "per_person": {
+      "0": [
+       0.85,
+       1,
+       0
+      ],
+      "1": [
+       0.76,
+       1,
+       0
+      ],
+      "2": [
+       0.91,
+       2,
+       1
+      ],
+      "3": [
+       0.74,
+       3,
+       2
+      ],
+      "4": [
+       0.76,
+       1,
+       0
+      ],
+      "5": [
+       0.66,
+       2,
+       2
+      ]
+     }
+    },
+    "cam_card_rms_after_tune": "cam0 .19, cam1 .34, cam2(tuned from people) 0, cam3 .29 (typed height 3)"
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": true,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run3: same clicks; cam2 weak -> played once, clicked ใช้ค่านี้ (cam:tune), ⏮, replayed. Near miss: align 0.37 m (limit 0.35 for estimated scale), ids/person 1.67 (limit 1.5), recall 0.78 (limit 0.8), count median 7 vs 6, 81% within ±1."
+  },
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 4,
+   "started": "2026-11-14T09:15:11",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 5.37
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 11.46
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 11.48
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 11.48
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 11.5
+    },
+    {
+     "order": 6,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 11.58
+    },
+    {
+     "order": 7,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 11.77
+    },
+    {
+     "order": 8,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 27.55
+    },
+    {
+     "order": 9,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 35.4
+    },
+    {
+     "order": 10,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 35.45
+    },
+    {
+     "order": 11,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 35.47
+    },
+    {
+     "order": 12,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 35.49
+    },
+    {
+     "order": 13,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 35.5
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 35.52
+    },
+    {
+     "order": 15,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 35.53
+    },
+    {
+     "order": 16,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 35.61
+    },
+    {
+     "order": 17,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 35.62
+    },
+    {
+     "order": 18,
+     "name": "key Escape",
+     "params": null,
+     "t": 45.94
+    },
+    {
+     "order": 19,
+     "name": "key Escape",
+     "params": null,
+     "t": 45.96
+    },
+    {
+     "order": 20,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 46.1
+    },
+    {
+     "order": 21,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 46.18
+    },
+    {
+     "order": 22,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 46.24
+    },
+    {
+     "order": 23,
+     "name": "key Enter",
+     "params": null,
+     "t": 46.26
+    },
+    {
+     "order": 24,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 46.29
+    },
+    {
+     "order": 25,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.31
+    },
+    {
+     "order": 26,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 46.36
+    },
+    {
+     "order": 27,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.42
+    },
+    {
+     "order": 28,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 46.45
+    },
+    {
+     "order": 29,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.49
+    },
+    {
+     "order": 30,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 46.6
+    },
+    {
+     "order": 31,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.62
+    },
+    {
+     "order": 32,
+     "name": "key Escape",
+     "params": null,
+     "t": 56.13
+    },
+    {
+     "order": 33,
+     "name": "key Escape",
+     "params": null,
+     "t": 56.15
+    },
+    {
+     "order": 34,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 56.22
+    },
+    {
+     "order": 35,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 56.25
+    },
+    {
+     "order": 36,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 56.27
+    },
+    {
+     "order": 37,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 56.31
+    },
+    {
+     "order": 38,
+     "name": "key Enter",
+     "params": null,
+     "t": 56.32
+    },
+    {
+     "order": 39,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 56.34
+    },
+    {
+     "order": 40,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.35
+    },
+    {
+     "order": 41,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 56.37
+    },
+    {
+     "order": 42,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.38
+    },
+    {
+     "order": 43,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 56.4
+    },
+    {
+     "order": 44,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.41
+    },
+    {
+     "order": 45,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 56.51
+    },
+    {
+     "order": 46,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 56.53
+    },
+    {
+     "order": 47,
+     "name": "key Escape",
+     "params": null,
+     "t": 65.36
+    },
+    {
+     "order": 48,
+     "name": "key Escape",
+     "params": null,
+     "t": 65.4
+    },
+    {
+     "order": 49,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 65.55
+    },
+    {
+     "order": 50,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 65.59
+    },
+    {
+     "order": 51,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 65.62
+    },
+    {
+     "order": 52,
+     "name": "key Enter",
+     "params": null,
+     "t": 65.64
+    },
+    {
+     "order": 53,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 65.66
+    },
+    {
+     "order": 54,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.67
+    },
+    {
+     "order": 55,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 65.69
+    },
+    {
+     "order": 56,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.7
+    },
+    {
+     "order": 57,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 65.71
+    },
+    {
+     "order": 58,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.74
+    },
+    {
+     "order": 59,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 65.82
+    },
+    {
+     "order": 60,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 65.83
+    },
+    {
+     "order": 61,
+     "name": "set camH",
+     "params": {
+      "cam": 4,
+      "value": "3"
+     },
+     "t": 66.36
+    },
+    {
+     "order": 62,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 72.69
+    },
+    {
+     "order": 63,
+     "name": "button play",
+     "params": null,
+     "t": 82.17
+    },
+    {
+     "order": 64,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 127.31
+    },
+    {
+     "order": 65,
+     "name": "button rewind",
+     "params": null,
+     "t": 129.93
+    },
+    {
+     "order": 66,
+     "name": "button play",
+     "params": null,
+     "t": 134.94
+    },
+    {
+     "order": 67,
+     "name": "button rewind",
+     "params": null,
+     "t": 181.94
+    },
+    {
+     "order": 68,
+     "name": "button play",
+     "params": null,
+     "t": 182.02
+    }
+   ],
+   "finished": "2026-11-14T09:15:12",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "map press": 1,
+    "zoom wheel": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 5,
+    "button corner bar": 16,
+    "camera press": 16,
+    "key Escape": 6,
+    "button cam:mini": 2,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "set camH": 1,
+    "button play": 3,
+    "button cam:tune": 1,
+    "button rewind": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.9878609481336231,
+     "per_cam": {
+      "0": {
+       "median_m": 0.42361757999289357,
+       "p90_m": 0.6372378306172084
+      },
+      "1": {
+       "median_m": 0.3687861625158616,
+       "p90_m": 0.6710526203948806
+      },
+      "2": {
+       "median_m": 0.3226102255417457,
+       "p90_m": 0.40738595554021884
+      },
+      "3": {
+       "median_m": 0.5817283449217767,
+       "p90_m": 0.7621715266025657
+      }
+     },
+     "overall_median": 0.3852228251742028,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.096,
+     "1": 0.301,
+     "2": 0.124,
+     "3": 0.036
+    },
+    "count_series": {
+     "median": 6.0,
+     "max": 7,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 1.0
+    },
+    "ids": {
+     "distinct_map_ids": 9,
+     "real_people": 6.0,
+     "fragmentation_ratio": 1.5,
+     "ids_alive_in_over_half_samples": 6
+    },
+    "cam_fit": [
+     {
+      "rms": 0.19499943963376484,
+      "height": 4.855900497913557
+     },
+     {
+      "rms": 0.34055852459389774,
+      "height": 5.100397864360803
+     },
+     {
+      "rms": 0,
+      "height": 3.0650514944152585
+     },
+     {
+      "rms": 0.29249331471789675,
+      "height": 3
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.39,
+     "gt_people": 6,
+     "recall": 0.75,
+     "false_per_frame": 1.27,
+     "mean_ids_per_person": 2.17,
+     "total_switches": 11,
+     "per_person": {
+      "0": [
+       0.79,
+       2,
+       1
+      ],
+      "1": [
+       0.82,
+       3,
+       3
+      ],
+      "2": [
+       0.71,
+       1,
+       0
+      ],
+      "3": [
+       0.82,
+       2,
+       3
+      ],
+      "4": [
+       0.65,
+       1,
+       0
+      ],
+      "5": [
+       0.72,
+       4,
+       4
+      ]
+     }
+    }
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": true,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run4: same clicks; play#1 -> cam:tune on the only camera offered -> rewind -> play#2 (no further tune offered) -> rewind -> play#3 scored. Align 0.385 (limit .35), ids/person 2.17, recall .75, count 100% within +-1."
+  },
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 5,
+   "started": "2026-11-14T09:20:46",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 5.64
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 10.87
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 10.92
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 10.92
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 10.95
+    },
+    {
+     "order": 6,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 11.02
+    },
+    {
+     "order": 7,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 11.21
+    },
+    {
+     "order": 8,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 11.25
+    },
+    {
+     "order": 9,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 16.14
+    },
+    {
+     "order": 10,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 16.2
+    },
+    {
+     "order": 11,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 16.22
+    },
+    {
+     "order": 12,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 16.24
+    },
+    {
+     "order": 13,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 16.27
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 16.3
+    },
+    {
+     "order": 15,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 16.31
+    },
+    {
+     "order": 16,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 16.4
+    },
+    {
+     "order": 17,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 16.42
+    },
+    {
+     "order": 18,
+     "name": "key Escape",
+     "params": null,
+     "t": 26.87
+    },
+    {
+     "order": 19,
+     "name": "key Escape",
+     "params": null,
+     "t": 26.89
+    },
+    {
+     "order": 20,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 26.97
+    },
+    {
+     "order": 21,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 27
+    },
+    {
+     "order": 22,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 27.03
+    },
+    {
+     "order": 23,
+     "name": "key Enter",
+     "params": null,
+     "t": 27.05
+    },
+    {
+     "order": 24,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 27.06
+    },
+    {
+     "order": 25,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 27.08
+    },
+    {
+     "order": 26,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 27.1
+    },
+    {
+     "order": 27,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 27.11
+    },
+    {
+     "order": 28,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 27.13
+    },
+    {
+     "order": 29,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 27.14
+    },
+    {
+     "order": 30,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 27.24
+    },
+    {
+     "order": 31,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 27.25
+    },
+    {
+     "order": 32,
+     "name": "key Escape",
+     "params": null,
+     "t": 35.62
+    },
+    {
+     "order": 33,
+     "name": "key Escape",
+     "params": null,
+     "t": 35.63
+    },
+    {
+     "order": 34,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 35.71
+    },
+    {
+     "order": 35,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 35.75
+    },
+    {
+     "order": 36,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 35.76
+    },
+    {
+     "order": 37,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 35.81
+    },
+    {
+     "order": 38,
+     "name": "key Enter",
+     "params": null,
+     "t": 35.82
+    },
+    {
+     "order": 39,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 35.84
+    },
+    {
+     "order": 40,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 35.86
+    },
+    {
+     "order": 41,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 35.89
+    },
+    {
+     "order": 42,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 35.91
+    },
+    {
+     "order": 43,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 35.94
+    },
+    {
+     "order": 44,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 35.95
+    },
+    {
+     "order": 45,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 36.06
+    },
+    {
+     "order": 46,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 36.08
+    },
+    {
+     "order": 47,
+     "name": "key Escape",
+     "params": null,
+     "t": 45.4
+    },
+    {
+     "order": 48,
+     "name": "key Escape",
+     "params": null,
+     "t": 45.43
+    },
+    {
+     "order": 49,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 45.59
+    },
+    {
+     "order": 50,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 45.63
+    },
+    {
+     "order": 51,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 45.66
+    },
+    {
+     "order": 52,
+     "name": "key Enter",
+     "params": null,
+     "t": 45.67
+    },
+    {
+     "order": 53,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 45.69
+    },
+    {
+     "order": 54,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 45.71
+    },
+    {
+     "order": 55,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 45.72
+    },
+    {
+     "order": 56,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 45.74
+    },
+    {
+     "order": 57,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 45.75
+    },
+    {
+     "order": 58,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 45.77
+    },
+    {
+     "order": 59,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 45.85
+    },
+    {
+     "order": 60,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 45.86
+    },
+    {
+     "order": 61,
+     "name": "set camH",
+     "params": {
+      "cam": 4,
+      "value": "3"
+     },
+     "t": 46.39
+    },
+    {
+     "order": 62,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 48.67
+    },
+    {
+     "order": 63,
+     "name": "button play",
+     "params": null,
+     "t": 59.45
+    },
+    {
+     "order": 64,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 107.72
+    },
+    {
+     "order": 65,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 111.06
+    },
+    {
+     "order": 66,
+     "name": "button cam:align",
+     "params": {
+      "cam": 4
+     },
+     "t": 114.33
+    },
+    {
+     "order": 67,
+     "name": "button rewind",
+     "params": null,
+     "t": 120.07
+    },
+    {
+     "order": 68,
+     "name": "button play",
+     "params": null,
+     "t": 125.28
+    },
+    {
+     "order": 69,
+     "name": "button rewind",
+     "params": null,
+     "t": 175.05
+    },
+    {
+     "order": 70,
+     "name": "button play",
+     "params": null,
+     "t": 175.16
+    }
+   ],
+   "finished": "2026-11-14T09:24:48",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "map press": 1,
+    "zoom wheel": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 5,
+    "button corner bar": 16,
+    "camera press": 16,
+    "key Escape": 6,
+    "button cam:mini": 2,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "set camH": 1,
+    "button play": 3,
+    "button cam:tune": 2,
+    "button cam:align": 1,
+    "button rewind": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.9815982012855542,
+     "per_cam": {
+      "0": {
+       "median_m": 0.2887949788495202,
+       "p90_m": 0.5208829209721891
+      },
+      "1": {
+       "median_m": 0.2691488784059135,
+       "p90_m": 0.6493498732925526
+      },
+      "2": {
+       "median_m": 0.26626947761583086,
+       "p90_m": 0.45564712050854433
+      },
+      "3": {
+       "median_m": 0.3743435564333364,
+       "p90_m": 0.4214409988634428
+      }
+     },
+     "overall_median": 0.3246953326463663,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.096,
+     "1": 0.2,
+     "2": 0.13,
+     "3": 0.036
+    },
+    "count_series": {
+     "median": 6.0,
+     "max": 6,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 1.0
+    },
+    "ids": {
+     "distinct_map_ids": 6,
+     "real_people": 6.0,
+     "fragmentation_ratio": 1.0,
+     "ids_alive_in_over_half_samples": 6
+    },
+    "cam_fit": [
+     {
+      "rms": 0.19499943937566963,
+      "height": 4.855900601448795
+     },
+     {
+      "rms": 0.7291759554647738,
+      "height": 4.180212650007928
+     },
+     {
+      "rms": 0,
+      "height": 3.042759320788012
+     },
+     {
+      "rms": 0.2924933152153659,
+      "height": 3
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.32,
+     "gt_people": 6,
+     "recall": 0.81,
+     "false_per_frame": 0.75,
+     "mean_ids_per_person": 1.83,
+     "total_switches": 7,
+     "per_person": {
+      "0": [
+       0.82,
+       3,
+       2
+      ],
+      "1": [
+       0.91,
+       2,
+       2
+      ],
+      "2": [
+       0.85,
+       2,
+       2
+      ],
+      "3": [
+       0.79,
+       2,
+       1
+      ],
+      "4": [
+       0.79,
+       1,
+       0
+      ],
+      "5": [
+       0.68,
+       1,
+       0
+      ]
+     }
+    }
+   },
+   "pass": {
+    "alignment": true,
+    "occlusion": true,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run5. Offers after play#1: 3 (tune cam2, tune cam3, align cam4) all clicked; after #2: 0; after #3 (scored): 0. Alignment 0.325 pass, count pass (6/6), recall .81 pass; ID fail: id_eval mean ids/person 1.83 (limit 1.5), 3 of 6 people with 2 switches, 6 distinct map ids total."
+  },
+  {
+   "scenario": "B1-01",
+   "batch": "1",
+   "cameras": 4,
+   "run": 6,
+   "started": "2026-11-14T09:40:56",
+   "functions": [
+    {
+     "order": 1,
+     "name": "button reset",
+     "params": null,
+     "t": 18.2
+    },
+    {
+     "order": 2,
+     "name": "map press",
+     "params": {
+      "tool": "select"
+     },
+     "t": 25.66
+    },
+    {
+     "order": 3,
+     "name": "key Delete",
+     "params": null,
+     "t": 25.7
+    },
+    {
+     "order": 4,
+     "name": "button sDel",
+     "params": null,
+     "t": 25.7
+    },
+    {
+     "order": 5,
+     "name": "set vset",
+     "params": {
+      "value": "B1-01"
+     },
+     "t": 29.38
+    },
+    {
+     "order": 6,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 39.36
+    },
+    {
+     "order": 7,
+     "name": "button askOk",
+     "params": null,
+     "t": 39.38
+    },
+    {
+     "order": 8,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 39.38
+    },
+    {
+     "order": 9,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 39.4
+    },
+    {
+     "order": 10,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 39.47
+    },
+    {
+     "order": 11,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 39.63
+    },
+    {
+     "order": 12,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 39.64
+    },
+    {
+     "order": 13,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 44.92
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 44.98
+    },
+    {
+     "order": 15,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 45
+    },
+    {
+     "order": 16,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 45.05
+    },
+    {
+     "order": 17,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 45.08
+    },
+    {
+     "order": 18,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 45.11
+    },
+    {
+     "order": 19,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 45.13
+    },
+    {
+     "order": 20,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 45.21
+    },
+    {
+     "order": 21,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 45.22
+    },
+    {
+     "order": 22,
+     "name": "key Escape",
+     "params": null,
+     "t": 55.43
+    },
+    {
+     "order": 23,
+     "name": "key Escape",
+     "params": null,
+     "t": 55.44
+    },
+    {
+     "order": 24,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 55.56
+    },
+    {
+     "order": 25,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 55.59
+    },
+    {
+     "order": 26,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r2"
+     },
+     "t": 55.63
+    },
+    {
+     "order": 27,
+     "name": "key Enter",
+     "params": null,
+     "t": 55.65
+    },
+    {
+     "order": 28,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 55.69
+    },
+    {
+     "order": 29,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 55.73
+    },
+    {
+     "order": 30,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 55.76
+    },
+    {
+     "order": 31,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 55.78
+    },
+    {
+     "order": 32,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 55.81
+    },
+    {
+     "order": 33,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 55.83
+    },
+    {
+     "order": 34,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 55.94
+    },
+    {
+     "order": 35,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 55.95
+    },
+    {
+     "order": 36,
+     "name": "key Escape",
+     "params": null,
+     "t": 64.38
+    },
+    {
+     "order": 37,
+     "name": "key Escape",
+     "params": null,
+     "t": 64.4
+    },
+    {
+     "order": 38,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 64.47
+    },
+    {
+     "order": 39,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 64.5
+    },
+    {
+     "order": 40,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 64.51
+    },
+    {
+     "order": 41,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r2"
+     },
+     "t": 64.54
+    },
+    {
+     "order": 42,
+     "name": "key Enter",
+     "params": null,
+     "t": 64.56
+    },
+    {
+     "order": 43,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 64.57
+    },
+    {
+     "order": 44,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 64.6
+    },
+    {
+     "order": 45,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 64.66
+    },
+    {
+     "order": 46,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 64.69
+    },
+    {
+     "order": 47,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 64.72
+    },
+    {
+     "order": 48,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 64.74
+    },
+    {
+     "order": 49,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 64.84
+    },
+    {
+     "order": 50,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 64.86
+    },
+    {
+     "order": 51,
+     "name": "key Escape",
+     "params": null,
+     "t": 75.38
+    },
+    {
+     "order": 52,
+     "name": "key Escape",
+     "params": null,
+     "t": 75.41
+    },
+    {
+     "order": 53,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 75.49
+    },
+    {
+     "order": 54,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 75.53
+    },
+    {
+     "order": 55,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r2"
+     },
+     "t": 75.56
+    },
+    {
+     "order": 56,
+     "name": "key Enter",
+     "params": null,
+     "t": 75.58
+    },
+    {
+     "order": 57,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 75.6
+    },
+    {
+     "order": 58,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 75.62
+    },
+    {
+     "order": 59,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 75.65
+    },
+    {
+     "order": 60,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 75.68
+    },
+    {
+     "order": 61,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 75.7
+    },
+    {
+     "order": 62,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 75.72
+    },
+    {
+     "order": 63,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 75.94
+    },
+    {
+     "order": 64,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 75.96
+    },
+    {
+     "order": 65,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 78.2
+    },
+    {
+     "order": 66,
+     "name": "button play",
+     "params": null,
+     "t": 87.28
+    },
+    {
+     "order": 67,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 1
+     },
+     "t": 135.45
+    },
+    {
+     "order": 68,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 139.96
+    },
+    {
+     "order": 69,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 145.3
+    },
+    {
+     "order": 70,
+     "name": "button rewind",
+     "params": null,
+     "t": 148.98
+    },
+    {
+     "order": 71,
+     "name": "button play",
+     "params": null,
+     "t": 154.98
+    },
+    {
+     "order": 72,
+     "name": "button rewind",
+     "params": null,
+     "t": 205.94
+    },
+    {
+     "order": 73,
+     "name": "button play",
+     "params": null,
+     "t": 206.06
+    }
+   ],
+   "finished": "2026-11-14T09:40:56",
+   "counts": {
+    "button reset": 1,
+    "map press": 2,
+    "key Delete": 1,
+    "button sDel": 1,
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "zoom wheel": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 5,
+    "button corner bar": 16,
+    "camera press": 16,
+    "key Escape": 6,
+    "button cam:mini": 2,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "button play": 3,
+    "button cam:tune": 3,
+    "button rewind": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 1.003890730068014,
+     "per_cam": {
+      "0": {
+       "median_m": 0.5346842552522844,
+       "p90_m": 0.6423438310965309
+      },
+      "1": {
+       "median_m": 0.3322144545289933,
+       "p90_m": 0.5310113662268715
+      },
+      "2": {
+       "median_m": 0.36564759739314395,
+       "p90_m": 0.4701588789879186
+      },
+      "3": {
+       "median_m": 0.430775823816472,
+       "p90_m": 0.45877340475496253
+      }
+     },
+     "overall_median": 0.4247065392840082,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.064,
+     "1": 0.132,
+     "2": 0.083,
+     "3": 0.036
+    },
+    "count_series": {
+     "median": 6.0,
+     "max": 7,
+     "truth_people_median": 6.0,
+     "frac_within1_of_truth": 1.0
+    },
+    "ids": {
+     "distinct_map_ids": 8,
+     "real_people": 6.0,
+     "fragmentation_ratio": 1.3333333333333333,
+     "ids_alive_in_over_half_samples": 6
+    },
+    "cam_fit": [
+     {
+      "rms": 0.6712766589550389,
+      "height": 4.814076895777033
+     },
+     {
+      "rms": 0.47118433966384016,
+      "height": 4.929548547848623
+     },
+     {
+      "rms": 0,
+      "height": 2.7046571039670018
+     },
+     {
+      "rms": 0.2924933172051464,
+      "height": 3
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.42,
+     "gt_people": 6,
+     "recall": 0.83,
+     "false_per_frame": 0.85,
+     "mean_ids_per_person": 1.67,
+     "total_switches": 4,
+     "per_person": {
+      "0": [
+       0.84,
+       2,
+       1
+      ],
+      "1": [
+       0.81,
+       2,
+       1
+      ],
+      "2": [
+       0.81,
+       1,
+       0
+      ],
+      "3": [
+       0.87,
+       3,
+       2
+      ],
+      "4": [
+       0.87,
+       1,
+       0
+      ],
+      "5": [
+       0.81,
+       1,
+       0
+      ]
+     }
+    },
+    "offers_after_play": {
+     "play1": 3,
+     "play2": 0,
+     "play3_scored": 0
+    },
+    "clicks": "play1: cam:tune on cards 1,2,3",
+    "env": {
+     "sample_gaps_over_1s": 3,
+     "max_gap_ms": 3402,
+     "page_visible_state": "visible but pane not shown in an app window (show_pane refused: session not open in any window)"
+    }
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": true,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run6: state cleared by deleting the stale reference first. Offers after #1: 3 (all cam:tune, cards 1-3), #2: 0, #3: 0. Align 0.425 FAIL, count OK, recall .83 OK, ids/person 1.67 FAIL (1 person with 2 switches)."
+  },
+  {
+   "scenario": "B1-02",
+   "batch": "1",
+   "cameras": 4,
+   "run": 1,
+   "started": "2026-11-14T10:09:14",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-02"
+     },
+     "t": 5.85
+    },
+    {
+     "order": 2,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 11.61
+    },
+    {
+     "order": 3,
+     "name": "button askOk",
+     "params": null,
+     "t": 14.39
+    },
+    {
+     "order": 4,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 14.39
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 14.44
+    },
+    {
+     "order": 6,
+     "name": "set sLen",
+     "params": {
+      "value": "4.85"
+     },
+     "t": 23.7
+    },
+    {
+     "order": 7,
+     "name": "set sLen",
+     "params": {
+      "value": "4.9"
+     },
+     "t": 23.71
+    },
+    {
+     "order": 8,
+     "name": "set sLen",
+     "params": {
+      "value": "4.932"
+     },
+     "t": 23.74
+    },
+    {
+     "order": 9,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 23.77
+    },
+    {
+     "order": 10,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 27.16
+    },
+    {
+     "order": 11,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 32.48
+    },
+    {
+     "order": 12,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 40.27
+    },
+    {
+     "order": 13,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 40.39
+    },
+    {
+     "order": 14,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 54.2
+    },
+    {
+     "order": 15,
+     "name": "button play",
+     "params": null,
+     "t": 60.33
+    },
+    {
+     "order": 16,
+     "name": "button play",
+     "params": null,
+     "t": 76.98
+    },
+    {
+     "order": 17,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 78.05
+    },
+    {
+     "order": 18,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 82.21
+    },
+    {
+     "order": 19,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 82.26
+    },
+    {
+     "order": 20,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 93.41
+    },
+    {
+     "order": 21,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 93.46
+    },
+    {
+     "order": 22,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 93.53
+    },
+    {
+     "order": 23,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 93.55
+    },
+    {
+     "order": 24,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 93.57
+    },
+    {
+     "order": 25,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 93.58
+    },
+    {
+     "order": 26,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 93.67
+    },
+    {
+     "order": 27,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 93.69
+    },
+    {
+     "order": 28,
+     "name": "key Escape",
+     "params": null,
+     "t": 103.61
+    },
+    {
+     "order": 29,
+     "name": "key Escape",
+     "params": null,
+     "t": 103.64
+    },
+    {
+     "order": 30,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 103.74
+    },
+    {
+     "order": 31,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 103.78
+    },
+    {
+     "order": 32,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 114.31
+    },
+    {
+     "order": 33,
+     "name": "key Enter",
+     "params": null,
+     "t": 114.31
+    },
+    {
+     "order": 34,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 114.36
+    },
+    {
+     "order": 35,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 114.37
+    },
+    {
+     "order": 36,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 114.39
+    },
+    {
+     "order": 37,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 114.4
+    },
+    {
+     "order": 38,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 114.42
+    },
+    {
+     "order": 39,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 114.43
+    },
+    {
+     "order": 40,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 114.53
+    },
+    {
+     "order": 41,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 114.54
+    },
+    {
+     "order": 42,
+     "name": "key Escape",
+     "params": null,
+     "t": 126.45
+    },
+    {
+     "order": 43,
+     "name": "key Escape",
+     "params": null,
+     "t": 126.47
+    },
+    {
+     "order": 44,
+     "name": "button cam:full",
+     "params": {
+      "cam": 3
+     },
+     "t": 126.53
+    },
+    {
+     "order": 45,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 3
+     },
+     "t": 126.56
+    },
+    {
+     "order": 46,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 132.79
+    },
+    {
+     "order": 47,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 3
+     },
+     "t": 132.82
+    },
+    {
+     "order": 48,
+     "name": "set refSel",
+     "params": {
+      "cam": 3,
+      "value": "r1"
+     },
+     "t": 132.88
+    },
+    {
+     "order": 49,
+     "name": "key Enter",
+     "params": null,
+     "t": 132.9
+    },
+    {
+     "order": 50,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 1
+     },
+     "t": 137.13
+    },
+    {
+     "order": 51,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 137.19
+    },
+    {
+     "order": 52,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 2
+     },
+     "t": 137.26
+    },
+    {
+     "order": 53,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 137.3
+    },
+    {
+     "order": 54,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 3
+     },
+     "t": 137.33
+    },
+    {
+     "order": 55,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 137.36
+    },
+    {
+     "order": 56,
+     "name": "button corner bar",
+     "params": {
+      "cam": 3,
+      "corner": 4
+     },
+     "t": 137.48
+    },
+    {
+     "order": 57,
+     "name": "camera press",
+     "params": {
+      "cam": 3,
+      "button": 0
+     },
+     "t": 137.5
+    },
+    {
+     "order": 58,
+     "name": "key Escape",
+     "params": null,
+     "t": 144.75
+    },
+    {
+     "order": 59,
+     "name": "key Escape",
+     "params": null,
+     "t": 144.76
+    },
+    {
+     "order": 60,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 144.87
+    },
+    {
+     "order": 61,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 4
+     },
+     "t": 144.9
+    },
+    {
+     "order": 62,
+     "name": "set refSel",
+     "params": {
+      "cam": 4,
+      "value": "r1"
+     },
+     "t": 151.32
+    },
+    {
+     "order": 63,
+     "name": "key Enter",
+     "params": null,
+     "t": 151.33
+    },
+    {
+     "order": 64,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 1
+     },
+     "t": 151.36
+    },
+    {
+     "order": 65,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 151.38
+    },
+    {
+     "order": 66,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 2
+     },
+     "t": 151.4
+    },
+    {
+     "order": 67,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 151.41
+    },
+    {
+     "order": 68,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 3
+     },
+     "t": 151.45
+    },
+    {
+     "order": 69,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 151.46
+    },
+    {
+     "order": 70,
+     "name": "button corner bar",
+     "params": {
+      "cam": 4,
+      "corner": 4
+     },
+     "t": 151.55
+    },
+    {
+     "order": 71,
+     "name": "camera press",
+     "params": {
+      "cam": 4,
+      "button": 0
+     },
+     "t": 151.57
+    },
+    {
+     "order": 72,
+     "name": "button cam:full",
+     "params": {
+      "cam": 4
+     },
+     "t": 159.76
+    },
+    {
+     "order": 73,
+     "name": "button rewind",
+     "params": null,
+     "t": 164.46
+    },
+    {
+     "order": 74,
+     "name": "button play",
+     "params": null,
+     "t": 168.71
+    },
+    {
+     "order": 75,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 282.06
+    },
+    {
+     "order": 76,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 286.65
+    },
+    {
+     "order": 77,
+     "name": "button rewind",
+     "params": null,
+     "t": 289.42
+    },
+    {
+     "order": 78,
+     "name": "button play",
+     "params": null,
+     "t": 292.75
+    },
+    {
+     "order": 79,
+     "name": "button rewind",
+     "params": null,
+     "t": 417.27
+    },
+    {
+     "order": 80,
+     "name": "button play",
+     "params": null,
+     "t": 417.34
+    }
+   ],
+   "finished": "2026-11-14T10:09:14",
+   "counts": {
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "map press": 1,
+    "set sLen": 4,
+    "set sDep": 1,
+    "zoom wheel": 1,
+    "button cam:full": 7,
+    "button cam:mini": 5,
+    "button play": 5,
+    "camera press": 17,
+    "button corner bar": 16,
+    "key Escape": 6,
+    "set refSel": 3,
+    "key Enter": 3,
+    "button cam:zout": 2,
+    "button rewind": 3,
+    "button cam:tune": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 1.168071583526814,
+     "per_cam": {
+      "0": {
+       "median_m": 0.3334512424666311,
+       "p90_m": 0.5938120247616812
+      },
+      "1": {
+       "median_m": 0.2561095878250338,
+       "p90_m": 0.4844509398847897
+      },
+      "2": {
+       "median_m": 0.294669602409466,
+       "p90_m": 0.4563117073486689
+      },
+      "3": {
+       "median_m": 0.27351648773804327,
+       "p90_m": 0.36988534951960994
+      }
+     },
+     "overall_median": 0.2940797587910814,
+     "pass_align_0.30": true
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.119,
+     "1": 0.112,
+     "2": 0.253,
+     "3": 0.063
+    },
+    "count_series": {
+     "median": 4.0,
+     "max": 5,
+     "truth_people_median": 5.0,
+     "frac_within1_of_truth": 0.9905660377358491,
+     "truth_people_used": 4
+    },
+    "ids": {
+     "distinct_map_ids": 5,
+     "real_people": 5.0,
+     "fragmentation_ratio": 1.0,
+     "ids_alive_in_over_half_samples": 4,
+     "note": "no GT positions for B1-02: ids judged by map-id lifetimes: ids 1-4 alive in 209-212 of 212 samples, id 5 for 2 samples (ratio 5/4=1.25)"
+    },
+    "cam_fit": [
+     {
+      "rms": 0.1570268054148317,
+      "height": 1.9505884265136355
+     },
+     {
+      "rms": 0,
+      "height": 3.729999689653068
+     },
+     {
+      "rms": 0,
+      "height": 3.9663316259828028
+     },
+     {
+      "rms": 0.3148503632515129,
+      "height": 3.3371050644981737
+     }
+    ],
+    "id_eval": {
+     "error": "Command '['C:\\\\Users\\\\User\\\\OneDrive\\\\Desktop\\\\nttdata_cam\\\\NTT_Prototype\\\\.venv-vision\\\\Scripts\\\\python.exe', '-I', 'tools/id_eval.py', 'B1-02', 'logs/raw/B1-02-run1.run.json']' returned non-zero exit status 1."
+    },
+    "count_vs_4": {
+     "frames_with_4": 209,
+     "with_3": 2,
+     "with_5": 1,
+     "frac_within1": 1.0
+    },
+    "offers_after_play": {
+     "play1": 2,
+     "play2": 0,
+     "play3_scored": 0
+    },
+    "mode": "steady 1/8 s ON"
+   },
+   "pass": {
+    "alignment": true,
+    "occlusion": true,
+    "id": true
+   },
+   "verdict": "PASS",
+   "notes": "Run1 PASS. Steady mode on. Corners: cam0 clicked on a frame at 4.4 s (paused) because people hid the rug at 0 s; offers after #1: 2 (cam:tune cards 2,3), #2: 0, #3: 0. Align joint 0.294 m; count 4 of 4 in 209/212 samples; ids 1-4 persistent."
+  },
+  {
+   "scenario": "B1-03",
+   "batch": "1",
+   "cameras": 2,
+   "run": 1,
+   "started": "2026-11-14T10:15:16",
+   "functions": [
+    {
+     "order": 1,
+     "name": "map press",
+     "params": {
+      "tool": "select"
+     },
+     "t": 7.11
+    },
+    {
+     "order": 2,
+     "name": "key Delete",
+     "params": null,
+     "t": 7.16
+    },
+    {
+     "order": 3,
+     "name": "button sDel",
+     "params": null,
+     "t": 7.16
+    },
+    {
+     "order": 4,
+     "name": "set vset",
+     "params": {
+      "value": "B1-03"
+     },
+     "t": 11.04
+    },
+    {
+     "order": 5,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 19.93
+    },
+    {
+     "order": 6,
+     "name": "button askOk",
+     "params": null,
+     "t": 19.98
+    },
+    {
+     "order": 7,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 19.98
+    },
+    {
+     "order": 8,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 20.04
+    },
+    {
+     "order": 9,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 21.2
+    },
+    {
+     "order": 10,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 26.67
+    },
+    {
+     "order": 11,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 26.7
+    },
+    {
+     "order": 12,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 32
+    },
+    {
+     "order": 13,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 32.08
+    },
+    {
+     "order": 14,
+     "name": "key Escape",
+     "params": null,
+     "t": 38.21
+    },
+    {
+     "order": 15,
+     "name": "key Escape",
+     "params": null,
+     "t": 38.23
+    },
+    {
+     "order": 16,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 38.31
+    },
+    {
+     "order": 17,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 38.34
+    },
+    {
+     "order": 18,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r2"
+     },
+     "t": 53.12
+    },
+    {
+     "order": 19,
+     "name": "key Enter",
+     "params": null,
+     "t": 53.13
+    },
+    {
+     "order": 20,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 1
+     },
+     "t": 53.17
+    },
+    {
+     "order": 21,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 53.2
+    },
+    {
+     "order": 22,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 53.21
+    },
+    {
+     "order": 23,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 53.24
+    },
+    {
+     "order": 24,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 53.28
+    },
+    {
+     "order": 25,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 53.31
+    },
+    {
+     "order": 26,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 53.41
+    },
+    {
+     "order": 27,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 53.43
+    },
+    {
+     "order": 28,
+     "name": "key Escape",
+     "params": null,
+     "t": 60.26
+    },
+    {
+     "order": 29,
+     "name": "key Escape",
+     "params": null,
+     "t": 60.3
+    },
+    {
+     "order": 30,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 65.78
+    },
+    {
+     "order": 31,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 65.83
+    },
+    {
+     "order": 32,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 1
+     },
+     "t": 65.86
+    },
+    {
+     "order": 33,
+     "name": "button cam:zout",
+     "params": {
+      "cam": 1
+     },
+     "t": 65.88
+    },
+    {
+     "order": 34,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 75.13
+    },
+    {
+     "order": 35,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 75.18
+    },
+    {
+     "order": 36,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 75.23
+    },
+    {
+     "order": 37,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 75.26
+    },
+    {
+     "order": 38,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 75.3
+    },
+    {
+     "order": 39,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 75.33
+    },
+    {
+     "order": 40,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 75.44
+    },
+    {
+     "order": 41,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 75.45
+    },
+    {
+     "order": 42,
+     "name": "set camH",
+     "params": {
+      "cam": 1,
+      "value": "4"
+     },
+     "t": 83.17
+    },
+    {
+     "order": 43,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 89.05
+    },
+    {
+     "order": 44,
+     "name": "button play",
+     "params": null,
+     "t": 93.47
+    },
+    {
+     "order": 45,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 148.9
+    },
+    {
+     "order": 46,
+     "name": "button rewind",
+     "params": null,
+     "t": 152.94
+    },
+    {
+     "order": 47,
+     "name": "button play",
+     "params": null,
+     "t": 152.99
+    },
+    {
+     "order": 48,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 1
+     },
+     "t": 210.71
+    },
+    {
+     "order": 49,
+     "name": "button rewind",
+     "params": null,
+     "t": 211.09
+    },
+    {
+     "order": 50,
+     "name": "button play",
+     "params": null,
+     "t": 211.14
+    },
+    {
+     "order": 51,
+     "name": "button rewind",
+     "params": null,
+     "t": 271.27
+    },
+    {
+     "order": 52,
+     "name": "button play",
+     "params": null,
+     "t": 271.39
+    }
+   ],
+   "finished": "2026-11-14T10:15:16",
+   "counts": {
+    "map press": 2,
+    "key Delete": 1,
+    "button sDel": 1,
+    "set vset": 1,
+    "button tool:ref": 2,
+    "button askOk": 1,
+    "zoom wheel": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 4,
+    "button cam:mini": 3,
+    "key Escape": 4,
+    "set refSel": 1,
+    "key Enter": 1,
+    "button corner bar": 8,
+    "camera press": 8,
+    "button cam:zout": 2,
+    "set camH": 1,
+    "button play": 4,
+    "button cam:tune": 2,
+    "button rewind": 3
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.9883598717661883,
+     "per_cam": {
+      "0": {
+       "median_m": 0.21899263353272533,
+       "p90_m": 0.3388109472630553
+      },
+      "1": {
+       "median_m": 0.24579630343219921,
+       "p90_m": 0.4198897426408521
+      }
+     },
+     "overall_median": 0.23262691954513326,
+     "pass_align_0.30": true
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.179,
+     "1": 0.198
+    },
+    "count_series": {
+     "median": 4.0,
+     "max": 5,
+     "truth_people_median": 5.0,
+     "frac_within1_of_truth": 0.8240740740740741
+    },
+    "ids": {
+     "distinct_map_ids": 7,
+     "real_people": 5.0,
+     "fragmentation_ratio": 1.4,
+     "ids_alive_in_over_half_samples": 4,
+     "note": "7 distinct map ids; vs ~6 people = 1.17 (vs 5 = 1.4)"
+    },
+    "cam_fit": [
+     {
+      "rms": 0.4295346827546347,
+      "height": 4
+     },
+     {
+      "rms": 0,
+      "height": 8.828191354579236
+     },
+     {
+      "rms": 0,
+      "height": 3.9663316259828028
+     },
+     {
+      "rms": null,
+      "height": null
+     }
+    ],
+    "id_eval": {
+     "error": "Command '['C:\\\\Users\\\\User\\\\OneDrive\\\\Desktop\\\\nttdata_cam\\\\NTT_Prototype\\\\.venv-vision\\\\Scripts\\\\python.exe', '-I', 'tools/id_eval.py', 'B1-03', 'logs/raw/B1-03-run1.run.json']' returned non-zero exit status 1."
+    },
+    "truth_note": "no GT positions; scenario says ~6 people, YOLO per-camera mean 3.2/4.1 (max 4/6): count judged vs 4-6; map count median 4, max 5, never above 5",
+    "offers_after_play": {
+     "play1": 1,
+     "play2": 1,
+     "play3": 0,
+     "play4_scored": 0
+    },
+    "typed_height": "cam0 4 m (page estimated 12.8 m)",
+    "mode": "steady ON"
+   },
+   "pass": {
+    "alignment": true,
+    "occlusion": true,
+    "id": true
+   },
+   "verdict": "PASS",
+   "notes": "Run1 PASS (no GT). 2 cams cropped, cam0 rug corners clicked in zoomed-out view (all within ~picture), typed height 4 m on cam0; offers after plays #1 1 (tune card2), #2 1 (tune card1), #3 0, scored #4 0. Align joint 0.233 m; count 3-5 (median 4) vs ~6 people visible 4-6; ids 7/~6 = 1.17."
+  },
+  {
+   "scenario": "B1-04",
+   "batch": "1",
+   "cameras": 2,
+   "run": 1,
+   "started": "2026-11-14T10:17:18",
+   "functions": [
+    {
+     "order": 1,
+     "name": "map press",
+     "params": {
+      "tool": "select"
+     },
+     "t": 10.15
+    },
+    {
+     "order": 2,
+     "name": "key Delete",
+     "params": null,
+     "t": 10.19
+    },
+    {
+     "order": 3,
+     "name": "button sDel",
+     "params": null,
+     "t": 10.19
+    },
+    {
+     "order": 4,
+     "name": "set vset",
+     "params": {
+      "value": "B1-04"
+     },
+     "t": 18.57
+    },
+    {
+     "order": 5,
+     "name": "button tool:ref",
+     "params": null,
+     "t": 30.15
+    },
+    {
+     "order": 6,
+     "name": "button askOk",
+     "params": null,
+     "t": 30.17
+    },
+    {
+     "order": 7,
+     "name": "map press",
+     "params": {
+      "tool": "ref"
+     },
+     "t": 30.18
+    },
+    {
+     "order": 8,
+     "name": "set sLen",
+     "params": {
+      "value": "3.2"
+     },
+     "t": 30.46
+    },
+    {
+     "order": 9,
+     "name": "set sDep",
+     "params": {
+      "value": "2.0"
+     },
+     "t": 30.51
+    },
+    {
+     "order": 10,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 34.74
+    },
+    {
+     "order": 11,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 47.35
+    },
+    {
+     "order": 12,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 47.4
+    },
+    {
+     "order": 13,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 47.46
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 47.49
+    },
+    {
+     "order": 15,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 59.05
+    },
+    {
+     "order": 16,
+     "name": "set camH",
+     "params": {
+      "cam": 1,
+      "value": ""
+     },
+     "t": 66.87
+    },
+    {
+     "order": 17,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 74.29
+    },
+    {
+     "order": 18,
+     "name": "button cam:auto",
+     "params": {
+      "cam": 2
+     },
+     "t": 92.25
+    },
+    {
+     "order": 19,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 96.38
+    }
+   ],
+   "finished": "2026-11-14T10:17:33",
+   "counts": {
+    "map press": 2,
+    "key Delete": 1,
+    "button sDel": 1,
+    "set vset": 1,
+    "button tool:ref": 1,
+    "button askOk": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "button cam:full": 2,
+    "button corner bar": 5,
+    "set camH": 1,
+    "button cam:auto": 1,
+    "camera press": 1
+   },
+   "metrics": {
+    "blocked": "cam1 (second camera) shows only wall, people and a bit of table/chair; no floor reference, rug or carpet visible; page refuses to create a reference from an untied camera (cam:auto drag did nothing, no corner finder result). Camera 0 tied: 4 rug corners, card avg 0.55 m with typed height 4, then 0.00 free-floor fit + warning 'clicks do not fit a real camera' after clearing the stale height.",
+    "alignment": "not measurable",
+    "count": "not run",
+    "ids": "not run"
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": false,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "BLOCKED: second camera crop has no floor reference; cannot be tied by any user action."
+  },
+  {
+   "scenario": "B1-05",
+   "batch": "1",
+   "cameras": 2,
+   "run": 1,
+   "started": "2026-11-14T15:44:13",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B1-05"
+     },
+     "t": 4.15
+    },
+    {
+     "order": 2,
+     "name": "zoom wheel",
+     "params": {
+      "map": true
+     },
+     "t": 7.51
+    },
+    {
+     "order": 3,
+     "name": "map press",
+     "params": {
+      "tool": "select"
+     },
+     "t": 11.14
+    },
+    {
+     "order": 4,
+     "name": "set sPts",
+     "params": {
+      "value": "5.12,2.86; 5.06,5.62; 5.36,5.68; 5.36,6."
+     },
+     "t": 17.65
+    },
+    {
+     "order": 5,
+     "name": "map press",
+     "params": {
+      "tool": "select"
+     },
+     "t": 23.54
+    },
+    {
+     "order": 6,
+     "name": "set sLen",
+     "params": {
+      "value": "2.24"
+     },
+     "t": 31.41
+    },
+    {
+     "order": 7,
+     "name": "set sDep",
+     "params": {
+      "value": "3.75"
+     },
+     "t": 31.47
+    },
+    {
+     "order": 8,
+     "name": "set sCx",
+     "params": {
+      "value": "3.15"
+     },
+     "t": 31.5
+    },
+    {
+     "order": 9,
+     "name": "set sCy",
+     "params": {
+      "value": "5.53"
+     },
+     "t": 31.54
+    },
+    {
+     "order": 10,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 40.07
+    },
+    {
+     "order": 11,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 40.11
+    },
+    {
+     "order": 12,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 48.74
+    },
+    {
+     "order": 13,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 48.77
+    },
+    {
+     "order": 14,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 48.8
+    },
+    {
+     "order": 15,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 48.81
+    },
+    {
+     "order": 16,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 48.83
+    },
+    {
+     "order": 17,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 48.84
+    },
+    {
+     "order": 18,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 48.95
+    },
+    {
+     "order": 19,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 48.97
+    },
+    {
+     "order": 20,
+     "name": "key Escape",
+     "params": null,
+     "t": 59.37
+    },
+    {
+     "order": 21,
+     "name": "key Escape",
+     "params": null,
+     "t": 59.38
+    },
+    {
+     "order": 22,
+     "name": "key Escape",
+     "params": null,
+     "t": 59.4
+    },
+    {
+     "order": 23,
+     "name": "button play",
+     "params": null,
+     "t": 63.08
+    },
+    {
+     "order": 24,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 158.7
+    },
+    {
+     "order": 25,
+     "name": "button rewind",
+     "params": null,
+     "t": 162.28
+    },
+    {
+     "order": 26,
+     "name": "button play",
+     "params": null,
+     "t": 162.37
+    },
+    {
+     "order": 27,
+     "name": "button rewind",
+     "params": null,
+     "t": 264.08
+    },
+    {
+     "order": 28,
+     "name": "button play",
+     "params": null,
+     "t": 265.3
+    }
+   ],
+   "finished": "2026-11-14T15:44:14",
+   "counts": {
+    "set vset": 1,
+    "zoom wheel": 1,
+    "map press": 2,
+    "set sPts": 1,
+    "set sLen": 1,
+    "set sDep": 1,
+    "set sCx": 1,
+    "set sCy": 1,
+    "button cam:full": 1,
+    "button cam:mini": 1,
+    "button corner bar": 4,
+    "camera press": 4,
+    "key Escape": 3,
+    "button play": 3,
+    "button cam:tune": 1,
+    "button rewind": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.7493387629363567,
+     "per_cam": {
+      "0": {
+       "median_m": 0.40737101537110354,
+       "p90_m": 0.6969997778443321
+      },
+      "1": {
+       "median_m": 0.538724475413653,
+       "p90_m": 1.0101835230574168
+      }
+     },
+     "overall_median": 0.4626477225025645,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.155,
+     "1": 0.516
+    },
+    "count_series": {
+     "median": 4.0,
+     "max": 5,
+     "truth_people_median": 5.0,
+     "frac_within1_of_truth": 0.5324675324675324
+    },
+    "ids": {
+     "distinct_map_ids": 6,
+     "real_people": 5.0,
+     "fragmentation_ratio": 1.2,
+     "ids_alive_in_over_half_samples": 4
+    },
+    "cam_fit": [
+     {
+      "rms": 0.44631877033423834,
+      "height": 4.317711924039693
+     },
+     {
+      "rms": 0,
+      "height": 4.495979092813298
+     }
+    ],
+    "id_eval": {
+     "error": "Command '['C:\\\\Users\\\\User\\\\OneDrive\\\\Desktop\\\\nttdata_cam\\\\NTT_Prototype\\\\.venv-vision\\\\Scripts\\\\python.exe', '-I', 'tools/id_eval.py', 'B1-05', 'logs/raw/B1-05-run1.run.json']' returned non-zero exit status 1."
+    },
+    "offers": {
+     "play1": "1 (untied cam1 from people, 0.23 m, clicked)",
+     "play2": 0
+    },
+    "note": "plan placement typed; cam0 rug tie card avg 0.45 m (h 4.3 m)"
+   },
+   "pass": {
+    "alignment": false,
+    "occlusion": false,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run1 FAIL: align 0.463 m (cam0 rug tie 0.45 m, low-res crop), count 4-5 vs 5; cam1 tied from people (0.23 m) after play#1"
+  },
+  {
+   "scenario": "B3-16",
+   "batch": "3",
+   "cameras": 2,
+   "run": 1,
+   "started": "2026-11-14T15:50:29",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B3-16"
+     },
+     "t": 4.23
+    },
+    {
+     "order": 2,
+     "name": "button cam:full",
+     "params": {
+      "cam": 2
+     },
+     "t": 15.93
+    },
+    {
+     "order": 3,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 15.97
+    },
+    {
+     "order": 4,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r1"
+     },
+     "t": 16.02
+    },
+    {
+     "order": 5,
+     "name": "set refSel",
+     "params": {
+      "cam": 2,
+      "value": "r2"
+     },
+     "t": 16.04
+    },
+    {
+     "order": 6,
+     "name": "key Enter",
+     "params": null,
+     "t": 16.05
+    },
+    {
+     "order": 7,
+     "name": "key Enter",
+     "params": null,
+     "t": 23
+    },
+    {
+     "order": 8,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 23.04
+    },
+    {
+     "order": 9,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 2
+     },
+     "t": 28.09
+    },
+    {
+     "order": 10,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 28.12
+    },
+    {
+     "order": 11,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 3
+     },
+     "t": 34.03
+    },
+    {
+     "order": 12,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 34.07
+    },
+    {
+     "order": 13,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 2
+     },
+     "t": 42.45
+    },
+    {
+     "order": 14,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 42.58
+    },
+    {
+     "order": 15,
+     "name": "button corner bar",
+     "params": {
+      "cam": 2,
+      "corner": 4
+     },
+     "t": 46.36
+    },
+    {
+     "order": 16,
+     "name": "camera press",
+     "params": {
+      "cam": 2,
+      "button": 0
+     },
+     "t": 46.4
+    },
+    {
+     "order": 17,
+     "name": "key Escape",
+     "params": null,
+     "t": 51.6
+    },
+    {
+     "order": 18,
+     "name": "key Escape",
+     "params": null,
+     "t": 51.61
+    },
+    {
+     "order": 19,
+     "name": "key Escape",
+     "params": null,
+     "t": 51.62
+    },
+    {
+     "order": 20,
+     "name": "button play",
+     "params": null,
+     "t": 55.94
+    },
+    {
+     "order": 21,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 1
+     },
+     "t": 131.68
+    },
+    {
+     "order": 22,
+     "name": "button rewind",
+     "params": null,
+     "t": 136.25
+    },
+    {
+     "order": 23,
+     "name": "button play",
+     "params": null,
+     "t": 136.36
+    },
+    {
+     "order": 24,
+     "name": "button rewind",
+     "params": null,
+     "t": 213.39
+    },
+    {
+     "order": 25,
+     "name": "button play",
+     "params": null,
+     "t": 214.6
+    }
+   ],
+   "finished": "2026-11-14T15:50:30",
+   "counts": {
+    "set vset": 1,
+    "button cam:full": 1,
+    "button cam:mini": 3,
+    "set refSel": 2,
+    "key Enter": 2,
+    "button corner bar": 3,
+    "camera press": 4,
+    "key Escape": 3,
+    "button play": 3,
+    "button cam:tune": 1,
+    "button rewind": 2
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.9625527674552955,
+     "per_cam": {
+      "0": {
+       "median_m": 0.1966176761166228,
+       "p90_m": 0.27916668138028505
+      },
+      "1": {
+       "median_m": 0.1513726864512631,
+       "p90_m": 0.34273778730964183
+      }
+     },
+     "overall_median": 0.1775756076376284,
+     "pass_align_0.30": true
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.073,
+     "1": 0.064
+    },
+    "count_series": {
+     "median": 4.0,
+     "max": 8,
+     "truth_people_median": 5.0,
+     "frac_within1_of_truth": 0.8051948051948052
+    },
+    "ids": {
+     "distinct_map_ids": 11,
+     "real_people": 5.0,
+     "fragmentation_ratio": 2.2,
+     "ids_alive_in_over_half_samples": 4
+    },
+    "cam_fit": [
+     {
+      "rms": 0,
+      "height": 5.229726679692215
+     },
+     {
+      "rms": 0.057988532551241256,
+      "height": 3.815528519537049
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.18,
+     "gt_people": 6,
+     "recall": 0.77,
+     "false_per_frame": 0.65,
+     "mean_ids_per_person": 2.17,
+     "total_switches": 8,
+     "per_person": {
+      "0": [
+       0.82,
+       3,
+       2
+      ],
+      "1": [
+       0.88,
+       1,
+       0
+      ],
+      "2": [
+       0.88,
+       2,
+       2
+      ],
+      "3": [
+       0.78,
+       3,
+       2
+      ],
+      "4": [
+       0.52,
+       2,
+       1
+      ],
+      "5": [
+       0.5,
+       2,
+       1
+      ]
+     }
+    },
+    "offers": {
+     "play1": "1 (untied cam0 from people 0.23 m, clicked)",
+     "play2": 0
+    },
+    "tie": "cam1 rug 3 corners... 4 corners card 0.06 m h 3.8 m"
+   },
+   "pass": {
+    "alignment": true,
+    "occlusion": false,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run1 FAIL: align 0.178 OK; recall 0.77, ids/person 2.17, 8 switches, count median 4 vs 6 GT, max 8. cam1 rug tie 0.06 m; cam0 tied from people (0.23 m) after play#1."
+  },
+  {
+   "scenario": "B3-20",
+   "batch": "3",
+   "cameras": 4,
+   "run": 1,
+   "started": "2026-11-14T16:01:44",
+   "functions": [
+    {
+     "order": 1,
+     "name": "set vset",
+     "params": {
+      "value": "B3-20"
+     },
+     "t": 4.93
+    },
+    {
+     "order": 2,
+     "name": "button cam:full",
+     "params": {
+      "cam": 1
+     },
+     "t": 12.4
+    },
+    {
+     "order": 3,
+     "name": "button cam:mini",
+     "params": {
+      "cam": 1
+     },
+     "t": 12.44
+    },
+    {
+     "order": 4,
+     "name": "set refSel",
+     "params": {
+      "cam": 1,
+      "value": "r1"
+     },
+     "t": 22.34
+    },
+    {
+     "order": 5,
+     "name": "set refSel",
+     "params": {
+      "cam": 1,
+      "value": "r2"
+     },
+     "t": 22.37
+    },
+    {
+     "order": 6,
+     "name": "key Enter",
+     "params": null,
+     "t": 22.39
+    },
+    {
+     "order": 7,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 1
+     },
+     "t": 22.43
+    },
+    {
+     "order": 8,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 22.45
+    },
+    {
+     "order": 9,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 2
+     },
+     "t": 27.5
+    },
+    {
+     "order": 10,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 27.53
+    },
+    {
+     "order": 11,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 3
+     },
+     "t": 31.93
+    },
+    {
+     "order": 12,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 31.99
+    },
+    {
+     "order": 13,
+     "name": "button corner bar",
+     "params": {
+      "cam": 1,
+      "corner": 4
+     },
+     "t": 35.83
+    },
+    {
+     "order": 14,
+     "name": "camera press",
+     "params": {
+      "cam": 1,
+      "button": 0
+     },
+     "t": 35.87
+    },
+    {
+     "order": 15,
+     "name": "key Escape",
+     "params": null,
+     "t": 40.32
+    },
+    {
+     "order": 16,
+     "name": "key Escape",
+     "params": null,
+     "t": 40.34
+    },
+    {
+     "order": 17,
+     "name": "key Escape",
+     "params": null,
+     "t": 40.36
+    },
+    {
+     "order": 18,
+     "name": "button play",
+     "params": null,
+     "t": 44.73
+    },
+    {
+     "order": 19,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 4
+     },
+     "t": 181.39
+    },
+    {
+     "order": 20,
+     "name": "button rewind",
+     "params": null,
+     "t": 185.74
+    },
+    {
+     "order": 21,
+     "name": "button play",
+     "params": null,
+     "t": 185.78
+    },
+    {
+     "order": 22,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 2
+     },
+     "t": 334.62
+    },
+    {
+     "order": 23,
+     "name": "button cam:tune",
+     "params": {
+      "cam": 3
+     },
+     "t": 337.26
+    },
+    {
+     "order": 24,
+     "name": "button rewind",
+     "params": null,
+     "t": 341.47
+    },
+    {
+     "order": 25,
+     "name": "button play",
+     "params": null,
+     "t": 341.56
+    },
+    {
+     "order": 26,
+     "name": "button rewind",
+     "params": null,
+     "t": 481.56
+    },
+    {
+     "order": 27,
+     "name": "button play",
+     "params": null,
+     "t": 482.77
+    }
+   ],
+   "finished": "2026-11-14T16:01:45",
+   "counts": {
+    "set vset": 1,
+    "button cam:full": 1,
+    "button cam:mini": 1,
+    "set refSel": 2,
+    "key Enter": 1,
+    "button corner bar": 4,
+    "camera press": 4,
+    "key Escape": 3,
+    "button play": 4,
+    "button cam:tune": 3,
+    "button rewind": 3
+   },
+   "metrics": {
+    "alignment_joint": {
+     "unit_m": 0.03,
+     "flip": 1,
+     "scale": 0.8919541750778198,
+     "per_cam": {
+      "0": {
+       "median_m": 0.19962928406058517,
+       "p90_m": 0.3490610156687896
+      },
+      "1": {
+       "median_m": 0.38356719224260594,
+       "p90_m": 0.5575577066080111
+      },
+      "2": {
+       "median_m": 0.520299666937935,
+       "p90_m": 0.7823433585711084
+      },
+      "3": {
+       "median_m": 0.17720853925883603,
+       "p90_m": 0.34856095823390554
+      }
+     },
+     "overall_median": 0.3121851082231747,
+     "pass_align_0.30": false
+    },
+    "alignment_per_camera_shape_median_m": {
+     "0": 0.158,
+     "1": 0.198,
+     "2": 0.262,
+     "3": 0.055
+    },
+    "count_series": {
+     "median": 4.0,
+     "max": 8,
+     "truth_people_median": 5.0,
+     "frac_within1_of_truth": 0.8571428571428571
+    },
+    "ids": {
+     "distinct_map_ids": 12,
+     "real_people": 5.0,
+     "fragmentation_ratio": 2.4,
+     "ids_alive_in_over_half_samples": 4
+    },
+    "cam_fit": [
+     {
+      "rms": 0.40635594591177754,
+      "height": 7.3077329102607385
+     },
+     {
+      "rms": 0,
+      "height": 8.27392954373612
+     },
+     {
+      "rms": 0,
+      "height": 1.7280797847183587
+     },
+     {
+      "rms": 0,
+      "height": 3.833882795893859
+     }
+    ],
+    "id_eval": {
+     "map_to_truth_align_median_m": 0.31,
+     "gt_people": 6,
+     "recall": 0.78,
+     "false_per_frame": 0.88,
+     "mean_ids_per_person": 1.5,
+     "total_switches": 3,
+     "per_person": {
+      "0": [
+       0.93,
+       2,
+       1
+      ],
+      "1": [
+       0.85,
+       1,
+       0
+      ],
+      "2": [
+       0.78,
+       1,
+       0
+      ],
+      "3": [
+       0.84,
+       2,
+       1
+      ],
+      "4": [
+       0.39,
+       2,
+       1
+      ],
+      "5": [
+       0.6,
+       1,
+       0
+      ]
+     }
+    },
+    "offers": {
+     "play1": 1,
+     "play2": 2,
+     "play3": 0,
+     "scored": 0
+    },
+    "tie": "cam0 rug 4 corners (card avg 0.41 m, h 7.3); cams 1,2,3 tied from people"
+   },
+   "pass": {
+    "alignment": true,
+    "occlusion": true,
+    "id": false
+   },
+   "verdict": "FAIL",
+   "notes": "Run1 FAIL (recall only): align 0.312 OK, count 86% within +-1 OK, ids/person 1.50 OK, switches 3, recall 0.78 (<0.80). cam0 rug tie 0.41 m; cams 1-3 tied from people (offers: #1 1, #2 2, #3 0)."
+  }
+ ],
+ "summary": {
+  "totals": {
+   "set vset": 12,
+   "button tool:ref": 17,
+   "button askOk": 9,
+   "zoom wheel": 14,
+   "map press": 14,
+   "set sLen": 13,
+   "set sDep": 10,
+   "button cam:full": 46,
+   "button corner bar": 137,
+   "camera press": 135,
+   "key Escape": 65,
+   "button cam:mini": 27,
+   "set refSel": 26,
+   "key Enter": 27,
+   "button cam:zout": 16,
+   "button cam:fix": 1,
+   "button play": 32,
+   "set camH": 6,
+   "button cam:tune": 16,
+   "button rewind": 20,
+   "button cam:align": 1,
+   "button reset": 1,
+   "key Delete": 3,
+   "button sDel": 3,
+   "button cam:auto": 1,
+   "set sPts": 1,
+   "set sCx": 1,
+   "set sCy": 1
+  },
+  "most_used": [
+   [
+    "button corner bar",
+    137
+   ],
+   [
+    "camera press",
+    135
+   ],
+   [
+    "key Escape",
+    65
+   ],
+   [
+    "button cam:full",
+    46
+   ],
+   [
+    "button play",
+    32
+   ],
+   [
+    "button cam:mini",
+    27
+   ],
+   [
+    "key Enter",
+    27
+   ],
+   [
+    "set refSel",
+    26
+   ],
+   [
+    "button rewind",
+    20
+   ],
+   [
+    "button tool:ref",
+    17
+   ]
+  ],
+  "rarely_used": [
+   "button cam:fix",
+   "button cam:align",
+   "button reset",
+   "button cam:auto",
+   "set sPts",
+   "set sCx",
+   "set sCy"
+  ]
+ }
+}

@@ -1,0 +1,12 @@
+# test videos, downloads, logs and model weights stay on the machine that made them
+__pycache__/
+*.pyc
+*.pt
+*.avi
+*.webm
+*.mp4
+tests/downloads/
+tests/videos/
+tests/logs/
+tests/heartbeat/
+tests/tools/scratch/

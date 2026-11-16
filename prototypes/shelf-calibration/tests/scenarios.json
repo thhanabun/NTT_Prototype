@@ -1,0 +1,2605 @@
+[
+ {
+  "id": "B1-01",
+  "batch": 1,
+  "title": "Lab, 4 cameras, six people, one room",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B1-01/cam0.webm",
+   "videos/B1-01/cam1.webm",
+   "videos/B1-01/cam2.webm",
+   "videos/B1-01/cam3.webm"
+  ],
+  "truth_file": "videos/B1-01/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "full",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.687,
+    0.609,
+    0.699
+   ],
+   [
+    0.687,
+    1.0,
+    0.775,
+    0.565
+   ],
+   [
+    0.609,
+    0.775,
+    1.0,
+    0.579
+   ],
+   [
+    0.699,
+    0.565,
+    0.579,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 6,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-01/floorplan.json",
+   "videos/B1-01/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 10,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 9,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 11,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 5,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 5.33
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 5.65
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.5
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.47
+   }
+  ]
+ },
+ {
+  "id": "B1-02",
+  "batch": 1,
+  "title": "Lab, 4 cameras, four people",
+  "dataset": "EPFL Laboratory 4p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B1-02/cam0.webm",
+   "videos/B1-02/cam1.webm",
+   "videos/B1-02/cam2.webm",
+   "videos/B1-02/cam3.webm"
+  ],
+  "truth_file": "videos/B1-02/truth.json",
+  "overlap": "full",
+  "overlap_design_target": "full",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.864,
+    0.848,
+    0.882
+   ],
+   [
+    0.864,
+    1.0,
+    0.917,
+    0.781
+   ],
+   [
+    0.848,
+    0.917,
+    1.0,
+    0.767
+   ],
+   [
+    0.882,
+    0.781,
+    0.767,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "crossing_paths",
+   "occlusion"
+  ],
+  "people_count_estimate": 5,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (EPFL gives no unit; matches rug 2.2x3.6 m guess and ~0.9 m/s walking speed); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-02/floorplan.json",
+   "videos/B1-02/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 12,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 11,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 12,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 9,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT file for 4p). Same room as lab6p.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.03
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.8
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.6
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.67
+   }
+  ]
+ },
+ {
+  "id": "B1-03",
+  "batch": 1,
+  "title": "Lab, 2 cameras cropped to the same floor",
+  "dataset": "EPFL Laboratory 4p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B1-03/cam0.webm",
+   "videos/B1-03/cam1.webm"
+  ],
+  "truth_file": "videos/B1-03/truth.json",
+  "overlap": "full",
+  "overlap_design_target": "full",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.917
+   ],
+   [
+    0.917,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 6,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    580,
+    300
+   ],
+   [
+    660,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (EPFL gives no unit; matches rug 2.2x3.6 m guess and ~0.9 m/s walking speed); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-03/floorplan.json",
+   "videos/B1-03/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 7,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 11,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT file for 4p). Same room as lab6p.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.97,
+    "people_per_sample_mean": 3.17
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.1
+   }
+  ]
+ },
+ {
+  "id": "B1-04",
+  "batch": 1,
+  "title": "Lab (4p), 2 cameras on disjoint floor areas (rug side vs carpet side), people walk between them",
+  "dataset": "EPFL Laboratory 4p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B1-04/cam0.webm",
+   "videos/B1-04/cam1.webm"
+  ],
+  "truth_file": "videos/B1-04/truth.json",
+  "overlap": "none",
+  "overlap_design_target": "none",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.016
+   ],
+   [
+    0.016,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 4,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    400,
+    376
+   ],
+   [
+    300,
+    456
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (EPFL gives no unit; matches rug 2.2x3.6 m guess and ~0.9 m/s walking speed); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-04/floorplan.json",
+   "videos/B1-04/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 8,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 4,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT file for 4p). Same room as lab6p.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.12,
+    "people_per_sample_mean": 0.9
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.07,
+    "people_per_sample_mean": 0.68
+   }
+  ]
+ },
+ {
+  "id": "B1-05",
+  "batch": 1,
+  "title": "Lab, 2 cameras cropped to half-shared floor",
+  "dataset": "EPFL Laboratory 4p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B1-05/cam0.webm",
+   "videos/B1-05/cam1.webm"
+  ],
+  "truth_file": "videos/B1-05/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.547
+   ],
+   [
+    0.547,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 4,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    480,
+    520
+   ],
+   [
+    600,
+    400
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (EPFL gives no unit; matches rug 2.2x3.6 m guess and ~0.9 m/s walking speed); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-05/floorplan.json",
+   "videos/B1-05/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 10,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 7,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT file for 4p). Same room as lab6p.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.3,
+    "people_per_sample_mean": 1.18
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.65,
+    "people_per_sample_mean": 1.77
+   }
+  ]
+ },
+ {
+  "id": "B1-06",
+  "batch": 1,
+  "title": "Roof terrace, 4 cameras, seven people",
+  "dataset": "EPFL Terrace 1",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B1-06/cam0.webm",
+   "videos/B1-06/cam1.webm",
+   "videos/B1-06/cam2.webm",
+   "videos/B1-06/cam3.webm"
+  ],
+  "truth_file": "videos/B1-06/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.381,
+    0.34,
+    0.391
+   ],
+   [
+    0.381,
+    1.0,
+    0.442,
+    0.462
+   ],
+   [
+    0.34,
+    0.442,
+    1.0,
+    0.763
+   ],
+   [
+    0.391,
+    0.462,
+    0.763,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 11,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.018232,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 1.82 cm (0.86 cm from the Tsai-mm ratio x 2.12, rescaled because people measured on the page came out 0.8 m tall; basis: people ~1.7 m), +/-30 %",
+  "references_hint": "Roof terrace with square grey floor tiles in a regular grid (joint intersections make good corners), glass facade base line (panel seam feet) and the railing base (post feet) along the edges; use the seam/post feet, not tile joints.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-06/floorplan.json",
+   "videos/B1-06/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 16,
+    "references": [
+     "glass-wall panel seam foot 1",
+     "glass-wall panel seam foot 2",
+     "wall base line left end (frame edge)",
+     "wall-panel / door-post foot (far end)",
+     "tile cell",
+     "tile cell",
+     "tile cell"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 6,
+    "references": [
+     "railing post foot 1",
+     "railing post foot 2",
+     "railing post foot 3",
+     "railing post foot 4",
+     "tile cell"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 6,
+    "references": [
+     "parapet/railing corner foot",
+     "railing post foot A",
+     "railing post foot B",
+     "railing post foot C (left)",
+     "railing end-post foot",
+     "parapet wall base, far end (right edge)"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only: EPFL's terrace GT is in a Tsai world frame that could not be reconciled with the homographies, so it is not included.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 7.3
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 7.22
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 6.95
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 6.08
+   }
+  ]
+ },
+ {
+  "id": "B1-07",
+  "batch": 1,
+  "title": "Underground passage, 4 cameras, poor light",
+  "dataset": "EPFL Passageway 1",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B1-07/cam0.webm",
+   "videos/B1-07/cam1.webm",
+   "videos/B1-07/cam2.webm",
+   "videos/B1-07/cam3.webm"
+  ],
+  "truth_file": "videos/B1-07/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.076,
+    0.016,
+    0.007
+   ],
+   [
+    0.076,
+    1.0,
+    0.094,
+    0.035
+   ],
+   [
+    0.016,
+    0.094,
+    1.0,
+    0.105
+   ],
+   [
+    0.007,
+    0.035,
+    0.105,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "low_light_uneven_lighting",
+   "crossing_paths",
+   "people_leaving_reentering"
+  ],
+  "people_count_estimate": 7,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.05,
+  "scale_source": "ESTIMATE: 1 unit ~= 5 cm from ~1 m/s walking speed; +/-40 %",
+  "references_hint": "Underground passage: a long yellow lane line on the dark floor, painted bike symbol and arrow marking, wall-floor base line, bicycles standing at the wall, stairs/landing at the far end.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-07/floorplan.json",
+   "videos/B1-07/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 2,
+    "references": [
+     "yellow lane stripe (centre line, visible part)"
+    ],
+    "status": "weak (painted/wall line only, no surveyed corners)"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 3,
+    "references": [
+     "yellow lane stripe (centre line, visible part)",
+     "yellow bike symbol (centre)"
+    ],
+    "status": "weak (painted/wall line only, no surveyed corners)"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 3,
+    "references": [
+     "yellow lane stripe (centre line, visible part)",
+     "yellow arrow (head)"
+    ],
+    "status": "weak (painted/wall line only, no surveyed corners)"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 2,
+    "references": [
+     "yellow lane stripe (centre line, visible part)"
+    ],
+    "status": "weak (painted/wall line only, no surveyed corners)"
+   }
+  ],
+  "notes": "GT positions are only indicative (near-field offsets ~0.5-1 m seen on overlays); the homographies are the truth. Far field of the calibration is unreliable.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.9,
+    "people_per_sample_mean": 2.45
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.62,
+    "people_per_sample_mean": 1.68
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.8,
+    "people_per_sample_mean": 2.48
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.8,
+    "people_per_sample_mean": 2.38
+   }
+  ]
+ },
+ {
+  "id": "B1-08",
+  "batch": 1,
+  "title": "Roof terrace, 4 cameras, crowd of ~6 people at once, partial overlap (2nd window)",
+  "dataset": "EPFL Terrace 1",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B1-08/cam0.webm",
+   "videos/B1-08/cam1.webm",
+   "videos/B1-08/cam2.webm",
+   "videos/B1-08/cam3.webm"
+  ],
+  "truth_file": "videos/B1-08/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.279,
+    0.686,
+    0.733
+   ],
+   [
+    0.279,
+    1.0,
+    0.945,
+    0.824
+   ],
+   [
+    0.686,
+    0.945,
+    1.0,
+    0.904
+   ],
+   [
+    0.733,
+    0.824,
+    0.904,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 5,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    400,
+    576
+   ],
+   [
+    400,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.018232,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 1.82 cm (0.86 cm from the Tsai-mm ratio x 2.12, rescaled because people measured on the page came out 0.8 m tall; basis: people ~1.7 m), +/-30 %",
+  "references_hint": "Roof terrace with square grey floor tiles in a regular grid (joint intersections make good corners), glass facade base line (panel seam feet) and the railing base (post feet) along the edges; use the seam/post feet, not tile joints.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-08/floorplan.json",
+   "videos/B1-08/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 16,
+    "references": [
+     "glass-wall panel seam foot 1",
+     "glass-wall panel seam foot 2",
+     "wall base line left end (frame edge)",
+     "wall-panel / door-post foot (far end)",
+     "tile cell",
+     "tile cell",
+     "tile cell"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 3,
+    "references": [
+     "railing post foot 2",
+     "railing post foot 3",
+     "railing post foot 4"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 6,
+    "references": [
+     "parapet/railing corner foot",
+     "railing post foot A",
+     "railing post foot B",
+     "railing post foot C (left)",
+     "railing end-post foot",
+     "parapet wall base, far end (right edge)"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only: EPFL's terrace GT is in a Tsai world frame that could not be reconciled with the homographies, so it is not included.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.35,
+    "people_per_sample_mean": 1.15
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.57,
+    "people_per_sample_mean": 1.6
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.9,
+    "people_per_sample_mean": 3.02
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.85,
+    "people_per_sample_mean": 2.6
+   }
+  ]
+ },
+ {
+  "id": "B1-09",
+  "batch": 1,
+  "title": "Lab, 3 cameras, partial overlap, lights fade",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 3,
+  "files": [
+   "videos/B1-09/cam0.webm",
+   "videos/B1-09/cam1.webm",
+   "videos/B1-09/cam2.webm"
+  ],
+  "truth_file": "videos/B1-09/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.389,
+    0.557
+   ],
+   [
+    0.389,
+    1.0,
+    0.694
+   ],
+   [
+    0.557,
+    0.694,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "lighting_change_synthetic",
+   "heavy_occlusion_crowd"
+  ],
+  "people_count_estimate": 6,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    660,
+    300
+   ],
+   [
+    580,
+    540
+   ],
+   [
+    500,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-09/floorplan.json",
+   "videos/B1-09/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 3,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 10,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 2,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m). Brightness ramp is synthetic (applied by us), not from the dataset.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.33
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.62
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.95,
+    "people_per_sample_mean": 2.83
+   }
+  ]
+ },
+ {
+  "id": "B1-10",
+  "batch": 1,
+  "title": "Courtyard, 3 cameras, low resolution, 1 s offset",
+  "dataset": "EPFL Campus 4",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 3,
+  "files": [
+   "videos/B1-10/cam0.webm",
+   "videos/B1-10/cam1.webm",
+   "videos/B1-10/cam2.webm"
+  ],
+  "truth_file": "videos/B1-10/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.581,
+    0.569
+   ],
+   [
+    0.581,
+    1.0,
+    0.638
+   ],
+   [
+    0.569,
+    0.638,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "low_resolution",
+   "time_offset",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 5,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 30.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    290,
+    190
+   ],
+   [
+    290,
+    190
+   ],
+   [
+    290,
+    270
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "floor_unit_m": 0.018,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 1.8 cm (ratio to EPFL's Tsai metres, +/-30 %)",
+  "references_hint": "(B3-18 cam2: middle arcade pillar base, dark bin and big right-hand pillar base only - all within ~1 m depth, so tie it from overlap/people.) Large rectangular paving slabs in a regular grid (joint intersections), square pillar bases of the arcade (floor-contact corners, see floorplan), glass entrance door threshold, building facade base line, bins and a bike rack at the edge.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B1-10/floorplan.json",
+   "videos/B1-10/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 7,
+    "references": [
+     "pillar L front base",
+     "glass door threshold (frame base, left and right end)",
+     "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+     "dark bin at the left pillar (centre of its foot)",
+     "dark bin at the right pillar (centre of its foot)"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 4,
+    "references": [
+     "arcade pillar 1 base",
+     "arcade pillar 2 base"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 3,
+    "references": [
+     "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)",
+     "dark bin standing against the big right-hand pillar (centre of its foot)"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT). Source clip is ~68 s long. time_offsets_s[k]: camera k video starts that many seconds LATER in source time than the base clip (an event at t in cam0 appears at t-offset in cam k).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.97,
+    "people_per_sample_mean": 2.37
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.87,
+    "people_per_sample_mean": 2.9
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.93,
+    "people_per_sample_mean": 2.8
+   }
+  ]
+ },
+ {
+  "id": "B2-11",
+  "batch": 2,
+  "title": "Lab, 2 cameras on disjoint floor areas (rug side vs far carpet corner), people walk between them",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B2-11/cam0.webm",
+   "videos/B2-11/cam1.webm"
+  ],
+  "truth_file": "videos/B2-11/truth.json",
+  "overlap": "none",
+  "overlap_design_target": "none",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.045
+   ],
+   [
+    0.045,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths",
+   "heavy_occlusion_crowd"
+  ],
+  "people_count_estimate": 3,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    420,
+    380
+   ],
+   [
+    640,
+    260
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B2-11/floorplan.json",
+   "videos/B2-11/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 4,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 5,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.38,
+    "people_per_sample_mean": 1.18
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.53,
+    "people_per_sample_mean": 1.55
+   }
+  ]
+ },
+ {
+  "id": "B2-12",
+  "batch": 2,
+  "title": "Public square, 3 HD cameras seeing the same floor, crowd (2 fps)",
+  "dataset": "WILDTRACK",
+  "licence": "WILDTRACK, CVLab EPFL + IDIAP, research use only (Chavdarova et al., CVPR 2018); https://www.epfl.ch/labs/cvlab/data/data-wildtrack/",
+  "cameras": 3,
+  "files": [
+   "videos/B2-12/cam0.webm",
+   "videos/B2-12/cam1.webm",
+   "videos/B2-12/cam2.webm"
+  ],
+  "truth_file": "videos/B2-12/truth.json",
+  "overlap": "full",
+  "overlap_design_target": "full",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.78,
+    0.984
+   ],
+   [
+    0.78,
+    1.0,
+    0.858
+   ],
+   [
+    0.984,
+    0.858,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths",
+   "low_frame_rate"
+  ],
+  "people_count_estimate": 43,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 20.0,
+  "fps": 2.0,
+  "resolutions": [
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 1.0,
+  "scale_source": "metres (WILDTRACK calibration, exact)",
+  "references_hint": "Distinctive static ground features (see floorplan; paving joints are identical and sheared, do not use them): slotted drain grates and a steel manhole cover in the gutter by the stair edge, concrete planter bases, bin/post feet, white painted kerb line.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B2-12/floorplan.json",
+   "videos/B2-12/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 11,
+    "references": [
+     "drain grate 1 (gutter, centre of the slotted plate)",
+     "drain grate 2 (gutter, centre)",
+     "grey bin foot (far side of the square)",
+     "concrete planter, front (centre of base)",
+     "concrete planter, right (centre of base)",
+     "sunlit paving patch, lower-left corner (far field, +-1 m)",
+     "sunlit paving patch, lower-right corner (far field, +-1 m)",
+     "square manhole cover (4 corners)"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   }
+  ],
+  "notes": "GT = WILDTRACK annotations every 0.5 s (2 fps), 2.5 cm grid. Only 20 s per clip (frames extracted from the 6.8 GB zip by range requests).",
+  "verification": []
+ },
+ {
+  "id": "B2-13",
+  "batch": 2,
+  "title": "Roof terrace (sequence 2), 4 cameras, six people",
+  "dataset": "EPFL Terrace 2",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B2-13/cam0.webm",
+   "videos/B2-13/cam1.webm",
+   "videos/B2-13/cam2.webm",
+   "videos/B2-13/cam3.webm"
+  ],
+  "truth_file": "videos/B2-13/truth.json",
+  "overlap": "full",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.805,
+    0.747,
+    0.723
+   ],
+   [
+    0.805,
+    1.0,
+    0.792,
+    0.8
+   ],
+   [
+    0.747,
+    0.792,
+    1.0,
+    0.961
+   ],
+   [
+    0.723,
+    0.8,
+    0.961,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths"
+  ],
+  "people_count_estimate": null,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ],
+   [
+    720,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.018232,
+  "scale_source": "ESTIMATE: 1 unit ~= 1.82 cm (as terrace1, basis people ~1.7 m), +/-30 %",
+  "references_hint": "Roof terrace with square grey floor tiles in a regular grid (joint intersections make good corners), glass facade base line (panel seam feet) and the railing base (post feet) along the edges; use the seam/post feet, not tile joints.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B2-13/floorplan.json",
+   "videos/B2-13/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 8,
+    "references": [
+     "glass-wall panel seam foot 1",
+     "glass-wall panel seam foot 2",
+     "wall base line left end (frame edge)",
+     "wall-panel / door-post foot (far end)",
+     "tile cell"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 10,
+    "references": [
+     "railing post foot 1",
+     "railing post foot 2",
+     "railing post foot 3",
+     "railing post foot 4",
+     "tile cell",
+     "tile cell"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 6,
+    "references": [
+     "parapet/railing corner foot",
+     "railing post foot A",
+     "railing post foot B",
+     "railing post foot C (left)",
+     "railing end-post foot",
+     "parapet wall base, far end (right edge)"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no EPFL GT for this sequence).",
+  "verification": []
+ },
+ {
+  "id": "B2-14",
+  "batch": 2,
+  "title": "Courtyard, 2 cameras, people walk out of view and come back, 0.5 s offset",
+  "dataset": "EPFL Campus 4",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B2-14/cam0.webm",
+   "videos/B2-14/cam1.webm"
+  ],
+  "truth_file": "videos/B2-14/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.444
+   ],
+   [
+    0.444,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "time_offset",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 5,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 30.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    580,
+    380
+   ],
+   [
+    500,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.5
+  ],
+  "floor_unit_m": 0.018,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 1.8 cm (ratio to EPFL's Tsai metres, +/-30 %)",
+  "references_hint": "(B3-18 cam2: middle arcade pillar base, dark bin and big right-hand pillar base only - all within ~1 m depth, so tie it from overlap/people.) Large rectangular paving slabs in a regular grid (joint intersections), square pillar bases of the arcade (floor-contact corners, see floorplan), glass entrance door threshold, building facade base line, bins and a bike rack at the edge.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B2-14/floorplan.json",
+   "videos/B2-14/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 6,
+    "references": [
+     "glass door threshold (frame base, left and right end)",
+     "pillar R front base",
+     "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+     "dark bin at the right pillar (centre of its foot)"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 2,
+    "references": [
+     "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT). Source clip is ~68 s long. time_offsets_s[k]: camera k video starts that many seconds LATER in source time than the base clip (an event at t in cam0 appears at t-offset in cam k).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.77,
+    "people_per_sample_mean": 2.33
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.73,
+    "people_per_sample_mean": 2.0
+   }
+  ]
+ },
+ {
+  "id": "B2-15",
+  "batch": 2,
+  "title": "Lab, 3 cameras, low resolution, one camera dims",
+  "dataset": "EPFL Laboratory 4p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 3,
+  "files": [
+   "videos/B2-15/cam0.webm",
+   "videos/B2-15/cam1.webm",
+   "videos/B2-15/cam2.webm"
+  ],
+  "truth_file": "videos/B2-15/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.593,
+    0.99
+   ],
+   [
+    0.593,
+    1.0,
+    0.572
+   ],
+   [
+    0.99,
+    0.572,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "low_resolution",
+   "lighting_change_synthetic",
+   "people_leaving_reentering"
+  ],
+  "people_count_estimate": 4,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    230,
+    210
+   ],
+   [
+    300,
+    198
+   ],
+   [
+    230,
+    190
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (EPFL gives no unit; matches rug 2.2x3.6 m guess and ~0.9 m/s walking speed); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B2-15/floorplan.json",
+   "videos/B2-15/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 8,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 10,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 7,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT file for 4p). Same room as lab6p. Brightness ramp is synthetic (applied by us), not from the dataset.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.28,
+    "people_per_sample_mean": 1.12
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.5,
+    "people_per_sample_mean": 1.4
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.33,
+    "people_per_sample_mean": 1.02
+   }
+  ]
+ },
+ {
+  "id": "B3-16",
+  "batch": 3,
+  "title": "Lab, 2 cameras on the same floor, low resolution, lights switch off",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B3-16/cam0.webm",
+   "videos/B3-16/cam1.webm"
+  ],
+  "truth_file": "videos/B3-16/truth.json",
+  "overlap": "full",
+  "overlap_design_target": "full",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.998
+   ],
+   [
+    0.998,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "low_resolution",
+   "lighting_change_synthetic",
+   "heavy_occlusion_crowd"
+  ],
+  "people_count_estimate": 6,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    158,
+    202
+   ],
+   [
+    248,
+    202
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B3-16/floorplan.json",
+   "videos/B3-16/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 2,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 8,
+    "references": [
+     "rug",
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m). Brightness ramp is synthetic (applied by us), not from the dataset.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.97,
+    "people_per_sample_mean": 3.42
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 4.97
+   }
+  ]
+ },
+ {
+  "id": "B3-17",
+  "batch": 3,
+  "title": "Lab (6p), 2 cameras on nearly disjoint floor areas (rug side vs carpet), people walk between them",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 2,
+  "files": [
+   "videos/B3-17/cam0.webm",
+   "videos/B3-17/cam1.webm"
+  ],
+  "truth_file": "videos/B3-17/truth.json",
+  "overlap": "none, <=0.15",
+  "overlap_design_target": "none",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.14
+   ],
+   [
+    0.14,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 3,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    400,
+    370
+   ],
+   [
+    400,
+    576
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B3-17/floorplan.json",
+   "videos/B3-17/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 4,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 8,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.3,
+    "people_per_sample_mean": 1.07
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.12,
+    "people_per_sample_mean": 0.8
+   }
+  ]
+ },
+ {
+  "id": "B3-18",
+  "batch": 3,
+  "title": "Courtyard, 3 cameras, partial overlap, people leave and return",
+  "dataset": "EPFL Campus 4",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 3,
+  "files": [
+   "videos/B3-18/cam0.webm",
+   "videos/B3-18/cam1.webm",
+   "videos/B3-18/cam2.webm"
+  ],
+  "truth_file": "videos/B3-18/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.519,
+    0.786
+   ],
+   [
+    0.519,
+    1.0,
+    0.658
+   ],
+   [
+    0.786,
+    0.658,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "people_leaving_reentering",
+   "crossing_paths"
+  ],
+  "people_count_estimate": 5,
+  "people_count_basis": "max people seen in one camera sample (YOLO11n, lower bound)",
+  "truth": true,
+  "truth_kind": "calibration homographies only (no per-frame positions)",
+  "gt_positions": false,
+  "duration_s": 30.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    560,
+    460
+   ],
+   [
+    580,
+    380
+   ],
+   [
+    660,
+    460
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 0.018,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 1.8 cm (ratio to EPFL's Tsai metres, +/-30 %)",
+  "references_hint": "(B3-18 cam2: middle arcade pillar base, dark bin and big right-hand pillar base only - all within ~1 m depth, so tie it from overlap/people.) Large rectangular paving slabs in a regular grid (joint intersections), square pillar bases of the arcade (floor-contact corners, see floorplan), glass entrance door threshold, building facade base line, bins and a bike rack at the edge.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B3-18/floorplan.json",
+   "videos/B3-18/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 9,
+    "references": [
+     "pillar L front base",
+     "glass door threshold (frame base, left and right end)",
+     "pillar R front base",
+     "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+     "dark bin at the left pillar (centre of its foot)",
+     "dark bin at the right pillar (centre of its foot)"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 2,
+    "references": [
+     "arcade pillar 2 base"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 5,
+    "references": [
+     "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)",
+     "dark bin standing against the big right-hand pillar (centre of its foot)",
+     "big right-hand pillar with the yellow sign: left/right end of its front base"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "Calibration homographies only (no GT). Source clip is ~68 s long.",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.97,
+    "people_per_sample_mean": 2.47
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.97,
+    "people_per_sample_mean": 3.3
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 750,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.0
+   }
+  ]
+ },
+ {
+  "id": "B3-19",
+  "batch": 3,
+  "title": "Public square, all 7 HD cameras, dense crowd (2 fps)",
+  "dataset": "WILDTRACK",
+  "licence": "WILDTRACK, CVLab EPFL + IDIAP, research use only (Chavdarova et al., CVPR 2018); https://www.epfl.ch/labs/cvlab/data/data-wildtrack/",
+  "cameras": 7,
+  "files": [
+   "videos/B3-19/cam0.webm",
+   "videos/B3-19/cam1.webm",
+   "videos/B3-19/cam2.webm",
+   "videos/B3-19/cam3.webm",
+   "videos/B3-19/cam4.webm",
+   "videos/B3-19/cam5.webm",
+   "videos/B3-19/cam6.webm"
+  ],
+  "truth_file": "videos/B3-19/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.892,
+    0.716,
+    0.604,
+    1.0,
+    0.987,
+    0.968
+   ],
+   [
+    0.892,
+    1.0,
+    0.78,
+    0.433,
+    0.979,
+    0.984,
+    0.597
+   ],
+   [
+    0.716,
+    0.78,
+    1.0,
+    0.958,
+    0.996,
+    0.858,
+    0.746
+   ],
+   [
+    0.604,
+    0.433,
+    0.958,
+    1.0,
+    0.072,
+    0.764,
+    0.532
+   ],
+   [
+    1.0,
+    0.979,
+    0.996,
+    0.072,
+    1.0,
+    1.0,
+    0.403
+   ],
+   [
+    0.987,
+    0.984,
+    0.858,
+    0.764,
+    1.0,
+    1.0,
+    0.929
+   ],
+   [
+    0.968,
+    0.597,
+    0.746,
+    0.532,
+    0.403,
+    0.929,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths",
+   "low_frame_rate"
+  ],
+  "people_count_estimate": 43,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 20.0,
+  "fps": 2.0,
+  "resolutions": [
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ],
+   [
+    960,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "floor_unit_m": 1.0,
+  "scale_source": "metres (WILDTRACK calibration, exact)",
+  "references_hint": "Distinctive static ground features (see floorplan; paving joints are identical and sheared, do not use them): slotted drain grates and a steel manhole cover in the gutter by the stair edge, concrete planter bases, bin/post feet, white painted kerb line.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B3-19/floorplan.json",
+   "videos/B3-19/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 7,
+    "references": [
+     "drain grate A (gutter, centre of the slotted plate)",
+     "drain grate B (gutter, centre)",
+     "concrete planter cone 1 (leftmost; centre of its base)",
+     "concrete planter cone 2 (front, middle; centre of base)",
+     "concrete planter cone 3 (directly behind cone 2, only its top/back is visible; footprint centre)",
+     "concrete planter cone 4 (rightmost; centre of base)",
+     "bin/post foot beside the tripod"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 11,
+    "references": [
+     "drain grate 1 (gutter, centre of the slotted plate)",
+     "drain grate 2 (gutter, centre)",
+     "grey bin foot (far side of the square)",
+     "concrete planter, front (centre of base)",
+     "concrete planter, right (centre of base)",
+     "sunlit paving patch, lower-left corner (far field, +-1 m)",
+     "sunlit paving patch, lower-right corner (far field, +-1 m)",
+     "square manhole cover (4 corners)"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 4,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 5,
+    "visible_reference_points": 0,
+    "references": [],
+    "status": "NONE: no usable reference in this view"
+   },
+   {
+    "camera": 6,
+    "visible_reference_points": 1,
+    "references": [
+     "drain grate (gutter, centre)"
+    ],
+    "status": "NONE: no usable reference in this view"
+   }
+  ],
+  "notes": "GT = WILDTRACK annotations every 0.5 s (2 fps), 2.5 cm grid. Only 20 s per clip (frames extracted from the 6.8 GB zip by range requests).",
+  "verification": []
+ },
+ {
+  "id": "B3-20",
+  "batch": 3,
+  "title": "Lab, 4 cameras on partly shared floor, six people, 1 s offset on one camera",
+  "dataset": "EPFL Laboratory 6p",
+  "licence": "CVLab-EPFL research use only; (c) CVLab EPFL; https://www.epfl.ch/labs/cvlab/data-pom-index-php",
+  "cameras": 4,
+  "files": [
+   "videos/B3-20/cam0.webm",
+   "videos/B3-20/cam1.webm",
+   "videos/B3-20/cam2.webm",
+   "videos/B3-20/cam3.webm"
+  ],
+  "truth_file": "videos/B3-20/truth.json",
+  "overlap": "partial",
+  "overlap_design_target": "partial",
+  "overlap_shared_fraction_matrix": [
+   [
+    1.0,
+    0.596,
+    0.227,
+    0.821
+   ],
+   [
+    0.596,
+    1.0,
+    0.365,
+    0.492
+   ],
+   [
+    0.227,
+    0.365,
+    1.0,
+    0.383
+   ],
+   [
+    0.821,
+    0.492,
+    0.383,
+    1.0
+   ]
+  ],
+  "edge_cases": [
+   "heavy_occlusion_crowd",
+   "crossing_paths",
+   "time_offset",
+   "people_leaving_reentering"
+  ],
+  "people_count_estimate": 6,
+  "people_count_basis": "ground-truth ids in clip",
+  "truth": true,
+  "truth_kind": "calibration homographies + ground-truth floor positions",
+  "gt_positions": true,
+  "duration_s": 40.0,
+  "fps": 25.0,
+  "resolutions": [
+   [
+    420,
+    540
+   ],
+   [
+    420,
+    540
+   ],
+   [
+    420,
+    540
+   ],
+   [
+    600,
+    540
+   ]
+  ],
+  "time_offsets_s": [
+   0.0,
+   0.0,
+   1.0,
+   0.0
+  ],
+  "floor_unit_m": 0.03,
+  "scale_source": "ESTIMATE: 1 calibration unit ~= 3 cm (as lab4p); +/-30 %",
+  "references_hint": "Blue carpet with straight edges and sharp corners (large, irregular outline - use its corners), a fringed rectangular patterned rug (4 clear corners), small star/cross-shaped stickers on the grey floor, wall-floor corners of the room, table and chair legs on the floor.",
+  "floorplan": true,
+  "floorplan_files": [
+   "videos/B3-20/floorplan.json",
+   "videos/B3-20/floorplan.png"
+  ],
+  "reference_coverage": [
+   {
+    "camera": 0,
+    "visible_reference_points": 4,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 1,
+    "visible_reference_points": 2,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 2,
+    "visible_reference_points": 8,
+    "references": [
+     "blue carpet"
+    ],
+    "status": "ok"
+   },
+   {
+    "camera": 3,
+    "visible_reference_points": 3,
+    "references": [
+     "rug"
+    ],
+    "status": "ok"
+   }
+  ],
+  "notes": "GT = EPFL manual labels once per second (grid cell ~0.2 m). time_offsets_s[k]: camera k video starts that many seconds LATER in source time than the base clip (an event at t in cam0 appears at t-offset in cam k).",
+  "verification": [
+   {
+    "file": "cam0.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.93,
+    "people_per_sample_mean": 2.73
+   },
+   {
+    "file": "cam1.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 0.82,
+    "people_per_sample_mean": 2.5
+   },
+   {
+    "file": "cam2.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 2.67
+   },
+   {
+    "file": "cam3.webm",
+    "frames": 1000,
+    "first_frame_ok": true,
+    "last_frame_ok": true,
+    "frac_samples_with_2plus": 1.0,
+    "people_per_sample_mean": 3.17
+   }
+  ]
+ }
+]

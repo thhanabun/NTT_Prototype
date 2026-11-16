@@ -1,0 +1,632 @@
+{
+ "B1-01": [
+  {
+   "camera": 0,
+   "visible_reference_points": 10,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 9,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 11,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 5,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-02": [
+  {
+   "camera": 0,
+   "visible_reference_points": 12,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 11,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 12,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 9,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-03": [
+  {
+   "camera": 0,
+   "visible_reference_points": 7,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 11,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-04": [
+  {
+   "camera": 0,
+   "visible_reference_points": 8,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 4,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-05": [
+  {
+   "camera": 0,
+   "visible_reference_points": 10,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 7,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-06": [
+  {
+   "camera": 0,
+   "visible_reference_points": 16,
+   "references": [
+    "glass-wall panel seam foot 1",
+    "glass-wall panel seam foot 2",
+    "wall base line left end (frame edge)",
+    "wall-panel / door-post foot (far end)",
+    "tile cell",
+    "tile cell",
+    "tile cell"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 6,
+   "references": [
+    "railing post foot 1",
+    "railing post foot 2",
+    "railing post foot 3",
+    "railing post foot 4",
+    "tile cell"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 6,
+   "references": [
+    "parapet/railing corner foot",
+    "railing post foot A",
+    "railing post foot B",
+    "railing post foot C (left)",
+    "railing end-post foot",
+    "parapet wall base, far end (right edge)"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-07": [
+  {
+   "camera": 0,
+   "visible_reference_points": 2,
+   "references": [
+    "yellow lane stripe (centre line, visible part)"
+   ],
+   "status": "weak (painted/wall line only, no surveyed corners)"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 3,
+   "references": [
+    "yellow lane stripe (centre line, visible part)",
+    "yellow bike symbol (centre)"
+   ],
+   "status": "weak (painted/wall line only, no surveyed corners)"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 3,
+   "references": [
+    "yellow lane stripe (centre line, visible part)",
+    "yellow arrow (head)"
+   ],
+   "status": "weak (painted/wall line only, no surveyed corners)"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 2,
+   "references": [
+    "yellow lane stripe (centre line, visible part)"
+   ],
+   "status": "weak (painted/wall line only, no surveyed corners)"
+  }
+ ],
+ "B1-08": [
+  {
+   "camera": 0,
+   "visible_reference_points": 16,
+   "references": [
+    "glass-wall panel seam foot 1",
+    "glass-wall panel seam foot 2",
+    "wall base line left end (frame edge)",
+    "wall-panel / door-post foot (far end)",
+    "tile cell",
+    "tile cell",
+    "tile cell"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 3,
+   "references": [
+    "railing post foot 2",
+    "railing post foot 3",
+    "railing post foot 4"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 6,
+   "references": [
+    "parapet/railing corner foot",
+    "railing post foot A",
+    "railing post foot B",
+    "railing post foot C (left)",
+    "railing end-post foot",
+    "parapet wall base, far end (right edge)"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-09": [
+  {
+   "camera": 0,
+   "visible_reference_points": 3,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 10,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 2,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B1-10": [
+  {
+   "camera": 0,
+   "visible_reference_points": 7,
+   "references": [
+    "pillar L front base",
+    "glass door threshold (frame base, left and right end)",
+    "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+    "dark bin at the left pillar (centre of its foot)",
+    "dark bin at the right pillar (centre of its foot)"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 4,
+   "references": [
+    "arcade pillar 1 base",
+    "arcade pillar 2 base"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 3,
+   "references": [
+    "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)",
+    "dark bin standing against the big right-hand pillar (centre of its foot)"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B2-11": [
+  {
+   "camera": 0,
+   "visible_reference_points": 4,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 5,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B2-12": [
+  {
+   "camera": 0,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 11,
+   "references": [
+    "drain grate 1 (gutter, centre of the slotted plate)",
+    "drain grate 2 (gutter, centre)",
+    "grey bin foot (far side of the square)",
+    "concrete planter, front (centre of base)",
+    "concrete planter, right (centre of base)",
+    "sunlit paving patch, lower-left corner (far field, +-1 m)",
+    "sunlit paving patch, lower-right corner (far field, +-1 m)",
+    "square manhole cover (4 corners)"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  }
+ ],
+ "B2-13": [
+  {
+   "camera": 0,
+   "visible_reference_points": 8,
+   "references": [
+    "glass-wall panel seam foot 1",
+    "glass-wall panel seam foot 2",
+    "wall base line left end (frame edge)",
+    "wall-panel / door-post foot (far end)",
+    "tile cell"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 10,
+   "references": [
+    "railing post foot 1",
+    "railing post foot 2",
+    "railing post foot 3",
+    "railing post foot 4",
+    "tile cell",
+    "tile cell"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 6,
+   "references": [
+    "parapet/railing corner foot",
+    "railing post foot A",
+    "railing post foot B",
+    "railing post foot C (left)",
+    "railing end-post foot",
+    "parapet wall base, far end (right edge)"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B2-14": [
+  {
+   "camera": 0,
+   "visible_reference_points": 6,
+   "references": [
+    "glass door threshold (frame base, left and right end)",
+    "pillar R front base",
+    "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+    "dark bin at the right pillar (centre of its foot)"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 2,
+   "references": [
+    "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B2-15": [
+  {
+   "camera": 0,
+   "visible_reference_points": 8,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 10,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 7,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B3-16": [
+  {
+   "camera": 0,
+   "visible_reference_points": 2,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 8,
+   "references": [
+    "rug",
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B3-17": [
+  {
+   "camera": 0,
+   "visible_reference_points": 4,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 8,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B3-18": [
+  {
+   "camera": 0,
+   "visible_reference_points": 9,
+   "references": [
+    "pillar L front base",
+    "glass door threshold (frame base, left and right end)",
+    "pillar R front base",
+    "blue sports bag lying on the paving (centre of its footprint; it stays put all clip)",
+    "dark bin at the left pillar (centre of its foot)",
+    "dark bin at the right pillar (centre of its foot)"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 2,
+   "references": [
+    "arcade pillar 2 base"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 5,
+   "references": [
+    "middle arcade pillar, left/right end of its front base (the pillar right of the standing man in frame 0 of B3-18)",
+    "dark bin standing against the big right-hand pillar (centre of its foot)",
+    "big right-hand pillar with the yellow sign: left/right end of its front base"
+   ],
+   "status": "ok"
+  }
+ ],
+ "B3-19": [
+  {
+   "camera": 0,
+   "visible_reference_points": 7,
+   "references": [
+    "drain grate A (gutter, centre of the slotted plate)",
+    "drain grate B (gutter, centre)",
+    "concrete planter cone 1 (leftmost; centre of its base)",
+    "concrete planter cone 2 (front, middle; centre of base)",
+    "concrete planter cone 3 (directly behind cone 2, only its top/back is visible; footprint centre)",
+    "concrete planter cone 4 (rightmost; centre of base)",
+    "bin/post foot beside the tripod"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 11,
+   "references": [
+    "drain grate 1 (gutter, centre of the slotted plate)",
+    "drain grate 2 (gutter, centre)",
+    "grey bin foot (far side of the square)",
+    "concrete planter, front (centre of base)",
+    "concrete planter, right (centre of base)",
+    "sunlit paving patch, lower-left corner (far field, +-1 m)",
+    "sunlit paving patch, lower-right corner (far field, +-1 m)",
+    "square manhole cover (4 corners)"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 4,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 5,
+   "visible_reference_points": 0,
+   "references": [],
+   "status": "NONE: no usable reference in this view"
+  },
+  {
+   "camera": 6,
+   "visible_reference_points": 1,
+   "references": [
+    "drain grate (gutter, centre)"
+   ],
+   "status": "NONE: no usable reference in this view"
+  }
+ ],
+ "B3-20": [
+  {
+   "camera": 0,
+   "visible_reference_points": 4,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 1,
+   "visible_reference_points": 2,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 2,
+   "visible_reference_points": 8,
+   "references": [
+    "blue carpet"
+   ],
+   "status": "ok"
+  },
+  {
+   "camera": 3,
+   "visible_reference_points": 3,
+   "references": [
+    "rug"
+   ],
+   "status": "ok"
+  }
+ ]
+}

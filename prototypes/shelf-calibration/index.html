@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store map and cameras</title>
+<style>
+  :root { --bg:#f5efe9; --surface:#fffaf5; --ink:#2a211b; --soft:#7a6b60; --line:#e3d6cb; --hi:#e8742f; --ok:#2c7a4b; --warn:#b7791f; --bad:#a8362a; --pick:#f2c500; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16120f; --surface:#211b17; --ink:#f3ebe4; --soft:#b3a397; --line:#3a2f28; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.55 system-ui, "Segoe UI", sans-serif; }
+  header { padding:12px 16px 2px; } h1 { font-size:18px; margin:0; } header p { margin:2px 0 0; color:var(--soft); font-size:13px; }
+  .bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:5px 16px; }
+  .row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:4px 0; }
+  button, select, input { font:inherit; font-size:13px; min-height:34px; padding:4px 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); }
+  input[type=number] { width:70px; } input[type=file] { max-width:210px; } input.name { width:150px; }
+  button[aria-pressed=true], button.primary { background:var(--hi); color:#fff; border-color:var(--hi); }
+  button.small { min-height:26px; padding:1px 8px; font-size:12px; }
+  button:disabled { opacity:.45; } :focus-visible { outline:3px solid var(--hi); outline-offset:2px; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; padding:6px 16px 16px; }
+  @media (max-width:980px) { main { grid-template-columns:1fr; } }
+  canvas { width:100%; height:auto; display:block; background:#232c2a; border-radius:10px; border:1px solid var(--line); touch-action:none; user-select:none; }
+  svg { width:100%; height:min(64vh, 640px); min-height:340px; display:block; background:var(--surface); border-radius:10px; border:1px solid var(--line); touch-action:none; user-select:none; }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 12px; margin-top:8px; }
+  .card { background:var(--surface); border:2px solid var(--line); border-radius:12px; padding:8px 10px; margin-bottom:12px; }
+  .card.active { border-color:var(--hi); }
+  body.mapmode .setupOnly { display:none !important; }
+  input[type=color] { width:44px; padding:2px; }
+  .camWrap { position:relative; }
+  .ptbar { position:absolute; display:flex; flex-wrap:wrap; gap:4px; align-items:center; background:rgba(20,16,12,.9); color:#fff; padding:4px 6px; border-radius:8px; font-size:12px; z-index:5; max-width:340px; }
+  .ptbar[hidden] { display:none; }
+  .ptbar select, .ptbar button { min-height:24px; padding:0 6px; font-size:12px; }
+  .cornerBar button.placed { border-color:var(--ok); }
+  .full { position:fixed !important; inset:0; z-index:40; margin:0 !important; border-radius:0 !important; overflow:auto; background:var(--bg) !important; padding:10px 14px !important; }
+  .card.full canvas { margin:0 auto; }
+  body:has(.full) { overflow:hidden; }
+  #mapBox.full svg { height:calc(100vh - 120px); }
+  #mapBox.full #sel { position:fixed; right:16px; bottom:16px; max-width:min(480px, 90vw); z-index:41; box-shadow:0 4px 18px rgba(0,0,0,.35); }
+  .minimap { position:absolute; left:8px; bottom:8px; width:230px; height:180px; background:var(--surface); border:1px solid var(--line); border-radius:8px; opacity:.96; overflow:hidden; }
+  .card:not(.full) .minimap, .card.nomini .minimap, .card:not(.full) .fullOnly { display:none; }
+  @keyframes flash { 50% { opacity:.25; } } .flash { animation: flash 1s infinite; }
+  .muted { color:var(--soft); font-size:12px; } .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  ul { margin:4px 0 0; padding-left:18px; } li { margin:2px 0; } li button { margin-left:6px; }
+  #status { min-height:24px; margin:0 16px; }
+  .layers label { font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>แผนที่ร้าน + กล้อง</h1>
+  <p>1) วาด Reference (ชั้นวาง โต๊ะ เคาน์เตอร์ ฯลฯ ที่วางบนพื้น) บนแผนที่ หรือสร้างจากกล้อง · 2) ในแต่ละกล้อง เลือก Reference แล้วคลิกมุมตามหมายเลข (เห็นไม่ครบก็ได้) · 3) วาดพื้นที่ร้าน/โซนบนแผนที่ · 4) ▶ ดูทุกคนเดินบนแผนที่</p>
+</header>
+<div class="bar">
+  <label>วิดีโอตัวอย่าง <select id="sample"><option value="">เลือก…</option><option value="full">EPFL 2 กล้อง (เต็มภาพ)</option><option value="1">EPFL ก: กล้อง 2 เห็นซ้ำกับกล้อง 1</option><option value="2">EPFL ข: ไม่ซ้ำเลย</option><option value="3">EPFL ค: ซ้ำบางส่วน</option></select></label>
+  <label title="โฟลเดอร์ใน tests/videos: แต่ละไฟล์ = 1 กล้อง (เพิ่มกล้องให้อัตโนมัติ)">ชุดวิดีโอ <select id="vset"><option value="">เลือก…</option></select></label>
+  <button id="play" class="primary">▶ เล่นทุกกล้อง</button>
+  <button id="rewind">⏮ เฟรมแรก</button>
+  <label title="ตัวติดตามที่ตั้งค่าสำหรับการตรวจจับช้าบน CPU"><input type="checkbox" id="tuned" checked> ตัวติดตามภาพช้า</label>
+  <label title="OpenVINO: เร็วขึ้น ~3 เท่าบน CPU Intel"><input type="checkbox" id="fast" checked> ตรวจจับเร็ว</label>
+  <label title="ตรวจทุก 1/8 วินาทีของวิดีโอทุกกล้องพร้อมกัน (หยุดรอการตรวจ): ผลไม่ขึ้นกับความเร็วเครื่อง/เบราว์เซอร์ · ปิด = เล่นตามเวลาจริง ตรวจเท่าที่ทัน"><input type="checkbox" id="steady" checked> ตรวจทุก 1/8 วิ (คงที่)</label>
+  <label title="คนที่หายแล้วโผล่ใกล้ที่เดิม = คนเดิม · ทำนายตำแหน่งตอนถูกบัง"><input type="checkbox" id="relink" checked> เชื่อมคน + ทำนาย</label>
+  <button class="small" id="autoSync" aria-pressed="false" title="ระหว่างเล่นวิดีโอ จับคู่คนเดียวกันที่หลายกล้องเห็นพร้อมกัน แล้วผูก/ปรับกล้องให้เองจนนิ่ง · กล้องที่ผูกจากจุดที่คลิกเป็นหลักอ้างอิง ไม่ถูกเปลี่ยน">⇄ ซิงค์คนอัตโนมัติ: ปิด</button>
+  <span class="muted" id="liveNote"></span>
+  <button id="undo" disabled title="Ctrl+Z">↶ ย้อนกลับ</button><button id="redo" disabled title="Ctrl+Y">↷ ทำซ้ำ</button>
+  <button id="setupBtn" title="ซ่อนและล็อก Reference + การผูกกล้อง เหลือแต่แผนที่ให้วาด (เปิดกลับได้)">✓ เสร็จการตั้งค่า</button>
+  <button id="reset" title="ลบแผนที่ พื้นที่ และการผูกกล้องทั้งหมด">ล้างทั้งหมด</button>
+  <span class="muted" id="modelNote"></span>
+</div>
+<div class="panel" id="status" role="status">เริ่ม: เลือกวิดีโอให้แต่ละกล้อง (หรือวิดีโอตัวอย่าง) แล้ววาด/สร้าง Reference</div>
+<main>
+  <section>
+    <div id="cams"></div>
+    <button id="addCam">+ เพิ่มกล้อง</button>
+  </section>
+  <section><div id="mapBox">
+    <div class="row" role="toolbar" aria-label="เครื่องมือแผนที่">
+      <button id="mapFull" title="แผนที่เต็มจอ (Esc = ออก)">⛶</button>
+      <button data-tool="select" aria-pressed="true" title="คลิกเลือก ลากย้าย · ลากพื้นว่าง = เลื่อนแผนที่ · ล้อเมาส์ = ซูม">✋ เลือก/ย้าย</button>
+      <button data-tool="ref" class="setupOnly" aria-pressed="false" title="ลากกรอบบนแผนที่ = Reference ใหม่ (ปรับขนาด/หมุน/ชื่อได้)">▭ วาด Reference</button>
+      <button data-tool="shop" aria-pressed="false" title="คลิกมุมบนแผนที่ (หรือบนพื้นในกล้องที่ผูกแล้ว) คนนอกพื้นที่ร้านไม่ถูกนับ">⬠ พื้นที่ร้าน</button>
+      <button data-tool="zone" aria-pressed="false" title="โซน เช่น ทางเข้า แคชเชียร์">⬠ โซน</button>
+      <button data-tool="check" aria-pressed="false" title="คลิกบนแผนที่หรือในกล้อง: กรอบชมพู 60 ซม. ขึ้นที่จุดเดียวกันในทุกกล้อง">🎯 ตรวจตำแหน่ง</button>
+      <span class="muted">วาด:</span>
+      <button data-tool="dRect" aria-pressed="false" title="ลากบนแผนที่ (เป็นแค่ภาพ ไม่นับคน · เปลี่ยนเป็นโซนได้)">▭ สี่เหลี่ยม</button>
+      <button data-tool="dPoly" aria-pressed="false" title="คลิกมุม ปิดรูปด้วยคลิกจุดแรก ดับเบิลคลิก หรือ Enter">⬠ รูปทรง</button>
+      <button data-tool="dLine" aria-pressed="false" title="คลิกจุด จบด้วยดับเบิลคลิก หรือ Enter">╱ เส้น/ผนัง</button>
+      <button data-tool="dText" aria-pressed="false" title="คลิกตำแหน่ง แล้วพิมพ์ข้อความที่แผงด้านล่าง">T ข้อความ</button>
+      <button id="zin" title="ซูมเข้า">＋</button><button id="zout" title="ซูมออก">－</button><button id="zfit" title="พอดีกับทุกอย่าง">⤢ พอดี</button>
+    </div>
+    <div class="row layers" aria-label="ชั้นข้อมูล">
+      <strong class="muted">ชั้น:</strong>
+      <span class="setupOnly"><label><input type="checkbox" data-layer="refs" checked> Reference</label><label><input type="checkbox" data-lock="refs"> ล็อก</label></span>
+      <label><input type="checkbox" data-layer="drawings" checked> ภาพวาด</label><label><input type="checkbox" data-lock="drawings"> ล็อก</label>
+      <label><input type="checkbox" data-layer="areas" checked> พื้นที่</label><label><input type="checkbox" data-lock="areas"> ล็อก</label>
+      <label><input type="checkbox" data-layer="people" checked> คน</label><label title="เส้นทางที่แต่ละคนเดินผ่าน"><input type="checkbox" data-layer="paths" checked> เส้นทางเดิน</label>
+      <label class="setupOnly" title="📷 ตำแหน่งกล้อง (ประมาณจากการผูก) + พื้นที่ที่กล้องเห็น"><input type="checkbox" data-layer="cover" checked> 📷 กล้อง + พื้นที่ที่เห็น</label>
+    </div>
+    <svg id="map" viewBox="-6 -5 12 10" tabindex="0" aria-label="แผนที่ร้าน หน่วยเมตร"></svg>
+    <div class="panel" id="sel"><span class="muted">คลิก Reference หรือพื้นที่บนแผนที่เพื่อตั้งชื่อ ขนาด มุม</span></div>
+    <div class="panel"><strong>กล้อง</strong><ul id="camList"></ul><span class="setupOnly"><strong>Reference</strong><ul id="refList"></ul></span><strong>พื้นที่</strong><ul id="areaList"></ul><strong>ภาพวาด</strong><ul id="drawList"></ul><strong>คน</strong><p id="peopleOut" class="muted">ยังไม่ได้เล่น</p><p class="muted" id="checkOut"></p></div>
+  </div></section>
+</main>
+<script src="/geometry.js"></script>
+<script>
+// =====================================================================================================================
+// The map is the truth: references (rectangles with real sizes, named, corners numbered 1-4, front = edge 1-2) and areas
+// live on it in metres. Every camera is tied to the map the same way: pick a reference, click its numbered corners (or
+// 2 points on a numbered edge) in the picture. The camera is fitted as a real camera (geometry.js: cameraFit).
+// =====================================================================================================================
+const $ = id => document.getElementById(id);
+const svg = $("map");
+// ---- usage log: every user action on the page, in order (read by tests as window.usageLog) ----
+const usageLog = window.usageLog = [];
+function use(name, params) { const last = usageLog[usageLog.length - 1], p = params && Object.keys(params).length ? params : undefined;
+  if (last && name === "zoom wheel" && last.name === name && JSON.stringify(last.params) === JSON.stringify(p)) { last.n = (last.n ?? 1) + 1; return; }
+  usageLog.push({ order: usageLog.length + 1, t: +(performance.now() / 1000).toFixed(2), name, ...(p ? { params: p } : {}) }); }
+const camOf = el => { const card = el.closest?.("#cams .card"); return card ? [...document.querySelectorAll("#cams .card")].indexOf(card) + 1 : undefined; };
+const label = b => (b.dataset.act ? "cam:" + b.dataset.act : b.dataset.tool ? "tool:" + b.dataset.tool : b.dataset.corner !== undefined ? "corner bar" : b.dataset.edge !== undefined ? "edge bar" : b.id || b.textContent.trim().slice(0, 24));
+document.addEventListener("click", e => { const b = e.target.closest("button,[data-mini]"); if (!b) return;
+  const pr = { cam: camOf(b) }; if (b.dataset.corner !== undefined) pr.corner = +b.dataset.corner + 1; if (b.dataset.edge !== undefined) pr.edge = +b.dataset.edge + 1;
+  use(b.dataset.mini ? "mini map corner" : "button " + label(b), JSON.parse(JSON.stringify(pr))); }, true);
+document.addEventListener("change", e => { const t = e.target; if (!(t instanceof HTMLInputElement || t instanceof HTMLSelectElement)) return;
+  const nm = t.id || [...t.classList].find(k => k !== "small" && k !== "name") || t.dataset.layer && "layer " + t.dataset.layer || t.dataset.lock && "lock " + t.dataset.lock || t.type;
+  use("set " + nm, JSON.parse(JSON.stringify({ cam: camOf(t), value: t.type === "checkbox" ? t.checked : t.type === "file" ? t.files[0]?.name : String(t.value).slice(0, 40) }))); }, true);
+document.addEventListener("pointerdown", e => { const t = e.target;
+  if (t.tagName === "CANVAS" && camOf(t)) return use("camera press", JSON.parse(JSON.stringify({ cam: camOf(t), button: e.button, shift: e.shiftKey || undefined, alt: e.altKey || undefined })));
+  if (t.closest?.("#map")) use("map press", { tool: document.querySelector("[data-tool][aria-pressed=true]")?.dataset.tool }); }, true);
+document.addEventListener("dblclick", e => { if (e.target.tagName === "CANVAS") use("camera double-click", { cam: camOf(e.target) }); }, true);
+document.addEventListener("wheel", e => { const t = e.target; if (t.tagName === "CANVAS" && camOf(t)) use("zoom wheel", { cam: camOf(t) }); else if (t.closest?.("#map")) use("zoom wheel", { map: true }); }, { capture: true, passive: true });
+document.addEventListener("keydown", e => { const k = (e.ctrlKey || e.metaKey ? "Ctrl+" : "") + (e.shiftKey && e.key.length > 1 ? "Shift+" : "") + e.key;
+  if (/^(Ctrl\+[zZyY]|Delete|Backspace|Escape|Enter)$/.test(k) && !(e.target instanceof HTMLInputElement && e.target.type !== "checkbox")) use("key " + k); }, true);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+let refs = [], areas = [], drawings = [], cams = [], nextId = 1, camSeq = 1, setup = true;
+let layers = { refs: { show: true, lock: false }, areas: { show: true, lock: false }, people: { show: true }, paths: { show: true }, cover: { show: true }, drawings: { show: true, lock: false } };
+let tool = "select", selected = null, drag = null, draft = null, check = null, history = [], view = [-6, -5, 12, 10], activeCam = 0;
+let playing = false, mapPeople = null, ghosts = [], trails = {}, everCounted = new Set(), insideHits = {}, lastDraw = 0;
+const MIN_HITS = 3;
+const newId = p => p + (nextId++);
+const refById = id => refs.find(r => r.id === id);
+const say = (html, cls = "") => { $("status").className = "panel " + cls; $("status").innerHTML = html; };
+const esc = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+const camColour = i => ["#e8742f", "#3b8bd9", "#9b59b6", "#17a589", "#c0392b", "#b7950b", "#34495e", "#d63384"][i] ?? `hsl(${(i * 137.5) % 360} 60% 42%)`; // any number of cameras
+const personColour = pid => `hsl(${(pid * 67) % 360} 75% 45%)`;
+const ringArea = r => r.reduce((t, p, i) => t + p[0] * r[(i + 1) % r.length][1] - r[(i + 1) % r.length][0] * p[1], 0) / 2;
+const corners = r => r.pts ?? rectCorners(r);           // corner 1..n on the map
+const nc = r => r?.pts ? r.pts.length : 4;              // how many corners
+const centre = r => r.pts ? mean(r.pts) : [r.cx, r.cy];
+const okRing = pts => ringArea(pts) > 0 ? [pts[0], ...pts.slice(1).reverse()] : pts; // same turning direction as rectangles, corner 1 kept
+const rectFromRing = ring => rectOf(ringArea(ring) > 0 ? [...ring].reverse() : ring); // same turning direction as rectCorners
+
+// ---------------- undo + saving (browser storage; videos are not stored) ----------------
+const snapshot = () => JSON.stringify({ refs, areas, drawings, links: cams.map(c => c.links), tunes: cams.map(c => [c.tune, c.peopleH, c.align ?? null]), offsets: cams.map(c => c.offset) });
+let future = []; // redo stack
+function save() { history.push(snapshot()); history = history.slice(-80); future = []; $("undo").disabled = false; $("redo").disabled = true; }
+function restoreSnap(s) { const o = JSON.parse(s); refs = o.refs; areas = o.areas; drawings = o.drawings ?? []; cams.forEach((c, i) => { c.links = o.links[i] ?? []; [c.tune, c.peopleH, c.align] = o.tunes?.[i] ?? [null, null, null]; c.align ??= null; if (o.offsets?.[i] !== undefined && o.offsets[i] !== c.offset) { c.offset = o.offsets[i]; c.el.querySelector(".offset").value = c.offset; c.samples.look = []; } c.fitKey = null; c.sugg = null; c.suggAlign = null; c.ui.sel = null; c.ui.arm = null; c.ui.edgePts = []; });
+  $("undo").disabled = !history.length; $("redo").disabled = !future.length; selected = null; renderSel(); persist(); draw(); }
+function undo() { const s = history.pop(); if (!s) return; future.push(snapshot()); restoreSnap(s); }
+function redo() { const s = future.pop(); if (!s) return; history.push(snapshot()); restoreSnap(s); }
+function persist() { try { localStorage.setItem("storemap-v2", JSON.stringify({ refs, areas, drawings, setup, layers, nextId, view, cams: cams.map(c => ({ name: c.name, links: c.links, offset: c.offset, pp: c.pp, level: c.level, camH: c.camH, tune: c.tune, align: c.align, peopleH: c.peopleH })) })); } catch { /* storage off: nothing to do */ } }
+function restore() { try { const o = JSON.parse(localStorage.getItem("storemap-v2") || "null"); if (!o) return null;
+  refs = o.refs ?? []; refs.forEach(r => { if (r.from && !r.pts && r.sizeGuess === undefined && r.len === 1.6 && r.dep === .6) r.sizeGuess = true; }); /* made from a camera before sizeGuess existed, still at the default size */ areas = o.areas ?? []; drawings = o.drawings ?? []; setup = o.setup ?? true; layers = { ...layers, ...o.layers }; nextId = o.nextId ?? 1; view = o.view ?? view; return o.cams ?? null; } catch { return null; } }
+
+// ---------------- cameras ----------------
+function addCam(saved = {}) {
+  const el = document.createElement("div"); el.className = "card";
+  el.innerHTML = `<div class="row"><input class="name camName" aria-label="ชื่อกล้อง"> <label>วิดีโอ <input type="file" accept="video/*,image/*" class="file"></label>
+      <label title="ถ้ากล้องนี้เริ่มอัดช้า/เร็วกว่ากล้องแรก">เลื่อนเวลา <input type="number" step="0.04" class="offset"> วิ</label> <span class="muted">ซูม</span><button class="small" data-act="zin" title="ซูมเข้า (หรือล้อเมาส์บนภาพ)">＋</button><button class="small" data-act="zout" title="ซูมออก: คลิกนอกภาพได้ (มุมที่หลุดจอ)">－</button><button class="small" data-act="zfit" title="กลับขนาดปกติ">⤢</button>
+      <button class="small" data-act="full" title="กล้องนี้เต็มจอ (Esc = ออก)">⛶ เต็มจอ</button> <button class="small fullOnly setupOnly" data-act="mini" title="แสดง/ซ่อนแผนที่เล็กในภาพ">แผนที่เล็ก</button>
+      <button class="small setupOnly" data-act="delcam">ลบกล้อง</button></div>
+    <div class="row setupOnly"><label>Reference <select class="refSel"></select></label> <span class="cornerBar"></span></div>
+    <div class="row setupOnly"><button class="small" data-act="new" title="คลิก 4 มุมที่วางบนพื้นของสิ่งของในภาพ (ลำดับไหนก็ได้) → Reference ใหม่บนแผนที่">✚ Reference ใหม่: คลิก 4 มุม</button>
+      <button class="small" data-act="auto" title="ลากกรอบรอบสิ่งของ ระบบหามุมพื้นเอง (MobileSAM)">▭ หามุมเอง (ลากกรอบ)</button>      <label title="กล้องวงจรปิดส่วนใหญ่ไม่เอียงข้าง: ใช้ข้อมูลน้อยลง (6 แทน 8) · ปิดถ้ากล้องติดเอียง"><input type="checkbox" class="level" checked> กล้องไม่เอียงข้าง</label>
+      <label title="วัดจากพื้นถึงกล้อง (ไม่ใส่ก็ได้) · ใส่แล้วใช้ข้อมูลน้อยลงอีก 1">สูงจากพื้น <input type="number" class="camH" step="0.1" min="0.5" placeholder="?"> ม.</label>
+      <label class="muted">ขนาดจริง (ใช้ตอนกล้องนี้ยังไม่ผูก) <input type="number" class="nLen" value="1.6" step="0.05" min="0.1"> × <input type="number" class="nDep" value="0.6" step="0.05" min="0.1"> ม.</label></div>
+    <div class="camWrap"><canvas width="640" height="360" tabindex="0"></canvas><div class="ptbar" hidden></div><div class="minimap"></div></div><video muted playsinline hidden></video>
+    <div class="camOut muted"></div>`;
+  $("cams").appendChild(el);
+  const c = { id: String(camSeq++), name: saved.name ?? `กล้อง ${cams.length + 1}`, links: saved.links ?? [], offset: saved.offset ?? 0, pp: saved.pp ?? null, level: saved.level ?? true, camH: saved.camH ?? null, tune: saved.tune ?? null, align: saved.align ?? null, peopleH: saved.peopleH ?? null, samples: { pairs: [], heights: [] }, sugg: null, preview: false,
+    el, canvas: el.querySelector("canvas"), video: el.querySelector("video"), frame: null, first: null, people: [], newTrack: true,
+    ui: { ref: null, mode: "link", arm: null, sel: null, edgePts: [], newPts: [] }, fitKey: null, fit: null, refSig: "", vz: { s: 1, ox: 0, oy: 0 } };
+  c.ctx = c.canvas.getContext("2d");
+  el.querySelector(".camName").value = c.name; el.querySelector(".offset").value = c.offset; el.querySelector(".level").checked = c.level; el.querySelector(".camH").value = c.camH ?? "";
+  el.querySelector(".level").onchange = e => { save(); c.level = e.target.checked; persist(); draw(); };
+  el.querySelector(".camH").onchange = e => { const v = +e.target.value; save(); c.camH = v > .3 ? v : null; persist(); draw(); };
+  el.querySelector(".camName").oninput = e => { c.name = e.target.value; persist(); draw(); };
+  el.querySelector(".offset").onchange = e => { c.offset = +e.target.value || 0; persist(); };
+  el.querySelector(".file").onchange = e => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f); c.pp = null; // own camera: lens centre = picture centre
+    (f.type.startsWith("video") ? loadVideo(c, url) : loadImage(c, url)).catch(err => say(err.message, "bad")); };
+  el.querySelector(".refSel").onchange = e => { c.ui.ref = e.target.value || null; c.ui.mode = "link"; c.ui.arm = null; c.ui.sel = null; c.ui.edgePts = []; if (c.ui.ref) selected = { type: "ref", id: c.ui.ref }; renderSel(); draw(); };
+  el.addEventListener("change", e => { if (e.target.classList.contains("ptNum")) renumberSel(c, +e.target.value); });
+  el.addEventListener("click", e => { const mini = e.target.closest("[data-mini]"); if (mini) { activeCam = cams.indexOf(c); const [id, i] = mini.dataset.mini.split(":"); c.ui.ref = id; chooseCorner(c, +i); return draw(); }
+    const b = e.target.closest("button"); if (!b) return; activeCam = cams.indexOf(c);
+    if (b.dataset.corner !== undefined) chooseCorner(c, +b.dataset.corner);
+    if (b.dataset.edge !== undefined) chooseEdge(c, +b.dataset.edge);
+    let act = b.dataset.act;
+    if (act === "ptdel") deleteSel(c);
+    if (act === "line1" && c.ui.sel?.l.kind === "corner") { c.ui.lineFrom = c.ui.lineFrom === c.ui.sel.l ? null : c.ui.sel.l; if (c.ui.lineFrom) say("คลิกจุดที่สอง: จุดที่วางไว้ของ Reference เดียวกัน (ทั้งสองกลายเป็นเส้น) หรือจุดว่างบนขอบที่ออกจากมุมนี้ (มุมนี้ยังอยู่ + ได้เส้นเพิ่ม) · Esc = ยกเลิก"); }
+    if (act === "mkline" && c.ui.sel && c.ui.sel2) makeLine(c, c.ui.sel.l, c.ui.sel2.l);
+    if (act === "unline" && c.ui.sel?.l.kind === "edge") splitLine(c, c.ui.sel.l);
+    if (act === "ptre" && c.ui.sel) { const l = c.ui.sel.l; c.ui.arm = { kind: l.kind, i: l.i }; c.ui.sel = null; c.ui.edgePts = []; say(l.kind === "corner" ? `คลิกตำแหน่งใหม่ของมุม ${l.i + 1} ในภาพ · Esc = ยกเลิก` : `คลิก 2 จุดใหม่บนขอบ ${edgeName(l.i, nc(refById(l.ref)))} · Esc = ยกเลิก`); }
+    if (act === "full") toggleFull(el);
+    if (act === "mini") el.classList.toggle("nomini");
+    if (act === "new") { c.ui.arm = null; c.ui.sel = null; c.ui.newPts = [];
+      if (c.ui.mode === "new") c.ui.mode = "link";
+      else { askCorners(b, n => { c.ui.mode = "new"; c.ui.newN = n; c.ui.newPts = []; draw(); say(`คลิก ${n} มุมที่วางบนพื้นของสิ่งของใน${esc(c.name)} (วนรอบ ลำดับไหนก็ได้) · Esc = ยกเลิก`); }); return; } }
+    if (act === "auto") { c.ui.arm = null; c.ui.sel = null; c.ui.mode = c.ui.mode === "auto" ? "link" : "auto"; if (c.ui.mode === "auto") say(`ลากกรอบรอบสิ่งของใน${esc(c.name)} ระบบจะหามุมพื้นเอง`); }
+    if (act === "del") { save(); c.links.splice(+b.dataset.k, 1); c.ui.sel = null; }
+    if (act === "zin") c.zoom(1.3); if (act === "zout") c.zoom(1 / 1.3); if (act === "zfit") c.vz = { s: 1, ox: 0, oy: 0 };
+    if (act === "sync") { if (!cams.some(o => o !== c && camFit(o).H)) say(`${esc(c.name)}: ต้องมีกล้องอื่นที่ผูกแล้วอย่างน้อย 1 ตัวก่อน`); else { try { tuneSuggest(c); } catch (err) { console.warn("sync", err); } if (c.sugg?.H) act = "tune"; else say(`${esc(c.name)}: ${syncState(c).msg}`); } }
+    if (act === "tune" && c.sugg?.H) applyTune(c);
+    if (act === "preview") c.preview = !c.preview;
+    if (act === "untune") { save(); c.tune = null; }
+    if (act === "align" && c.suggAlign) { save(); c.align = { a: c.suggAlign.T.a, b: c.suggAlign.T.b }; c.suggAlign = null; c.fitKey = null; say(`${esc(c.name)}: จัดพื้นให้ตรงกับกล้องอื่นแล้ว · ⏮ แล้วเล่นใหม่ · Ctrl+Z = ย้อนกลับ`, "ok"); }
+    if (act === "unalign") { save(); c.align = null; c.fitKey = null; }
+    if (act === "unheights") { save(); c.peopleH = null; }
+    if (act === "heights") { const hs = trimmedHeights(c); save(); c.peopleH = hs; c.fitKey = null; const f2 = camFit(c);
+      say(f2.H ? `${esc(c.name)}: ใช้ความสูงคน ${hs.length} ครั้ง · กล้องสูงประมาณ ${f2.height.toFixed(1)} ม.` : `${esc(c.name)}: ใช้ความสูงคนแล้ว ยังต้องการมุมอีก ${f2.need - f2.eqs} ค่า`, f2.H ? "ok" : "warn"); }
+    if (act === "fix" || act === "fix2") { const s = act === "fix" ? c.fit?.suggest : c.fit?.suggest?.alt; if (s) { save(); c.links = s.links; say("แก้เลขมุมแล้ว · Ctrl+Z = ย้อนกลับ", "ok"); } }
+    if (act === "delcam") { if (!confirm(`ลบ${c.name}?`)) return; cams.splice(cams.indexOf(c), 1); el.remove(); activeCam = 0; }
+    persist(); draw(); });
+  const screen = e => { const r = c.canvas.getBoundingClientRect(); return [(e.clientX - r.left) * c.canvas.width / r.width, (e.clientY - r.top) * c.canvas.height / r.height]; };
+  const at = e => { const [x, y] = screen(e), v = c.vz; return [(x - v.ox) / v.s, (y - v.oy) / v.s]; }; // picture px (can be outside the picture when zoomed out)
+  const zoomCam = (q, f) => { const v = c.vz, s2 = Math.min(6, Math.max(.3, v.s * f)), k = s2 / v.s; c.vz = { s: s2, ox: q[0] - (q[0] - v.ox) * k, oy: q[1] - (q[1] - v.oy) * k }; draw(); };
+  c.zoom = f => zoomCam([c.canvas.width / 2, c.canvas.height / 2], f);
+  c.canvas.addEventListener("wheel", e => { if (!c.frame) return; e.preventDefault(); zoomCam(screen(e), e.deltaY > 0 ? 1 / 1.2 : 1.2); }, { passive: false });
+  c.canvas.onpointerdown = e => { if (e.altKey || e.button === 1) { e.preventDefault(); c.pan = { from: screen(e), v: { ...c.vz } }; c.canvas.setPointerCapture(e.pointerId); return; } camDown(c, at(e), e); };
+  c.canvas.onpointermove = e => { if (c.pan) { const q = screen(e); c.vz = { ...c.pan.v, ox: c.pan.v.ox + q[0] - c.pan.from[0], oy: c.pan.v.oy + q[1] - c.pan.from[1] }; return draw(); } camMove(c, at(e)); };
+  c.canvas.onpointerleave = () => { c.hover = null; if (c.ui.arm || c.ui.mode === "new") drawCam(c); };
+  c.canvas.onpointerup = () => { if (c.pan) { c.pan = null; return; } camUp(c); };
+  c.canvas.ondblclick = e => { if (draft) return closeDraft(); const p = at(e), gh = (c.ghosts ?? []).find(g => dist(g.p, p) < 13 / c.vz.s); if (!gh || !setup) return;
+    save(); const l = { ref: gh.ref, kind: "corner", i: gh.i, x: gh.p, out: outside(c, gh.p) }; c.links = c.links.filter(x => !(x.ref === gh.ref && x.kind === "corner" && x.i === gh.i)); c.links.push(l);
+    c.ui.ref = gh.ref; c.ui.arm = null; c.ui.sel = { l, k: -1 }; afterLink(c, `${esc(refById(gh.ref)?.name)} มุม ${gh.i + 1} (ตามที่ระบบเดา: ลากให้ตรงมุมจริง)`); };
+  c.canvas.oncontextmenu = e => { e.preventDefault(); const p = at(e), hit = pointAt(c, p, 12 / c.vz.s);
+    if (!hit) return say("คลิกขวาบนจุดที่วางไว้เพื่อลบ", "warn"); const l = hit.l, k = c.links.indexOf(l); c.ui.sel = null;
+    save(); c.links.splice(k, 1); persist(); draw(); say(`ลบ ${esc(refById(l.ref)?.name ?? "")} ${linkName(l)} แล้ว · Ctrl+Z = เอาคืน`, "ok"); };
+  cams.push(c); return c;
+}
+async function loadVideo(c, url) {
+  const v = c.video; v.src = url; v.muted = true;
+  await new Promise((ok, fail) => { v.onloadeddata = ok; v.onerror = () => fail(new Error(`เปิดวิดีโอของ${c.name}ไม่ได้`)); });
+  v.pause(); v.currentTime = 0; await new Promise(r => { v.onseeked = r; setTimeout(r, 1000); });
+  useFrame(c, v, v.videoWidth, v.videoHeight); c.isVideo = true;
+}
+async function loadImage(c, url) { const img = new Image(); await new Promise((ok, fail) => { img.onload = ok; img.onerror = () => fail(new Error("เปิดภาพไม่ได้")); img.src = url; });
+  useFrame(c, img, img.naturalWidth, img.naturalHeight); c.isVideo = false; }
+function useFrame(c, src, w, h) {
+  const k = Math.min(1, 960 / w); c.canvas.width = Math.round(w * k); c.canvas.height = Math.round(h * k);
+  c.frame = document.createElement("canvas"); c.first = document.createElement("canvas");
+  for (const f of [c.frame, c.first]) { f.width = c.canvas.width; f.height = c.canvas.height; f.getContext("2d").drawImage(src, 0, 0, f.width, f.height); }
+  c.fitKey = null; c.samples = { pairs: [], heights: [] }; c.sugg = null; fitFull(); draw();
+}
+
+// ---------------- camera <-> map fit ----------------
+const POSE_OK_M = .5; // a real camera within this (m) of the clicks is used even when a free floor fit matches them better
+const TUNE_W = .35, TUNE_L = { tune: true }, OUT_W = .5; // a corner placed outside the picture is a guess: half weight
+const outside = (c, p) => p[0] < 0 || p[1] < 0 || p[0] > c.canvas.width || p[1] > c.canvas.height; // a person's feet count about a third of a clicked corner
+const linkObs = links => { const P = [], Ls = [];
+  for (const l of links) { const r = refById(l.ref); if (!r || r.unplaced) continue; const k = corners(r), n = k.length; // an unplaced reference ties nothing yet
+    if (l.kind === "corner") P.push({ x: l.x, X: k[l.i], l, w: l.out ? OUT_W : 1 }); else l.pts.forEach((x, j) => Ls.push({ x, a: k[l.i], b: k[(l.i + 1) % n], l, w: l.outs?.[j] ? OUT_W : 1 })); }
+  return { P, Ls }; };
+function solve({ P, Ls }, w, h, pp, opt = null) {
+  const all = [...P, ...Ls], xs = all.map(o => o.x);
+  if (!xs.length) return { H: null }; // nothing to fit (e.g. its reference was deleted)
+  let cm, H;
+  if (opt) { cm = poseFit(P, Ls, w, h, pp, opt); if (!cm) return { H: null }; H = cm.H; }
+  else { const Hl = fitMixed(P, Ls, w); if (!Hl || Hl.some(v => !isFinite(v))) return { H: null }; cm = cameraFit(Hl, P, Ls, w, h, pp); H = cm?.H ?? Hl; }
+  const den = x => H[6] * x[0] + H[7] * x[1] + H[8], sgn = Math.sign(den(xs[0]));
+  if (xs.some(x => Math.sign(den(x)) !== sgn)) return { H: null, behind: true };
+  const res = all.map(o => o.X ? dist(proj(H, o.x), o.X) : lineDist(proj(H, o.x), o.a, o.b)), rms = Math.sqrt(res.reduce((t, v) => t + v * v, 0) / res.length);
+  const per = new Map(); all.forEach((o, i) => per.set(o.l, Math.max(per.get(o.l) ?? 0, res[i])));
+  const mirrored = detJ(H, mean(xs)) < 0; // corners numbered the other way round: a camera above the floor cannot see it mirrored
+  return { H: mirrored ? null : H, cam: mirrored ? null : cm?.cam, rms, per, model: !!cm, height: cm?.height, pos: cm?.pos, mirrored, sgn, warm: opt && cm?.q ? { q: cm.q, pxRms: cm.pxRms } : null };
+}
+function camFit(c) { const f = camFitRaw(c); if (!c.align || !f.H) return f;
+  if (f.alignedFrom !== f.H) { const T = c.align, A = [T.a[0], -T.a[1], T.b[0], T.a[1], T.a[0], T.b[1], 0, 0, 1];
+    const M = [0, 1, 2].flatMap(r => [0, 1, 2].map(k => A[r * 3] * f.H[k] + A[r * 3 + 1] * f.H[3 + k] + A[r * 3 + 2] * f.H[6 + k])); f.alignedFrom = f.H; f.H = M.map(v => v / M[8]); f.alignedFrom = f.H; f.aligned = true; f.headH = null; f.cam = null; }
+  return f; }
+var fitFrozen = false; /* while a Reference is dragged on the map, cameras keep their last fit: refitting 4 cameras on every mouse move took 0.2-1.8 s (B3-20) */
+function camFitRaw(c) { if (fitFrozen && c.fit) return c.fit;
+  const w = c.canvas.width, h = c.canvas.height, key = JSON.stringify([c.align ?? null, c.links, refs.map(r => [r.id, r.cx, r.cy, r.len, r.dep, r.ang, r.pts, !!r.unplaced]), c.pp, w, h, c.level, c.camH, c.tune?.n, c.peopleH?.length]);
+  if (c.fitKey === key) return c.fit;
+  // Independent values: a corner gives 2; an edge gives 2, but only 1 when one of its end corners is clicked too (its points then only
+  // add the edge's direction) and 0 when both are. Fewer than 8 independent values cannot fix where the camera looks.
+  const obs = linkObs(c.links); if (c.tune) obs.P.push(...c.tune.pts.map(q => ({ x: q.x, X: q.X, w: TUNE_W, l: TUNE_L })));
+  if (c.tune?.H) { // tied from people matched by appearance (the clicks of this camera disagreed): that floor is used as it is
+    const fit = { eqs: 99, need: 6, H: c.tune.H, cam: c.tune.cam, rms: 0, model: true, height: c.tune.height, assumed: true, byLook: true, per: new Map() }; c.fitKey = key; c.fit = fit; return fit; } // guessed corners count less once people tie the camera
+  const hasCorner = (ref, i) => c.links.some(l => l.ref === ref && l.kind === "corner" && l.i === i && !refById(l.ref)?.unplaced);
+  const eqs = 2 * obs.P.length + c.links.filter(l => l.kind === "edge" && refById(l.ref) && !refById(l.ref).unplaced).reduce((t, l) => t + Math.max(0, 2 - hasCorner(l.ref, l.i) - hasCorner(l.ref, (l.i + 1) % nc(refById(l.ref)))), 0);
+  // values needed: 8 for any camera; 7 a real camera; 6 if it is not tilted sideways; one fewer again with a typed height
+  const base = (c.level ? 6 : 7) - (c.camH ? 1 : 0), ppl = c.peopleH?.length && eqs < base ? c.peopleH : null, need = ppl ? (c.level ? 4 : 5) : base; // rough people heights only help a camera that cannot be tied otherwise
+  const opt = { level: c.level, height: c.camH, people: ppl ?? [], warm: c.poseWarm };
+  let fit = { eqs, need, H: null };
+  /* a Reference with a guessed size cannot agree with real-size ones (a combined fit fails, ~0.7 s): until those tie the camera alone
+     (fitGuessSize then re-places it from them on release), the camera keeps the fit from the guessed one, so the other corners stay drawn and can be dragged */
+  const guess = !c.guessOnly && refs.find(r => r.sizeGuess && c.links.some(l => l.ref === r.id));
+  if (guess && c.links.some(l => l.ref !== guess.id)) { const all = c.links; c.links = all.filter(l => l.ref === guess.id); c.guessOnly = true; c.fitKey = null;
+    try { const g = camFitRaw(c); if (g.H) fit = { ...g, eqs, waitFor: guess.id }; } finally { c.guessOnly = false; c.links = all; } }
+  else if (eqs >= need) {
+    // A real camera (6-7 unknowns) is always tried first: it extrapolates the floor far beyond the clicked object, and the values
+    // left over show clicks that do not agree. A free 8-value floor fit matches any 4 corners exactly (even wrong ones), so it is only
+    // the fallback when no real camera fits the clicks (B1-01: 1.49 m -> 0.31 m across 4 cameras on the same clicks).
+    let pose = solve(obs, w, h, c.pp, opt); if (pose.warm) c.poseWarm = pose.warm; const free = eqs >= 8 && !c.camH && !ppl ? solve(obs, w, h, c.pp, null) : null;
+    // "not tilted sideways" is the default, but a camera rolled ~1° then fell back to the free fit (B3-18 cam0: card 0.10 m, 0.64 m off truth; a real camera with roll: 0.06 m)
+    if (c.level && eqs >= base + 1 && (!pose.H || pose.rms > POSE_OK_M || (free?.H && pose.rms > 3 * free.rms))) { const p2 = solve(obs, w, h, c.pp, { ...opt, level: false }); if (p2.H && (!pose.H || p2.rms < pose.rms)) pose = p2; }
+    const usePose = !!pose.H && (!free?.H || pose.rms <= POSE_OK_M || pose.rms <= 3 * free.rms);
+    fit = usePose || !free ? { eqs, need, ...pose, assumed: true, exact: eqs === need } : { eqs, need, ...free, assumed: false, exact: eqs === 8, notReal: !!free.H };
+  }
+  fit.per?.delete(TUNE_L);
+  if (fit.H && !c.camH) { // the floor is only well known where the clues are; flag when they sit in a narrow strip or the camera height looks wrong
+    const xs = [...obs.P, ...obs.Ls].map(o => o.x).filter(x => !outside(c, x)), bx = xs.map(x => x[0]), by = xs.map(x => x[1]);
+    fit.narrow = xs.length > 0 && ((Math.max(...by) - Math.min(...by)) / h < .25 || (Math.max(...bx) - Math.min(...bx)) / w < .3);
+    fit.oddHeight = fit.height !== undefined && (fit.height < 1.5 || fit.height > 8); fit.unsure = fit.narrow || fit.oddHeight; }
+  if (eqs > need && !fit.waitFor && (fit.mirrored || !fit.H || fit.notReal || fit.rms > .15)) { const base = fit.H && !fit.notReal ? fit.rms : Infinity; // only with values to spare: an exact fit matches any numbering
+    /* the renumbering check tries ~25 camera solves (1.6 s on B3-20 cam1): run it after the page has drawn, and only for the latest clicks */
+    setTimeout(() => { if (c.fitKey !== key || fitFrozen || drag) return; fit.suggest = suggestFix(c, base, { ...opt, warm: null }); if (fit.suggest) draw(); }, 400); }
+  if (fit.H && fit.per && fit.rms > .15) { const [l, e] = [...fit.per].sort((a, b) => b[1] - a[1])[0]; fit.worst = { l, e }; }
+  c.fitKey = key; c.fit = fit; return fit;
+}
+// A misnumbered reference: try its corner numbers turned round (and the other way round); offer the one that fits far better.
+function suggestFix(c, rms, opt = null) {
+  const found = [];
+  for (const id of new Set(c.links.map(l => l.ref))) { const n = nc(refById(id)); for (let k = 1; k < 2 * n; k++) {
+    const fc = i => k < n ? (i + k) % n : ((k - n - i) % n + n) % n, fe = i => k < n ? (i + k) % n : ((k - n - i - 1) % n + n) % n;
+    const links = c.links.map(l => l.ref !== id ? l : { ...l, i: l.kind === "corner" ? fc(l.i) : fe(l.i) });
+    const s = solve(linkObs(links), c.canvas.width, c.canvas.height, c.pp, opt);
+    if (s.H && s.rms < Math.min(.5 * rms, opt ? POSE_OK_M : .15)) found.push({ id, links, rms: s.rms });
+  } }
+  found.sort((a, b) => a.rms - b.rms); const best = found[0]; if (!best) return null;
+  // a symmetric object (rectangle turned 180°) fits equally well both ways: offer both, the user knows which side is which
+  best.alt = found.find(f => f !== best && f.rms <= best.rms * 1.1 + .01) ?? null;
+  return best;
+}
+// Keep only the part of a floor polygon in front of the camera, then draw it in the picture.
+function toCam(c, poly) {
+  const fit = camFit(c); if (!fit.H) return null; const G = inv(fit.H), obs = linkObs(c.links);
+  const ref = obs.P[0]?.X ?? obs.Ls[0]?.a; if (!ref) return null; const w = p => G[6] * p[0] + G[7] * p[1] + G[8];
+  const s = Math.sign(w(ref)), eps = Math.abs(w(ref)) * .03, out = [];
+  poly.forEach((a, i) => { const b = poly[(i + 1) % poly.length], wa = s * w(a), wb = s * w(b);
+    if (wa > eps) out.push(a);
+    if (poly.length > 1 && (wa > eps) !== (wb > eps)) { const t = (eps - wa) / (wb - wa); out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]); } });
+  return out.length ? out.map(p => proj(G, p)) : null;
+}
+// Floor area a camera sees (its picture border on the map, without the part above the horizon).
+function coverage(c) {
+  const fit = camFit(c); if (!fit.H || !c.frame) return null; const W = c.canvas.width, Hh = c.canvas.height, H = fit.H, pts = [], obs = linkObs(c.links);
+  const centre = mean([...obs.P.map(o => o.X), ...obs.Ls.map(o => o.a)]), edge = [];
+  for (let i = 0; i <= 16; i++) edge.push([W * i / 16, Hh]); for (let i = 0; i <= 16; i++) edge.push([W, Hh * (1 - i / 16)]);
+  for (let i = 0; i <= 16; i++) edge.push([W * (1 - i / 16), 0]); for (let i = 0; i <= 16; i++) edge.push([0, Hh * i / 16]);
+  for (const q of edge) { if (Math.sign(H[6] * q[0] + H[7] * q[1] + H[8]) !== fit.sgn) continue; const m = proj(H, q); if (dist(m, centre) < 40) pts.push(m); }
+  return pts.length >= 3 ? pts : null;
+}
+const nextFree = (c, from) => { for (let k = 0; k < 4; k++) { const j = (from + k) % 4; if (!c.links.some(l => l.ref === c.ui.ref && l.kind === "corner" && l.i === j)) return j; } return from; };
+
+// ---------------- camera interaction ----------------
+// ---- corners: arm a corner/edge (＋) then click in the picture; any placed point can be dragged, selected, renumbered, deleted ----
+const edgeName = (i, n = 4) => `${i + 1}–${(i + 1) % n + 1}`;
+const linkName = l => l.kind === "corner" ? "มุม " + (l.i + 1) : "ขอบ " + edgeName(l.i, nc(refById(l.ref)));
+const linkOf = (c, kind, i, ref = c.ui.ref) => c.links.find(l => l.ref === ref && l.kind === kind && l.i === i);
+/* the nearest corner of a placed Reference that this camera has not clicked yet, as drawn in the picture (dashed circle or number) */
+function cornerAt(c, p, R) { if (!camFit(c).H || !layers.refs.show) return null; let best = null;
+  for (const r of refs) { if (r.unplaced) continue; corners(r).forEach((q, i) => { if (linkOf(c, "corner", i, r.id)) return; const m = toCam(c, [q]); if (!m?.length) return;
+    const d = dist(m[0], p); if (d < R && (!best || d < best.d)) best = { ref: r.id, i, p: m[0], d }; }); }
+  return best; }
+function pointAt(c, p, R) { let best = null;
+  for (const l of c.links) (l.kind === "corner" ? [[l.x, -1]] : l.pts.map((q, k) => [q, k])).forEach(([q, k]) => { const d = dist(q, p); if (d < R && (!best || d < best.d)) best = { l, k, d }; });
+  return best && { l: best.l, k: best.k }; }
+function chooseCorner(c, i) { c.ui.mode = "link"; c.ui.edgePts = []; const l = linkOf(c, "corner", i), r = refById(c.ui.ref);
+  if (l && !(c.ui.arm?.kind === "corner" && c.ui.arm.i === i)) { c.ui.sel = { l, k: -1 }; c.ui.arm = null; say(`${esc(r?.name)} มุม ${i + 1}: ลากจุดในภาพเพื่อย้าย · Delete = ลบ · ↻ = คลิกตำแหน่งใหม่`); }
+  else if (c.ui.arm?.kind === "corner" && c.ui.arm.i === i) { c.ui.arm = null; say("ยกเลิกการเพิ่มมุม"); }
+  else { c.ui.arm = { kind: "corner", i }; c.ui.sel = null; say(`คลิกตำแหน่งมุม ${i + 1} ของ ${esc(r?.name)} ในภาพ (ที่วางบนพื้น) · ซูมออกได้ถ้ามุมหลุดจอ · Esc = ยกเลิก`); } }
+function chooseEdge(c, i) { c.ui.mode = "link"; c.ui.edgePts = []; const l = linkOf(c, "edge", i), r = refById(c.ui.ref);
+  if (l && !(c.ui.arm?.kind === "edge" && c.ui.arm.i === i)) { c.ui.sel = { l, k: 0 }; c.ui.arm = null; say(`${esc(r?.name)} ขอบ ${edgeName(i, nc(r))}: ลากจุดเพื่อย้าย · Delete = ลบ`); }
+  else if (c.ui.arm?.kind === "edge" && c.ui.arm.i === i) { c.ui.arm = null; say("ยกเลิกการเพิ่มขอบ"); }
+  else { c.ui.arm = { kind: "edge", i }; c.ui.sel = null; say(`คลิก 2 จุดบนขอบ ${edgeName(i, nc(r))} ของ ${esc(r?.name)} ในภาพ (ปลายขอบไม่ต้องเห็น) · Esc = ยกเลิก`); } }
+// two clicked points of one reference -> one line on an edge of it (points anywhere along the edge, its ends may be hidden)
+function makeLine(c, A, B) { const n = nc(refById(A.ref)), e = B.i === (A.i + 1) % n ? A.i : A.i === (B.i + 1) % n ? B.i : A.i;
+  save(); c.links = c.links.filter(x => x !== A && x !== B); const l = { ref: A.ref, kind: "edge", i: e, pts: [A.x, B.x], outs: [!!A.out, !!B.out] }; c.links.push(l);
+  c.ui.sel = { l, k: 0 }; c.ui.sel2 = null; c.ui.lineFrom = null; persist(); draw();
+  say(`ทำเป็นเส้นบนขอบ ${edgeName(e, n)} แล้ว (2 จุดอยู่ตรงไหนของขอบก็ได้)${B.i === (A.i + 1) % n || A.i === (B.i + 1) % n ? "" : " · ถ้าไม่ใช่ขอบนี้ เปลี่ยนได้ในแถบของจุด"}`, "ok"); }
+// a visible corner + a spot along one of its edges: the corner stays, and the edge's direction is added as a line
+function lineFromCorner(c, A, p) { const r = refById(A.ref), k = corners(r), n = k.length, fit = camFit(c), e1 = A.i, e0 = (A.i + n - 1) % n;
+  // which of the corner's two edges? 1) a neighbour corner already placed in the picture: is the click towards it? 2) the camera's floor 3) the first edge
+  const ang = (u, v) => { const d = (Math.atan2(u[1], u[0]) - Math.atan2(v[1], v[0])) % (2 * Math.PI); return Math.abs(d > Math.PI ? d - 2 * Math.PI : d < -Math.PI ? d + 2 * Math.PI : d); };
+  const dir = [p[0] - A.x[0], p[1] - A.x[1]], nb1 = linkOf(c, "corner", (A.i + 1) % n, A.ref), nb0 = linkOf(c, "corner", e0, A.ref);
+  const t1 = nb1 && ang(dir, [nb1.x[0] - A.x[0], nb1.x[1] - A.x[1]]), t0 = nb0 && ang(dir, [nb0.x[0] - A.x[0], nb0.x[1] - A.x[1]]);
+  let e = e1, how = "เดา";
+  if (t1 !== undefined && t0 !== undefined) { e = t1 <= t0 ? e1 : e0; how = "ภาพ"; }
+  else if (t1 !== undefined) { e = t1 < .45 ? e1 : e0; how = "ภาพ"; } else if (t0 !== undefined) { e = t0 < .45 ? e0 : e1; how = "ภาพ"; }
+  else if (fit.H) { const m = proj(fit.H, p); e = lineDist(m, k[e0], k[(e0 + 1) % n]) < lineDist(m, k[e1], k[(e1 + 1) % n]) ? e0 : e1; how = "แผนที่"; }
+  const taken = j => c.links.find(x => x.ref === A.ref && x.kind === "edge" && x.i === j);
+  if (taken(e) && !taken(e).guess && taken(e).from === A.i && !taken(e === e1 ? e0 : e1)) e = e === e1 ? e0 : e1; // a corner has two edges: the other one is free
+  save(); const there = taken(e);
+  if (there?.guess && !c.links.some(x => x !== there && x.ref === A.ref && x.kind === "edge" && x.i === there.alt)) { there.i = there.alt; delete there.guess; delete there.alt; } // the guessed one was on the other edge
+  else c.links = c.links.filter(x => x !== there);
+  const l = { ref: A.ref, kind: "edge", i: e, from: A.i, pts: [[...A.x], p], outs: [!!A.out, outside(c, p)], ...(how === "เดา" ? { guess: true, alt: e === e1 ? e0 : e1 } : {}) };
+  c.links.push(l); c.ui.sel = { l, k: 1 }; c.ui.lineFrom = null; settleGuesses(c); persist(); draw();
+  say(`เพิ่มเส้นบนขอบ ${edgeName(e, n)} จากมุม ${A.i + 1} แล้ว${how === "เดา" ? " · ถ้าไม่ใช่ขอบนี้ เปลี่ยนได้ในแถบของจุด" : ""}`, "ok"); }
+// a line whose edge had to be guessed: once the camera is tied with values to spare, keep the edge that fits clearly better
+function settleGuesses(c) {
+  for (const l of c.links.filter(x => x.guess)) { const f = camFit(c); if (!f.H || f.eqs <= f.need) return;
+    if (c.links.some(x => x !== l && x.ref === l.ref && x.kind === "edge" && x.i === l.alt)) continue; // never two lines on one edge: a pair is checked below
+    const keep = l.i, rmsA = f.rms; l.i = l.alt; c.fitKey = null; const g = camFit(c), rmsB = g.H ? g.rms : Infinity;
+    if (rmsB < .6 * rmsA) { l.alt = keep; } else l.i = keep; c.fitKey = null; } // checked again after every new point: an early decision can be wrong
+  // two lines out of the same corner are its two edges: try them the other way round too
+  const groups = {}; c.links.filter(x => x.kind === "edge" && x.from !== undefined).forEach(x => (groups[x.ref + ":" + x.from] ??= []).push(x));
+  for (const g of Object.values(groups)) { if (g.length !== 2) continue; const f = camFit(c); if (!f.H || f.eqs <= f.need) return;
+    const rmsA = f.rms; [g[0].i, g[1].i] = [g[1].i, g[0].i]; c.fitKey = null; const h = camFit(c), rmsB = h.H ? h.rms : Infinity;
+    if (!(rmsB < .6 * rmsA)) { [g[0].i, g[1].i] = [g[1].i, g[0].i]; c.fitKey = null; } } }
+function splitLine(c, l) { const n = nc(refById(l.ref)); save(); c.links = c.links.filter(x => x !== l && !(x.ref === l.ref && x.kind === "corner" && (x.i === l.i || x.i === (l.i + 1) % n)));
+  const a = { ref: l.ref, kind: "corner", i: l.i, x: l.pts[0], out: !!l.outs?.[0] }, b = { ref: l.ref, kind: "corner", i: (l.i + 1) % n, x: l.pts[1], out: !!l.outs?.[1] };
+  c.links.push(a, b); c.ui.sel = { l: a, k: -1 }; persist(); draw(); say(`แยกเป็นมุม ${l.i + 1} และ ${(l.i + 1) % n + 1} แล้ว`, "ok"); }
+function deleteSel(c) { const l = c.ui.sel?.l; if (!l) return; save(); c.links = c.links.filter(x => x !== l); c.ui.sel = null; persist(); draw();
+  say(`ลบ ${esc(refById(l.ref)?.name ?? "")} ${linkName(l)} แล้ว · Ctrl+Z = เอาคืน`, "ok"); }
+function renumberSel(c, j) { const l = c.ui.sel?.l; if (!l || l.i === j) return; save(); const other = c.links.find(x => x !== l && x.ref === l.ref && x.kind === l.kind && x.i === j);
+  if (other) other.i = l.i; l.i = j; persist(); draw(); say(`เปลี่ยนเป็น${linkName(l)}${other ? " (สลับกับจุดเดิม)" : ""}`, "ok"); }
+function camDown(c, p, e) {
+  activeCam = cams.indexOf(c); if (!c.frame) { draw(); return say("เลือกวิดีโอหรือภาพให้กล้องนี้ก่อน", "warn"); }
+  const fit = camFit(c);
+  if (tool === "check") { if (!fit.H) return say(`${esc(c.name)} ยังไม่ได้ผูกกับแผนที่`, "warn"); check = proj(fit.H, p); showCheck(); return draw(); }
+  if (tool === "shop" || tool === "zone") { if (!fit.H) return say(`${esc(c.name)} ยังไม่ได้ผูกกับแผนที่: วาดพื้นที่บนแผนที่ หรือผูกกล้องก่อน`, "warn"); return addDraftPoint(proj(fit.H, p)); }
+  if (c.ui.mode === "auto") { drag = { cam: c, box: [p, p] }; c.canvas.setPointerCapture(e.pointerId); return; }
+  if (c.ui.mode === "new") { const n = c.ui.newN ?? 4; c.ui.newPts.push(p); if (c.ui.newPts.length === n) return createRefFromCam(c, c.ui.newPts); draw(); return say(`มุมที่ ${c.ui.newPts.length}/${n}`); }
+  const arm = c.ui.arm;
+  if (setup && !arm) { const hit = pointAt(c, p, 12 / c.vz.s); // any placed point: select + drag
+    if (hit && c.ui.lineFrom && hit.l !== c.ui.lineFrom) { const a = c.ui.lineFrom; c.ui.lineFrom = null; if (hit.l.kind === "corner" && hit.l.ref === a.ref) return makeLine(c, a, hit.l); say("จุดที่สองต้องเป็นจุดของ Reference เดียวกัน", "warn"); return draw(); }
+    if (hit && e.shiftKey && c.ui.sel && hit.l !== c.ui.sel.l) { c.ui.sel2 = hit; return draw(); }
+    if (!hit && c.ui.lineFrom) return lineFromCorner(c, c.ui.lineFrom, p); // empty spot: a line from that corner through here
+    if (hit) { c.ui.sel = hit; c.ui.sel2 = null; c.ui.ref = hit.l.ref; drag = { cam: c, hit, moved: false }; c.canvas.setPointerCapture(e.pointerId); return draw(); }
+    const gh = !c.ui.lineFrom && cornerAt(c, p, 12 / c.vz.s); /* a drawn corner number or dashed circle: dragging it places that corner here */
+    if (gh) { c.ui.ref = gh.ref; c.ui.sel = null; c.ui.sel2 = null; drag = { cam: c, ghost: gh, moved: false }; c.canvas.setPointerCapture(e.pointerId); return draw(); } }
+  if (!arm) { if (c.ui.sel || c.ui.lineFrom) { c.ui.sel = null; c.ui.sel2 = null; c.ui.lineFrom = null; return draw(); } // a plain click never adds a point
+    if (setup && c.ui.ref) say("จะเพิ่มมุม: กดปุ่ม ＋ ของมุมนั้นก่อน แล้วคลิกในภาพ · หรือลากเลขมุม/วงกลมประไปวางตรงมุมจริงในภาพ"); return; }
+  const W0 = c.canvas.width, H0 = c.canvas.height;
+  if (p[0] < -W0 || p[1] < -H0 || p[0] > 2 * W0 || p[1] > 2 * H0) return say("ไกลจากภาพเกินไป (นอกภาพได้ไม่เกิน 1 เท่าของภาพ)", "warn");
+  const r = refById(c.ui.ref); if (!r) { c.ui.arm = null; draw(); return say("เลือก Reference ก่อน: จากรายการเหนือภาพ หรือคลิก Reference บนแผนที่", "warn"); }
+  if (arm.kind === "corner") {
+    save(); c.links = c.links.filter(l => !(l.ref === r.id && l.kind === "corner" && l.i === arm.i));
+    const l = { ref: r.id, kind: "corner", i: arm.i, x: p, out: outside(c, p) }; c.links.push(l); c.ui.arm = null; c.ui.sel = { l, k: -1 };
+    afterLink(c, `${esc(r.name)} มุม ${arm.i + 1}`);
+  } else {
+    c.ui.edgePts.push(p); if (c.ui.edgePts.length < 2) { draw(); return say(`คลิกอีกจุดบนขอบ ${esc(r.name)} ${edgeName(arm.i, nc(r))} (ปลายขอบไม่ต้องเห็น)`); }
+    save(); c.links = c.links.filter(l => !(l.ref === r.id && l.kind === "edge" && l.i === arm.i));
+    const l = { ref: r.id, kind: "edge", i: arm.i, pts: c.ui.edgePts, outs: c.ui.edgePts.map(q => outside(c, q)) }; c.links.push(l); c.ui.edgePts = []; c.ui.arm = null; c.ui.sel = { l, k: 1 };
+    afterLink(c, `ขอบ ${esc(r.name)} ${edgeName(arm.i, nc(r))}`);
+  }
+}
+function afterLink(c, what) { settleGuesses(c); persist(); draw(); const f = camFit(c);
+  say(f.H ? `${what} · ${esc(c.name)} ผูกกับแผนที่แล้ว · เข้ากันเฉลี่ย ${f.rms.toFixed(2)} ม.` : f.mirrored ? `${what} · ⚠ เลขมุมวนกลับด้าน ตรวจเลขมุม` : `${what} · ข้อมูล ${f.eqs}/${f.need} (มุม = 2, ขอบ = 2 แต่ = 1 ถ้าคลิกมุมปลายขอบนั้นแล้ว)`, f.H ? "ok" : f.mirrored ? "bad" : ""); }
+function camMove(c, p) { c.hover = p;
+  if (!drag || drag.cam !== c) { if (c.ui.arm || c.ui.mode === "new") drawCam(c); return; } // the magnifier follows the mouse while adding
+  if (drag.ghost && !drag.hit) { if (dist(p, drag.ghost.p) < 2 / c.vz.s) return; save();
+    const l = { ref: drag.ghost.ref, kind: "corner", i: drag.ghost.i, x: p, out: outside(c, p) }; c.links.push(l); c.ui.sel = { l, k: -1 }; drag.hit = { l, k: -1 }; drag.moved = true; }
+  if (drag.hit) { if (!drag.moved) { if (dist(p, drag.hit.k < 0 ? drag.hit.l.x : drag.hit.l.pts[drag.hit.k]) < 2 / c.vz.s) return; save(); drag.moved = true; }
+    const { l, k } = drag.hit; if (k < 0) { l.x = p; l.out = outside(c, p); } else { l.pts[k] = p; (l.outs ??= [false, false])[k] = outside(c, p); } /* the fit waits until the mouse rests (one far move used to re-run the full 144-start search, 2-3 s per move) */
+    fitFrozen = true; clearTimeout(c.refitT); c.refitT = setTimeout(() => { if (drag?.hit && drag.cam === c) { fitFrozen = false; c.fitKey = null; draw(); fitFrozen = true; } }, 200); return draw(); }
+  if (drag.box) { drag.box[1] = p; draw(); } }
+async function camUp(c) { const d = drag; if (!d || d.cam !== c) return; drag = null;
+  if (d.hit) { clearTimeout(c.refitT); fitFrozen = false; c.fitKey = null; if (d.moved) { if (refs.filter(r => r.sizeGuess && c.links.some(l => l.ref === r.id)).map(r => fitGuessSize(c, r)).some(Boolean)) renderSel(); persist(); } return draw(); }
+  if (d.ghost) return draw();
+  if (d.box) { const [a, b] = d.box, box = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+    if (box[2] - box[0] < 12 || box[3] - box[1] < 12) return draw();
+    say("กำลังหามุมพื้น…");
+    try { const r = await fetch("/segment", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: c.frame.toDataURL("image/jpeg", .9), box, method: $("modelNote").dataset.sam === "1" ? "sam" : "grabcut" }) });
+      const out = await r.json(); if (!r.ok) throw new Error(out.error);
+      if (!out.corners) { c.ui.mode = "link"; draw(); return say("เห็นแค่ด้านหน้า หามุมหลังไม่ได้ ใช้ ✚ คลิก 4 มุม แทน", "warn"); }
+      createRefFromCam(c, out.corners); } catch (err) { say("หามุมไม่สำเร็จ: " + err.message, "bad"); draw(); } } }
+// 4 clicked floor corners -> new reference. Camera already tied: its real size and place come from the camera.
+// Camera not tied yet: it gets the typed size at the middle of the map, and the camera is tied by it (move it on the map later).
+function createRefFromCam(c, pts) {
+  if (pts.length !== 4) return createPolyFromCam(c, pts);
+  const o = ordered(pts), fit = camFit(c); c.ui.newPts = []; c.ui.mode = "link"; c.ui.arm = null; c.ui.sel = null; save();
+  const name = `Reference ${String.fromCharCode(65 + (refs.length % 26))}${refs.length >= 26 ? Math.floor(refs.length / 26) : ""}`;
+  const len = Math.max(.1, +c.el.querySelector(".nLen").value || 1), dep = Math.max(.1, +c.el.querySelector(".nDep").value || 1);
+  const placed = refs.filter(x => !x.unplaced), bx = placed.flatMap(corners);
+  const r = fit.H ? { id: newId("r"), name, from: c.id, ...rectOf(o.map(q => proj(fit.H, q))) }
+    : !placed.length ? { id: newId("r"), name, from: c.id, cx: 0, cy: 0, len, dep, ang: 0 }
+    : { id: newId("r"), name, from: c.id, unplaced: true, cx: Math.max(...bx.map(q => q[0])) + len / 2 + 1, cy: mean(bx)[1], len, dep, ang: 0 };
+  const typed = [".nLen", ".nDep"].some(k => { const e = c.el.querySelector(k); return e.value !== e.defaultValue; }); if (!fit.H && !typed) r.sizeGuess = true;
+  refs.push(r); c.links.push(...o.map((x, i) => ({ ref: r.id, kind: "corner", i, x }))); fitGuessSize(c, r);
+  c.ui.ref = r.id; selected = { type: "ref", id: r.id }; renderSel(); persist(); draw();
+  if (r.unplaced) { fitView(); return say(`สร้าง ${esc(r.name)} (${len} × ${dep} ม.) แล้ว แต่ยังไม่รู้ว่าอยู่ตรงไหน: <b>ลากมันบนแผนที่ไปที่ตำแหน่งจริง แล้วหมุนให้ตรง</b> (กระพริบอยู่ข้างแผนที่) · วางแล้ว${esc(c.name)}จะผูกผ่านมันทันที`, "warn"); }
+  say(fit.H ? `สร้าง ${esc(r.name)} จาก${esc(c.name)} ขนาดที่วัดได้ ${r.len.toFixed(2)} × ${r.dep.toFixed(2)} ม. · เปลี่ยนชื่อ/ขนาดได้ที่แผงใต้แผนที่`
+    : `สร้าง ${esc(r.name)} ${r.len.toFixed(2)} × ${r.dep.toFixed(2)} ม. กลางแผนที่ และผูก${esc(c.name)}กับมันแล้ว · ลาก/หมุนบนแผนที่ให้ตรงกับร้านได้ (กล้องตามเอง)`, "ok");
+}
+
+/* A Reference made from a camera that is not tied yet starts at the typed size, which is only a guess, so no real camera can put
+   all 4 corners on the clicks (a 1.6 x 0.6 guess left a corner 0.41 m off, drawn past the picture edge). While this camera's only
+   clues are that Reference's 4 corners, its length and depth are refitted from them so the box passes through the clicks. */
+function fitGuessSize(c, r) { if (!r?.sizeGuess || r.pts || r.unplaced || c.tune || c.align) return false;
+  const k = [0, 1, 2, 3].map(i => c.links.find(l => l.ref === r.id && l.kind === "corner" && l.i === i)); if (k.some(l => !l)) return false;
+  if (c.links.some(l => l.ref !== r.id)) { /* other References tie this camera too: if they tie it alone, the guessed one takes its real size and place from them */
+    const all = c.links; c.links = all.filter(l => l.ref !== r.id); c.fitKey = null; const f = camFitRaw(c); c.links = all; c.fitKey = null;
+    if (!f.H) return false; Object.assign(r, rectOf(k.map(l => proj(f.H, l.x)))); delete r.sizeGuess; return true; }
+  let changed = false;
+  for (let it = 0; it < 8; it++) { c.fitKey = null; const f = camFitRaw(c); if (!f.H) break;
+    const q = k.map(l => proj(f.H, l.x)), len = Math.max(.1, (dist(q[0], q[1]) + dist(q[3], q[2])) / 2), dep = Math.max(.1, (dist(q[1], q[2]) + dist(q[0], q[3])) / 2);
+    if (Math.abs(len - r.len) < .005 && Math.abs(dep - r.dep) < .005) break; r.len = len; r.dep = dep; changed = true; }
+  c.fitKey = null; return changed; }
+// n-corner reference from a camera: needs the camera to be tied already (its real shape comes from the camera)
+function createPolyFromCam(c, pts) {
+  const fit = camFit(c); c.ui.newPts = []; c.ui.mode = "link"; c.ui.arm = null; c.ui.sel = null;
+  if (!fit.H) { draw(); return say(`สร้าง Reference ${pts.length} มุมจากกล้องที่ยังไม่ผูกไม่ได้ (ยังไม่รู้ขนาดจริง): วาดบนแผนที่ก่อน (▭ วาด Reference) แล้วคลิกมุมในกล้อง · หรือผูกกล้องนี้ก่อน`, "warn"); }
+  let ring = ringOrder(pts), low = ring.reduce((b, q, i) => q[1] > ring[b][1] ? i : b, 0); ring = [...ring.slice(low), ...ring.slice(0, low)]; // corner 1 = nearest the camera
+  let mapPts = ring.map(q => proj(fit.H, q)); if (ringArea(mapPts) > 0) { ring = [ring[0], ...ring.slice(1).reverse()]; mapPts = [mapPts[0], ...mapPts.slice(1).reverse()]; }
+  save(); const r = { id: newId("r"), name: `Reference ${String.fromCharCode(65 + (refs.length % 26))}`, from: c.id, pts: mapPts }; refs.push(r);
+  c.links.push(...ring.map((x, i) => ({ ref: r.id, kind: "corner", i, x, out: outside(c, x) }))); c.ui.ref = r.id; selected = { type: "ref", id: r.id }; renderSel(); persist(); draw();
+  say(`สร้าง ${esc(r.name)} (${pts.length} มุม) จาก${esc(c.name)} แล้ว · ปรับรูปได้บนแผนที่ (ลากจุดมุม)`, "ok");
+}
+// ---------------- drawing: cameras ----------------
+function drawCam(c) {
+  const g = c.ctx, W = c.canvas.width, Hh = c.canvas.height, V = c.vz, k = 1 / V.s; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, Hh);
+  c.el.classList.toggle("active", cams.indexOf(c) === activeCam);
+  if (!c.frame) { g.fillStyle = "#bcc"; g.font = "14px sans-serif"; g.fillText("ยังไม่มีวิดีโอ: เลือกไฟล์ด้านบน หรือวิดีโอตัวอย่าง", 14, 28); return; }
+  g.fillStyle = "#3a4442"; g.fillRect(0, 0, W, Hh); g.setTransform(V.s, 0, 0, V.s, V.ox, V.oy); g.drawImage(c.frame, 0, 0, W, Hh);
+  const fit = camFit(c), sz = Math.max(11, Math.round(W / 40)) * k;
+  const poly = (pts, colour, width, dash = [], close = true) => { g.strokeStyle = colour; g.lineWidth = width * k; g.setLineDash(dash.map(v => v * k)); g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); if (close) g.closePath(); g.stroke(); g.setLineDash([]); };
+  const dot = (p, fill, r = 5) => { g.beginPath(); g.arc(p[0], p[1], r * k, 0, 7); g.fillStyle = fill; g.fill(); g.strokeStyle = "#2a211b"; g.lineWidth = k; g.stroke(); };
+  const tag = (text, p, colour = "#fff") => { g.font = `bold ${sz}px sans-serif`; const w = g.measureText(text).width; g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(p[0] - w / 2 - 3 * k, p[1] - sz, w + 6 * k, sz + 4 * k); g.fillStyle = colour; g.fillText(text, p[0] - w / 2, p[1]); };
+  if (V.s < .999 || V.ox || V.oy) poly([[0, 0], [W, 0], [W, Hh], [0, Hh]], "rgba(255,255,255,.7)", 1.5, [6, 4]); // the real picture's border
+  if (fit.H && V.s < .999) { const rx = refs.flatMap(corners), xs = rx.map(q => q[0]), ys = rx.map(q => q[1]); // 1 m floor grid, to place corners outside the picture
+    if (rx.length) { const x0 = Math.floor(Math.min(...xs)) - 6, x1 = Math.ceil(Math.max(...xs)) + 6, y0 = Math.floor(Math.min(...ys)) - 6, y1 = Math.ceil(Math.max(...ys)) + 6, seg = [];
+      for (let x = x0; x <= x1; x++) seg.push([[x, y0], [x, y1]]); for (let y = y0; y <= y1; y++) seg.push([[x0, y], [x1, y]]);
+      for (const [a, b] of seg) { const q = toCam(c, [a, b]); if (q?.length >= 2) poly(q.slice(0, 2), fit.unsure ? "rgba(255,210,120,.22)" : "rgba(255,255,255,.18)", 1, fit.unsure ? [5, 5] : [], false); } } }
+  if (fit.H) {
+    if (layers.areas.show) areas.forEach(a => { const pts = toCam(c, a.pts); if (!pts || pts.length < 3) return; g.fillStyle = a.kind === "shop" ? "rgba(63,174,106,.13)" : "rgba(111,159,232,.16)";
+      g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.closePath(); g.fill(); poly(pts, a.kind === "shop" ? "#3fae6a" : "#6f9fe8", 2); tag(a.name, mean(pts), a.kind === "shop" ? "#9ef0b8" : "#bcd4ff"); });
+    if (layers.drawings.show) drawings.forEach(dr => { if (dr.kind === "text") return; const pts = toCam(c, dr.closed ? dr.pts : dr.pts); if (!pts || pts.length < 2) return; poly(pts, dr.color, dr.closed ? 2 : 3, [4, 3], dr.closed); });
+    if (setup && layers.refs.show) refs.forEach(r => { const k = corners(r), pts = toCam(c, k); if (!pts || pts.length < 3) return; const mine = c.ui.ref === r.id;
+      poly(pts, mine ? "#ffd84d" : "#ff8a3d", mine ? 3 : 2); const f = toCam(c, [k[0], k[1]]); if (f?.length === 2) poly(f, mine ? "#ffd84d" : "#ff8a3d", 5, [], false);
+      k.forEach((q, i) => { if (setup && c.links.some(l => l.ref === r.id && l.kind === "corner" && l.i === i)) return; const m = toCam(c, [q]); if (m) tag(`${i + 1}`, [m[0][0], m[0][1] + 4], mine ? "#ffe680" : "#ffc08a"); });
+      tag(r.name, mean(pts), "#ffd0a0"); });
+  }
+  if (c.preview && c.sugg?.H) { const G2 = inv(c.sugg.H); refs.forEach(r => { const pts = corners(r).map(q => proj(G2, q)); poly(pts, "#4fd1ff", 2, [6, 4]); }); tag("เส้นฟ้า = หลังปรับจากคนเดิน", [W / 2, Hh - 8], "#9fe6ff"); }
+  // a placed point: a numbered circle coloured by its error; selected = white ring; outside the picture = dashed ring
+  const marker = (p, text, col, sel, out, rad = 10) => { if (sel) { g.beginPath(); g.arc(p[0], p[1], (rad + 5) * k, 0, 7); g.strokeStyle = "#fff"; g.lineWidth = 3 * k; g.stroke(); }
+    g.beginPath(); g.arc(p[0], p[1], rad * k, 0, 7); g.fillStyle = col; g.fill(); g.strokeStyle = "#1d1712"; g.lineWidth = 1.5 * k; g.setLineDash(out ? [3 * k, 2 * k] : []); g.stroke(); g.setLineDash([]);
+    if (text) { g.font = `bold ${Math.round(rad * 1.2) * k}px sans-serif`; g.fillStyle = "#1d1712"; const tw = g.measureText(text).width; g.fillText(text, p[0] - tw / 2, p[1] + rad * .42 * k); } };
+  c.ghosts = [];
+  if (setup && fit.H && layers.refs.show) refs.forEach(r => { if (r.unplaced || !(r.id === c.ui.ref || c.links.some(l => l.ref === r.id))) return; // suggested corners: where missing ones should be
+    corners(r).forEach((q, i) => { if (linkOf(c, "corner", i, r.id)) return; const m = toCam(c, [q]); if (!m) return; const p = m[0], sx = p[0] * V.s + V.ox, sy = p[1] * V.s + V.oy;
+      if (sx < -20 || sy < -20 || sx > W + 20 || sy > Hh + 20) return; c.ghosts.push({ ref: r.id, i, p });
+      g.beginPath(); g.arc(p[0], p[1], 10 * k, 0, 7); g.strokeStyle = r.id === c.ui.ref ? "#ffe680" : "rgba(255,255,255,.75)"; g.lineWidth = 2 * k; g.setLineDash([4 * k, 3 * k]); g.stroke(); g.setLineDash([]);
+      g.font = `bold ${12 * k}px sans-serif`; g.fillStyle = r.id === c.ui.ref ? "#ffe680" : "#fff"; const t = String(i + 1), tw = g.measureText(t).width; g.fillText(t, p[0] - tw / 2, p[1] + 4 * k); }); });
+  if (setup) c.links.forEach(l => { const r = refById(l.ref), err = fit.per?.get(l), col = err === undefined ? "#ffe14d" : err < .1 ? "#7ee2a0" : err < .3 ? "#ffd166" : "#ff7b6b", isSel = c.ui.sel?.l === l;
+    const note = `${l.ref === c.ui.ref ? "" : (r?.name ?? "?") + " "}${err !== undefined ? `${err.toFixed(2)} ม.` : ""}${r?.unplaced ? " · ยังไม่ได้วาง" : ""}`, showNote = isSel || err >= .3 || r?.unplaced;
+    if (l.kind === "corner") { marker(l.x, String(l.i + 1), col, isSel, l.out); if (showNote) tag(note, [l.x[0], l.x[1] - 17 * k], col); }
+    else { const [a, b] = l.pts, d = [b[0] - a[0], b[1] - a[1]]; poly([[a[0] - d[0] * .25, a[1] - d[1] * .25], [b[0] + d[0] * .25, b[1] + d[1] * .25]], col, isSel ? 4 : 3, [], false);
+      l.pts.forEach((q, j) => marker(q, "", col, isSel && c.ui.sel.k === j, l.outs?.[j], 6)); tag(`${edgeName(l.i, nc(r))}${showNote ? " · " + note : ""}`, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 9 * k], col); } });
+  c.ui.edgePts.forEach(q => marker(q, "", "#ffe14d", false, false, 6));
+  c.ui.newPts.forEach((q, i) => { dot(q, "#c9f56b", 6); tag(String(i + 1), [q[0], q[1] - 9], "#c9f56b"); });
+  if (drag?.cam === c && drag.box) { const [a, b] = drag.box; poly([a, [b[0], a[1]], b, [a[0], b[1]]], "#fff", 2, [6, 4]); }
+  for (const p of c.people) { const [x1, y1, x2, y2] = p.box, onMap = p.pid !== undefined, col = onMap ? (p.counted === false ? "#8a8a8a" : personColour(p.pid)) : "#b8b8b8";
+    g.globalAlpha = onMap ? .25 : .12; g.fillStyle = col; g.fillRect(x1, y1, x2 - x1, y2 - y1); g.globalAlpha = 1;
+    g.strokeStyle = col; g.lineWidth = 3 * k; g.setLineDash(onMap && p.counted !== false ? [] : [6 * k, 5 * k]); g.strokeRect(x1, y1, x2 - x1, y2 - y1); g.setLineDash([]);
+    const text = onMap ? `คน #${p.pid}${p.counted === false ? " · นอกร้าน" : ""}` : "ยังไม่อยู่บนแผนที่";
+    g.font = `bold ${sz}px sans-serif`; const tw = g.measureText(text).width, lx = Math.min(Math.max(x1, 0), W - tw - 8), ly = Math.max(y1 - sz - 6, 0);
+    g.fillStyle = col; g.fillRect(lx, ly, tw + 8 * k, sz + 6 * k); g.fillStyle = "#fff"; g.fillText(text, lx + 4 * k, ly + sz + k); }
+  if (check && fit.H) { const q = toCam(c, [[-.3, -.3], [.3, -.3], [.3, .3], [-.3, .3]].map(([dx, dy]) => [check[0] + dx, check[1] + dy])); if (q?.length >= 3) { poly(q, "#ff4fd8", 3); tag("จุดที่เลือก", [mean(q)[0], Math.min(...q.map(p => p[1])) - 4], "#ff9cf0"); } }
+  g.setTransform(1, 0, 0, 1, 0, 0); const sz0 = sz / k;
+  // magnifier: while adding a point or dragging one, a 3x view around the mouse in the top-right corner
+  const mag = c.hover && (c.ui.arm || c.ui.mode === "new" || (drag?.cam === c && drag.hit && drag.moved));
+  if (mag) { const S = Math.min(150, W / 3), r0 = S / 2 / 3 / V.s * V.s, hx = c.hover[0], hy = c.hover[1], src = S / 6; // src = half-width in picture px
+    g.save(); g.fillStyle = "#222"; g.fillRect(W - S - 8, 8, S, S); g.beginPath(); g.rect(W - S - 8, 8, S, S); g.clip(); g.imageSmoothingEnabled = false;
+    g.drawImage(c.frame, hx - src, hy - src, 2 * src, 2 * src, W - S - 8, 8, S, S); g.restore();
+    g.strokeStyle = "#fff"; g.lineWidth = 2; g.strokeRect(W - S - 8, 8, S, S); g.strokeStyle = "#ff4fd8"; g.lineWidth = 1.5; g.beginPath();
+    g.moveTo(W - S / 2 - 8, 8 + S / 2 - 12); g.lineTo(W - S / 2 - 8, 8 + S / 2 + 12); g.moveTo(W - S / 2 - 20, 8 + S / 2); g.lineTo(W - S / 2 + 4, 8 + S / 2); g.stroke(); void r0; }
+  if (V.s < .999 && fit.unsure) { g.font = `bold ${sz0}px sans-serif`; const t = "⚠ พื้นนอกภาพเป็นการเดา: ใส่ความสูงกล้อง หรือเพิ่ม Reference ใกล้ขอบภาพ", tw = g.measureText(t).width; g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(W / 2 - tw / 2 - 3, Hh - 2 * sz0 - 18, tw + 6, sz0 + 6); g.fillStyle = "#ffd166"; g.fillText(t, W / 2 - tw / 2, Hh - sz0 - 14); }
+  if (V.s !== 1) { g.font = `${sz0}px sans-serif`; g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(W - 92, Hh - sz0 - 10, 88, sz0 + 6); g.fillStyle = "#fff"; g.fillText(`ซูม ${Math.round(V.s * 100)}%`, W - 86, Hh - 9); }
+  if (!fit.H) { g.font = `bold ${sz0}px sans-serif`; const txt = fit.mirrored ? "⚠ เลขมุมวนกลับด้าน" : `ยังไม่ได้ผูกกับแผนที่ (${fit.eqs}/${fit.need})${fit.eqs < fit.need ? ` · ต้องเพิ่มอีก ${fit.need - fit.eqs}: มุมของ Reference อื่นที่เห็น หรือขอบที่เห็นบางส่วน${c.camH ? "" : " (หรือใส่ความสูงกล้อง)"}` : ""}`, tw = g.measureText(txt).width; g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(W / 2 - tw / 2 - 3, 4, tw + 6, sz0 + 6); g.fillStyle = "#ffe14d"; g.fillText(txt, W / 2 - tw / 2, sz0 + 6); }
+}
+const ppl = c => c.peopleH?.length;
+const setHTML = (el, html) => { if (el.innerHTML !== html && el.dataset.last !== html) { el.innerHTML = html; el.dataset.last = html; } };
+// small map inside a full-view camera: the reference being worked on (and the others this camera uses), corners clickable
+function miniMap(c) {
+  const show = refs.filter(r => r.id === c.ui.ref || c.links.some(l => l.ref === r.id)); if (!show.length) return '<div class="muted" style="padding:8px">เลือก Reference ในแถบด้านบน</div>';
+  const pts = show.flatMap(corners), xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), pad = .8, vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
+  const s = Math.max(vb[2], vb[3]) / 60, P = q => q.map(v => v.toFixed(3)).join(" "), out = [];
+  for (const r of show) { const k = corners(r), mine = r.id === c.ui.ref, [rcx, rcy] = centre(r);
+    out.push(`<polygon points="${k.map(P).join(" ")}" fill="${mine ? "#f2c50044" : "#ff8a3d33"}" stroke="#e8742f" stroke-width="${s * .5}"/><line x1="${k[0][0]}" y1="${k[0][1]}" x2="${k[1][0]}" y2="${k[1][1]}" stroke="#e8742f" stroke-width="${s * 1.4}"/>`);
+    out.push(`<text x="${rcx}" y="${rcy}" font-size="${s * 3}" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)">${esc(r.name)}</text>`);
+    k.forEach((q, i) => { const l = linkOf(c, "corner", i, r.id), armed = mine && c.ui.arm?.kind === "corner" && c.ui.arm.i === i, d = [q[0] - rcx, q[1] - rcy], n = Math.hypot(...d) || 1, lp = [q[0] + d[0] / n * s * 3.2, q[1] + d[1] / n * s * 3.2];
+      out.push(`<g data-mini="${r.id}:${i}" style="cursor:pointer"><circle cx="${lp[0]}" cy="${lp[1]}" r="${s * 3}" fill="${armed ? "var(--pick)" : l ? "#7ee2a0" : "var(--surface)"}" stroke="#e8742f" stroke-width="${s * .5}"/><text x="${lp[0]}" y="${lp[1]}" font-size="${s * 3.4}" text-anchor="middle" dominant-baseline="central" fill="var(--ink)">${i + 1}</text></g>`); }); }
+  return `<svg viewBox="${vb.join(" ")}" style="width:100%;height:100%;border:0;border-radius:0;min-height:0">${out.join("")}</svg>`;
+}
+// small "how many corners?" box next to the button that was pressed
+function askCorners(anchor, done) { closeAsk(); const box = document.createElement("div"); box.id = "askBox"; box.className = "panel";
+  box.style.cssText = "position:absolute;z-index:60;display:flex;gap:6px;align-items:center;margin:0;box-shadow:0 4px 16px rgba(0,0,0,.25)";
+  box.innerHTML = `<label>Reference นี้มีกี่มุม <input type="number" id="askN" min="3" max="12" value="4" style="width:60px"></label><button class="small primary" id="askOk">ตกลง</button><button class="small" id="askNo">ยกเลิก</button>`;
+  document.body.appendChild(box); const r = anchor.getBoundingClientRect(); box.style.left = Math.max(4, r.left + scrollX) + "px"; box.style.top = r.bottom + scrollY + 4 + "px";
+  const ok = () => { const n = Math.round(+$("askN").value); if (!(n >= 3 && n <= 12)) return say("จำนวนมุม 3–12", "warn"); closeAsk(); done(n); };
+  $("askOk").onclick = ok; $("askNo").onclick = () => { closeAsk(); say("ยกเลิกแล้ว"); }; $("askN").onkeydown = e => { if (e.key === "Enter") ok(); if (e.key === "Escape") { closeAsk(); say("ยกเลิกแล้ว"); } }; $("askN").select(); }
+const askOpen = () => !!$("askBox"); function closeAsk() { $("askBox")?.remove(); }
+function toggleFull(el) { const on = !el.classList.contains("full"); document.querySelectorAll(".full").forEach(x => x.classList.remove("full")); if (on) el.classList.add("full"); fitFull(); draw(); if (el.id === "mapBox") fitView(); }
+// a full-view camera picture: as large as the window allows, keeping its shape
+function fitFull() { cams.forEach(c => { if (!c.el.classList.contains("full")) { c.canvas.style.width = ""; return; }
+  const wrap = c.el.querySelector(".camWrap"), top = wrap.getBoundingClientRect().top, availW = c.el.clientWidth - 28, availH = innerHeight - Math.max(0, top) - 70;
+  c.canvas.style.width = Math.max(200, Math.min(availW, availH * c.canvas.width / c.canvas.height)) + "px"; }); }
+addEventListener("resize", () => { if (document.querySelector(".full")) { fitFull(); draw(); } });
+function updateCard(c) {
+  const f0 = camFit(c), used = r => c.links.filter(l => l.ref === r.id).length, seen = r => { if (!f0.H) return false; const q = toCam(c, [centre(r)]); return q && q[0][0] >= 0 && q[0][1] >= 0 && q[0][0] <= c.canvas.width && q[0][1] <= c.canvas.height; };
+  const order = [...refs].sort((a, b) => (used(b) > 0) - (used(a) > 0) || seen(b) - seen(a) || a.name.localeCompare(b.name));
+  const optHTML = `<option value="">— เลือก —</option>` + order.map(r => `<option value="${r.id}">${esc(r.name)}${used(r) ? ` ✓${used(r)}` : seen(r) ? " · น่าจะเห็นในกล้องนี้" : ""}${r.from === c.id ? " · จากกล้องนี้" : ""}${r.unplaced ? " · ยังไม่ได้วาง" : ""}</option>`).join("");
+  const sel = c.el.querySelector(".refSel"); if (optHTML !== c.refSig) { c.refSig = optHTML; sel.innerHTML = optHTML; }
+  if (c.ui.ref && !refById(c.ui.ref)) c.ui.ref = null; sel.value = c.ui.ref ?? "";
+  const btn = (kind, i) => { const l = linkOf(c, kind, i), armed = c.ui.arm?.kind === kind && c.ui.arm.i === i, isSel = !!l && c.ui.sel?.l === l;
+    return `<button class="small${l ? " placed" : ""}" data-${kind}="${i}" aria-pressed="${armed || isSel}" ${c.ui.ref ? "" : "disabled"} title="${l ? "เลือกจุดนี้ (ลากในภาพเพื่อย้าย)" : "กด แล้วคลิกตำแหน่งในภาพ"}">${kind === "corner" ? i + 1 : edgeName(i)} ${l ? "✓" : "＋"}</button>`; };
+  const nn = nc(refById(c.ui.ref)), lineN = c.links.filter(l => l.ref === c.ui.ref && l.kind === "edge").length;
+  setHTML(c.el.querySelector(".cornerBar"), `<span class="muted">มุม</span> ${Array.from({ length: nn }, (_, i) => btn("corner", i)).join(" ")}${lineN ? ` <span class="muted">· เส้น ${lineN}</span>` : ""}`);
+  // floating toolbar next to the selected point
+  const bar = c.el.querySelector(".ptbar"), sl = c.ui.sel?.l;
+  if (setup && sl && c.links.includes(sl) && c.frame) { const q = sl.kind === "corner" ? sl.x : sl.pts[c.ui.sel.k] ?? sl.pts[0], V = c.vz, cr = c.canvas.getBoundingClientRect(), sc = cr.width / c.canvas.width;
+    const x = (q[0] * V.s + V.ox) * sc, y = (q[1] * V.s + V.oy) * sc, er = c.fit?.per?.get(sl);
+    const rn = nc(refById(sl.ref)), s2 = c.ui.sel2?.l, lineBtn = sl.kind === "corner" ? (s2 && s2.ref === sl.ref && s2.kind === "corner" ? ' <button class="small" data-act="mkline" title="ทำ 2 จุดที่เลือกเป็นเส้นบนขอบ">╱ ทำเป็นเส้น</button>' : ` <button class="small" data-act="line1" aria-pressed="${c.ui.lineFrom === sl}" title="เลือกจุดที่สองบนขอบเดียวกัน (หรือ Shift+คลิก) แล้วทำเป็นเส้น">╱ เส้น…</button>`) : ' <button class="small" data-act="unline" title="แยกเส้นกลับเป็นจุดมุม">แยกเป็นจุด</button>';
+    setHTML(bar, `<b>${esc(refById(sl.ref)?.name ?? "?")}</b> <select class="ptNum" aria-label="เลข">${Array.from({ length: rn }, (_, j) => `<option value="${j}" ${j === sl.i ? "selected" : ""}>${sl.kind === "corner" ? "มุม " + (j + 1) : "เส้นบนขอบ " + edgeName(j, rn)}</option>`).join("")}</select>${er !== undefined ? ` <span>${er.toFixed(2)} ม.</span>` : ""}${s2 ? ` <span>+ ${linkName(s2)}</span>` : ""} <button class="small" data-act="ptre" title="คลิกตำแหน่งใหม่ในภาพ">↻</button>${lineBtn} <button class="small" data-act="ptdel" title="ลบ (Delete)">🗑</button>`);
+    bar.hidden = false; bar.style.left = c.canvas.offsetLeft + Math.min(Math.max(0, x + 16), cr.width - 230) + "px"; bar.style.top = c.canvas.offsetTop + (y > 70 ? y - 66 : y + 28) + "px"; } // the picture can be centred inside a wider area (full view)
+  else bar.hidden = true;
+  if (c.el.classList.contains("full") && setup) { const mm = c.el.querySelector(".minimap"); setHTML(mm, miniMap(c)); mm.style.left = c.canvas.offsetLeft + 8 + "px"; }
+  c.el.querySelector('[data-act="new"]').setAttribute("aria-pressed", c.ui.mode === "new"); c.el.querySelector('[data-act="auto"]').setAttribute("aria-pressed", c.ui.mode === "auto");
+  const f = camFit(c);
+  const status = !c.frame ? "ยังไม่มีวิดีโอ" : `ข้อมูลผูกกล้อง ${f.eqs} (ต้องการ ${f.need})` + (f.eqs < f.need ? " · เลือก Reference แล้วคลิกมุมตามหมายเลขในภาพ (มุม = 2, ขอบ = 2 แต่ = 1 ถ้าคลิกมุมปลายขอบนั้นแล้ว)" + (!c.links.length ? "<br><span class=\"muted\">ภาพนี้ไม่เห็น Reference ที่มีบนแผนที่? วาดสิ่งของที่กล้องนี้เห็นบนแผนที่ตามแผนผังร้าน (ขนาดและตำแหน่งจริง) แล้วคลิกมุมของมันในภาพ · หรือสร้างจากกล้องที่ผูกแล้วที่เห็นสิ่งของนั้นด้วย (✚ Reference ใหม่) · กล้องที่ไม่เห็นพื้นเลยผูกไม่ได้</span>" : "") : "")
+    + (f.H ? ` · <b class="${f.rms < .15 ? "ok" : f.rms < .4 ? "warn" : "bad"}">เข้ากันเฉลี่ย ${f.rms.toFixed(2)} ม.</b>` + (f.model ? ` · กล้องสูง${c.camH ? "" : "ประมาณ"} ${f.height.toFixed(1)} ม.` : ' · <span class="warn">ยังไม่เข้ากับกล้องจริง ตรวจเลขมุม</span>')
+      + (f.assumed ? ` · <span class="muted">ใช้${c.level ? "กล้องไม่เอียงข้าง" : ""}${c.level && c.camH ? " + " : ""}${c.camH ? "ความสูงที่ใส่" : ""}${!c.level && !c.camH ? "แบบกล้องจริง" : ""}</span>` : "")
+      + (c.tune ? ` · <span class="ok">ปรับจากคนเดินแล้ว (${c.tune.n} จุด)</span> <button class="small" data-act="untune">ยกเลิกการปรับ</button>` : "")
+      + (ppl(c) && f.need <= 5 ? ` · <span class="warn">ใช้ความสูงคน ${c.peopleH.length} ครั้ง (คร่าวๆ)</span> <button class="small" data-act="unheights">เลิกใช้</button>` : "")
+      + (f.unsure ? `<br><span class="warn">⚠ พื้นนอกบริเวณที่คลิก (และตอนซูมออก) ยังไม่แน่นอน: ${f.oddHeight ? `ความสูงกล้องที่คำนวณได้ ${f.height.toFixed(1)} ม. ดูไม่น่าใช่` : "จุดที่คลิกอยู่ในแถบแคบของภาพ"} · ใส่ความสูงกล้อง หรือเพิ่ม Reference ใกล้ขอบล่าง/ข้างภาพ</span>` : "")
+      + (f.exact ? ' · <span class="warn">ข้อมูลพอดีจำนวน: ดูเส้นในภาพว่าตรงไหม เพิ่มอีก 1 จะมั่นใจขึ้น</span>' : "")
+      + (f.notReal ? '<br><span class="bad">⚠ จุดที่คลิกไม่เข้ากับกล้องจริง (ใช้แบบพื้นอิสระแทน: นอกบริเวณที่คลิกจะคลาดมาก) · ตรวจเลขมุม/ตำแหน่งมุม หรือเพิ่ม Reference</span>' : "")
+      + (f.worst && !f.notReal ? `<br><span class="warn">จุดที่เข้ากันน้อยที่สุด: ${esc(refById(f.worst.l.ref)?.name ?? "")} ${linkName(f.worst.l)} (${f.worst.e.toFixed(2)} ม.) · ลากให้ตรงมุมจริง หรือเพิ่มจุดอื่น</span>` : "") : "")
+    + (f.mirrored ? ' · <span class="bad">⚠ เลขมุมวนกลับด้าน</span>' : "") + (f.behind ? ' · <span class="bad">⚠ บางจุดอยู่หลังกล้อง ตรวจเลขมุม</span>' : "")
+    + (f.suggest ? ` · <span class="warn">มุมของ ${esc(refById(f.suggest.id)?.name)} น่าจะเลขผิด</span> <button class="small" data-act="fix">แก้ให้ (เหลือ ${f.suggest.rms.toFixed(2)} ม.)</button>${f.suggest.alt ? ` <button class="small" data-act="fix2" title="ของสมมาตร (เช่นสี่เหลี่ยมหมุน 180°) เข้ากันได้สองแบบ: เลือกแบบที่มุม 1 อยู่ฝั่งเดียวกับบนแผนที่">หรือแบบกลับด้าน (${f.suggest.alt.rms.toFixed(2)} ม.)</button> <span class="muted">เข้ากันพอๆ กัน: ดูว่ามุม 1 อยู่ตรงไหน</span>` : ""}` : "");
+  const list = c.links.map((l, k) => `${esc(refById(l.ref)?.name ?? "?")} ${linkName(l)}${f.per?.has(l) ? " " + f.per.get(l).toFixed(2) + " ม." : ""} <button class="small" data-act="del" data-k="${k}" aria-label="ลบ">✕</button>`).join(" · ");
+  const sg = c.sugg, nH = c.samples.heights.length;
+  const learn = !c.frame ? "" : (sg?.moved ? `<br><span class="bad">⚠ กล้องนี้อาจถูกขยับ: คนจากกล้องนี้กับกล้องอื่นห่างกัน ${sg.recent.toFixed(2)} ม. (ปกติ ${sg.base.toFixed(2)} ม.)</span>` : "")
+    + (sg && !sg.H && !sg.moved && sg.from !== null ? `<br><span class="${sg.from > .6 ? "warn" : "muted"}">คนเดียวกันจากกล้องนี้กับกล้องอื่นห่างกันเฉลี่ย ${sg.from.toFixed(2)} ม. (${c.samples.pairs.length} ครั้ง)</span>` : "")
+    + (weakFit(f) && !sg?.H ? '<br><span class="warn">กล้องนี้ผูกได้ไม่ดี: คนจากกล้องนี้จะไม่เพิ่มคนใหม่ตรงที่กล้องอื่นเห็น · เพิ่ม Reference ที่เห็นมุมชัด (สร้างจากกล้องที่ผูกแล้วด้วย ✚ Reference ใหม่) หรือเล่นวิดีโอสักพักแล้วกด "ปรับจากคนเดิน"</span>' : "")
+    + (c.suggAlign && !c.align ? `<br><b>จัดให้ตรงกับกล้องอื่น:</b> พื้นของกล้องนี้หมุน/เลื่อนจากกล้องอื่น (หมุน ${c.suggAlign.rot.toFixed(0)}°, เลื่อน ${c.suggAlign.shift.toFixed(2)} ม.) · คนตรงกัน ${c.suggAlign.from.toFixed(2)} → ${c.suggAlign.to.toFixed(2)} ม. <button class="small" data-act="align">ใช้ค่านี้</button>` : "")
+    + (c.align ? ' · <span class="ok">จัดให้ตรงกับกล้องอื่นแล้ว</span> <button class="small" data-act="unalign">ยกเลิกการจัด</button>' : "")
+    + (sg?.H && sg.weak ? `<br><span class="warn">กล้องนี้ผูกได้ไม่ดี: ผูกจากคนที่กล้องอื่นเห็นด้วย (จำหน้าตา/เสื้อผ้า ${sg.n} ครั้ง) แนะนำให้ใช้${sg.off?.length ? ` · จุดที่คลิกไม่ตรงกับคนเดิน: ${sg.off.map(o => linkName(o.l) + " " + o.e.toFixed(1) + " ม.").join(", ")} (ตรวจเลขมุม)` : ""}</span>` : "")
+    + (sg?.H ? `<br><b>ปรับจากคนเดิน:</b> คนตรงกับกล้องอื่น ${sg.from === null ? "(ยังไม่ผูก)" : sg.from.toFixed(2)} → ${sg.to.toFixed(2)} ม. จาก ${sg.n} จุด${sg.shift ? ` · เลื่อนเวลา ${(-sg.shift).toFixed(2)} วิ (วิดีโอกล้องนี้ไม่ตรงกับกล้องอื่น)` : ""} <button class="small" data-act="tune">ใช้ค่านี้</button> <button class="small" data-act="preview" aria-pressed="${c.preview}">ดูก่อน</button>` : "")
+    + (!ppl(c) && nH >= 40 && (!f.H || f.eqs < 8) ? `<br><b>ความสูงคน:</b> เก็บได้ ${nH} ครั้ง ช่วยให้กล้องนี้ผูกได้ด้วยมุมน้อยลง (ต้องการแค่ ${c.level ? 4 : 5}) แต่ได้แบบคร่าวๆ (ทดสอบ: คลาด ~0.8 ม.) · ใส่ความสูงกล้องหรือเพิ่มมุมจะแม่นกว่ามาก <button class="small" data-act="heights">ใช้ความสูงคนช่วย (คร่าวๆ)</button>` : "")
+    + (!sg?.H && !nH && c.isVideo ? '<br><span class="muted">เล่นวิดีโอแล้วระบบจะเก็บข้อมูลจากคนเดินเอง (ไม่เปลี่ยนอะไรจนกว่าจะกด)</span>' : "")
+    + (c.isVideo ? (s => `<br><span class="muted">⇄ ซิงค์คน: ${syncAnchor(c) ? "" : `${s.n}/${s.need} คู่`}${autoSyncLabel(c)}</span>`)(syncState(c)) : "");
+  setHTML(c.el.querySelector(".camOut"), status + learn + (list ? `<br>${list}` : "") + (c.links.length ? '<br><span class="muted">ลบจุด: คลิกขวาที่จุดในภาพ, ✕ ในรายการ, หรือปุ่ม Delete (ลบจุดล่าสุด) · Ctrl+Z = ย้อนกลับ</span>' : ""));
+}
+
+// ---------------- drawing: map ----------------
+function drawMap() {
+  const [vx, vy, vw, vh] = view, s = Math.max(vw, vh) / 100, out = [];
+  svg.setAttribute("viewBox", view.join(" "));
+  const step = vw > 40 ? 5 : vw > 10 ? 1 : .5;
+  for (let x = Math.ceil(vx / step) * step; x <= vx + vw; x += step) out.push(`<line x1="${x}" y1="${vy}" x2="${x}" y2="${vy + vh}" stroke="var(--line)" stroke-width="${s * (Math.abs(x % 5) < 1e-6 ? .45 : .22)}"/>`);
+  for (let y = Math.ceil(vy / step) * step; y <= vy + vh; y += step) out.push(`<line x1="${vx}" y1="${y}" x2="${vx + vw}" y2="${y}" stroke="var(--line)" stroke-width="${s * (Math.abs(y % 5) < 1e-6 ? .45 : .22)}"/>`);
+  const P = c => c.map(p => p.join(",")).join(" ");
+  if (layers.drawings.show) drawings.forEach(dr => { const sel = selected?.type === "drawing" && selected.id === dr.id;
+    if (dr.kind === "text") out.push(`<text data-drawing="${dr.id}" x="${dr.pts[0][0]}" y="${dr.pts[0][1]}" font-size="${dr.size ?? .5}" font-weight="bold" fill="${dr.color}" ${sel ? `stroke="var(--hi)" stroke-width="${s * .15}"` : ""} style="cursor:move">${esc(dr.name)}</text>`);
+    else { const tag = dr.closed ? "polygon" : "polyline";
+      out.push(`<${tag} data-drawing="${dr.id}" points="${P(dr.pts)}" fill="${dr.closed ? dr.color : "none"}" fill-opacity="${dr.closed ? .3 : 0}" stroke="${dr.color}" stroke-width="${dr.closed ? s * (sel ? .9 : .5) : (dr.width ?? .15)}" stroke-linecap="round" stroke-linejoin="round" style="cursor:move"/>`);
+      if (dr.closed && dr.name) out.push(`<text x="${mean(dr.pts)[0]}" y="${mean(dr.pts)[1]}" text-anchor="middle" dominant-baseline="middle" font-size="${s * 2.6}" fill="var(--ink)" style="pointer-events:none">${esc(dr.name)}</text>`);
+      if (sel && !layers.drawings.lock) dr.pts.forEach((q, j) => out.push(`<circle data-dvertex="${dr.id}:${j}" cx="${q[0]}" cy="${q[1]}" r="${s * 1.2}" fill="${dr.color}" stroke="var(--ink)" stroke-width="${s * .25}" style="cursor:move"/>`)); } });
+  if (setup && layers.cover.show) cams.forEach((c, i) => { const cv = coverage(c), f = camFit(c), col = camColour(i); if (!cv) return;
+    out.push(`<polygon points="${P(cv)}" fill="${col}" fill-opacity=".07" stroke="${col}" stroke-width="${s * .35}" stroke-dasharray="${s * 1.5} ${s}" style="pointer-events:none"/>`);
+    const pos = f.pos && dist(f.pos, mean(cv)) < 60 ? f.pos : null, W = c.canvas.width, Hh = c.canvas.height;
+    if (pos) { [[0, Hh], [W, Hh]].forEach(q => { const m = proj(f.H, q); out.push(`<line x1="${pos[0]}" y1="${pos[1]}" x2="${m[0]}" y2="${m[1]}" stroke="${col}" stroke-width="${s * .35}" stroke-opacity=".8" style="pointer-events:none"/>`); });
+      out.push(`<circle cx="${pos[0]}" cy="${pos[1]}" r="${s * 2.6}" fill="var(--surface)" stroke="${col}" stroke-width="${s * .5}" style="pointer-events:none"/><text x="${pos[0]}" y="${pos[1]}" text-anchor="middle" dominant-baseline="central" font-size="${s * 3}" style="pointer-events:none">📷</text>`); }
+    const lp = pos ?? mean(cv); out.push(`<text x="${lp[0]}" y="${lp[1] + s * (pos ? 5.2 : 0)}" font-size="${s * 2.6}" font-weight="bold" fill="${col}" text-anchor="middle" style="pointer-events:none">${esc(c.name)}${f.height ? ` · สูง ${f.height.toFixed(1)} ม.` : ""}</text>`); });
+  if (layers.areas.show) areas.forEach(a => { const col = a.kind === "shop" ? "#3fae6a" : "#6f9fe8", sel = selected?.type === "area" && selected.id === a.id;
+    out.push(`<polygon data-area="${a.id}" points="${P(a.pts)}" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-width="${s * (sel ? .9 : .5)}" style="cursor:pointer"/>`);
+    out.push(`<text x="${mean(a.pts)[0]}" y="${mean(a.pts)[1]}" text-anchor="middle" font-size="${s * 2.8}" fill="${col}" style="pointer-events:none">${esc(a.name)}</text>`);
+    if (sel && !layers.areas.lock) a.pts.forEach((p, j) => out.push(`<circle data-vertex="${a.id}:${j}" cx="${p[0]}" cy="${p[1]}" r="${s * 1.2}" fill="${col}" stroke="var(--ink)" stroke-width="${s * .25}" style="cursor:move"/>`)); });
+  const ac = cams[activeCam];
+  if (setup && layers.refs.show) refs.forEach(r => { const k = corners(r), nn = k.length, sel = selected?.type === "ref" && selected.id === r.id, linking = ac?.ui.ref === r.id, m = centre(r);
+    if (nn < 3) { // a marked spot (drain grate, post base) or a 2-point mark: drawn as dots, tied like corners
+      if (nn === 2) out.push(`<line x1="${k[0][0]}" y1="${k[0][1]}" x2="${k[1][0]}" y2="${k[1][1]}" stroke="#e8742f" stroke-width="${s * 1.2}" style="pointer-events:none"/>`);
+      k.forEach(p => out.push(`<circle data-ref="${r.id}" cx="${p[0]}" cy="${p[1]}" r="${s * 1.6}" fill="#ff8a3d" stroke="#e8742f" stroke-width="${s * (sel ? 1 : .55)}" style="cursor:pointer"/>`));
+      out.push(`<text x="${m[0]}" y="${m[1] - s * 3}" text-anchor="middle" font-size="${s * 2.2}" fill="var(--ink)" style="pointer-events:none">${esc(r.name)}</text>`); return; }
+    out.push(`<polygon data-ref="${r.id}" ${r.unplaced ? 'class="flash"' : ""} points="${P(k)}" fill="${r.unplaced ? "#ff4fd840" : linking ? "#f2c50055" : "#ff8a3d40"}" stroke="${r.unplaced ? "#ff4fd8" : "#e8742f"}" ${r.unplaced ? `stroke-dasharray="${s * 1.5} ${s}"` : ""} stroke-width="${s * (sel ? 1 : .55)}" style="cursor:${layers.refs.lock ? "pointer" : "move"}"/>`);
+    out.push(`<line x1="${k[0][0]}" y1="${k[0][1]}" x2="${k[1][0]}" y2="${k[1][1]}" stroke="#e8742f" stroke-width="${s * 1.5}" style="pointer-events:none"/>`); // front edge (1-2)
+    const ei = ac?.ui.arm?.kind === "edge" ? ac.ui.arm.i : ac?.ui.sel?.l.kind === "edge" ? ac.ui.sel.l.i : null;
+    if (linking && ei !== null) out.push(`<line x1="${k[ei][0]}" y1="${k[ei][1]}" x2="${k[(ei + 1) % nn][0]}" y2="${k[(ei + 1) % nn][1]}" stroke="var(--pick)" stroke-width="${s * 1.8}" style="pointer-events:none"/>`);
+    out.push(`<text x="${m[0]}" y="${m[1]}" text-anchor="middle" dominant-baseline="middle" font-size="${s * 2.6}" fill="var(--ink)" style="pointer-events:none">${esc(r.name)}${r.unplaced ? " · ลากไปที่จริง" : ""}</text>`);
+    k.forEach((q, i) => { const d = [q[0] - m[0], q[1] - m[1]], n = Math.hypot(...d) || 1, lp = [q[0] + d[0] / n * s * 3, q[1] + d[1] / n * s * 3];
+      const linked = ac?.links.some(l => l.ref === r.id && l.kind === "corner" && l.i === i), target = linking && ((ac.ui.arm?.kind === "corner" && ac.ui.arm.i === i) || (ac.ui.sel?.l.kind === "corner" && ac.ui.sel.l.i === i));
+      out.push(`<g data-corner="${r.id}:${i}" style="cursor:pointer"><circle cx="${lp[0]}" cy="${lp[1]}" r="${s * 2}" fill="${target ? "var(--pick)" : linked ? "#7ee2a0" : "var(--surface)"}" stroke="#e8742f" stroke-width="${s * .4}"/><text x="${lp[0]}" y="${lp[1]}" text-anchor="middle" dominant-baseline="central" font-size="${s * 2.4}" fill="var(--ink)" style="pointer-events:none">${i + 1}</text></g>`); });
+    if (sel && !layers.refs.lock) { const kn = r.pts ? [0, -(Math.max(...k.map(q => dist(q, m))) + s * 6)] : turn([0, -(r.dep / 2 + s * 6)], r.ang), knob = [m[0] + kn[0], m[1] + kn[1]];
+      out.push(`<line x1="${m[0]}" y1="${m[1]}" x2="${knob[0]}" y2="${knob[1]}" stroke="#e8742f" stroke-width="${s * .35}"/><circle data-rotate="${r.id}" cx="${knob[0]}" cy="${knob[1]}" r="${s * 1.6}" fill="var(--surface)" stroke="#e8742f" stroke-width="${s * .5}" style="cursor:grab"/>`);
+      k.forEach((q, i) => out.push(r.pts ? `<circle data-rvertex="${r.id}:${i}" cx="${q[0]}" cy="${q[1]}" r="${s * 1.2}" fill="var(--surface)" stroke="#e8742f" stroke-width="${s * .4}" style="cursor:move"/>` : `<rect data-resize="${r.id}:${i}" x="${q[0] - s * 1.1}" y="${q[1] - s * 1.1}" width="${s * 2.2}" height="${s * 2.2}" fill="var(--surface)" stroke="#e8742f" stroke-width="${s * .4}" style="cursor:move"><title>ลากมุมนี้ไปตรงแบบแปลน · Shift+ลาก = คงเป็นสี่เหลี่ยม</title></rect>`)); } });
+  if (layers.paths.show) Object.entries(trails).forEach(([pid, t]) => { if (t.length > 1) out.push(`<polyline points="${P(t)}" fill="none" stroke="${personColour(+pid)}" stroke-width="${s * .45}" stroke-opacity=".7" style="pointer-events:none"/>`); });
+  if (layers.people.show) {
+    (mapPeople ?? []).forEach(p => { const f = p.smooth ?? p.floor, col = p.counted ? personColour(p.pid ?? 0) : "#9a9a9a", n = p.keys.filter(k => k !== undefined).length;
+      out.push(`<circle cx="${f[0]}" cy="${f[1]}" r="${s * 1.8}" fill="${col}" stroke="var(--ink)" stroke-width="${s * .3}" style="pointer-events:none"/><text x="${f[0]}" y="${f[1] - s * 2.6}" text-anchor="middle" font-size="${s * 2.6}" fill="var(--ink)" style="pointer-events:none">#${p.pid ?? "?"}${p.counted ? "" : " นอกร้าน"}${n > 1 ? ` (${n} กล้อง)` : ""}</text>`); });
+    ghosts.forEach(g => out.push(`<circle cx="${g.pos[0]}" cy="${g.pos[1]}" r="${s * 1.8}" fill="none" stroke="${personColour(g.pid)}" stroke-width="${s * .5}" stroke-dasharray="${s} ${s * .6}" style="pointer-events:none"/>`));
+  }
+  if (draft) out.push(`<polyline points="${P(draft.pts)}" fill="none" stroke="${draft.kind === "shop" ? "#3fae6a" : draft.kind === "zone" ? "#6f9fe8" : "#8a6d5a"}" stroke-width="${s * .6}" stroke-dasharray="${s * 1.5} ${s}" style="pointer-events:none"/>` + draft.pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${s * 1.2}" fill="${i ? "var(--surface)" : "#c9f56b"}" stroke="var(--ink)" stroke-width="${s * .3}" style="pointer-events:none"/>`).join(""));
+  if (drag?.newDRect) { const [a, b] = drag.newDRect; out.push(`<rect x="${Math.min(a[0], b[0])}" y="${Math.min(a[1], b[1])}" width="${Math.abs(b[0] - a[0])}" height="${Math.abs(b[1] - a[1])}" fill="#8a6d5a33" stroke="#8a6d5a" stroke-width="${s * .5}" stroke-dasharray="${s} ${s}"/>`); }
+  if (drag?.newRect) { const [a, b] = drag.newRect; out.push(`<rect x="${Math.min(a[0], b[0])}" y="${Math.min(a[1], b[1])}" width="${Math.abs(b[0] - a[0])}" height="${Math.abs(b[1] - a[1])}" fill="#ff8a3d33" stroke="#e8742f" stroke-width="${s * .5}" stroke-dasharray="${s} ${s}"/>`); }
+  if (check) out.push(`<rect x="${check[0] - .3}" y="${check[1] - .3}" width=".6" height=".6" fill="#ff4fd855" stroke="#ff4fd8" stroke-width="${s * .6}" style="pointer-events:none"/>`);
+  out.push(`<text x="${vx + s}" y="${vy + vh - s}" font-size="${s * 2.6}" fill="var(--soft)">ตาราง ${step} ม.</text>`);
+  svg.innerHTML = out.join("");
+}
+const median = a => { const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
+function lists() {
+  const agree = r => { let worst = null; cams.forEach(c => { const f = camFit(c); c.links.forEach(l => { if (l.ref === r.id && f.per?.has(l)) worst = Math.max(worst ?? 0, f.per.get(l)); }); }); return worst; };
+  setHTML($("camList"), cams.map((c, i) => { const f = camFit(c);
+    const state = !c.frame ? '<span class="muted">ยังไม่มีวิดีโอ</span>' : f.H ? `<span class="ok">📷 อยู่บนแผนที่ · เข้ากัน ${f.rms.toFixed(2)} ม.${f.height ? ` · สูง ${f.height.toFixed(1)} ม.` : ""}</span>`
+      : f.H ? "" : `<span class="warn">ยังไม่อยู่บนแผนที่ (${f.eqs}/${f.need})${f.mirrored ? " · เลขมุมวนกลับด้าน" : f.behind ? " · ตรวจเลขมุม" : f.eqs >= f.need ? " · จุดพอแต่คำนวณกล้องไม่ได้ (จุดน้อยพอดีหรือเกือบเรียงแนวเดียว) เพิ่มอีก 1 จุด หรือใช้ปรับจากคนเดิน" : ""}: คนในกล้องนี้ยังไม่ขึ้นแผนที่ · ${f.eqs < f.need ? `ต้องเพิ่มอีก ${f.need - f.eqs}: ถ้ามุมของ Reference นี้หลุดจอ ให้เลือก Reference อื่นที่กล้องนี้เห็น แล้วคลิกมุมของมัน หรือคลิกขอบที่เห็นบางส่วน` : "ตรวจเลขมุม"}</span>`;
+    return `<li><b style="color:${camColour(i)}">${esc(c.name)}</b> · ${state}${f.unsure ? ' · <span class="warn">⚠ พื้นนอกบริเวณที่คลิกยังไม่แน่นอน</span>' : ""}</li>`; }).join(""));
+  setHTML($("refList"), refs.length ? refs.map(r => { const w = agree(r), n = cams.filter(c => c.links.some(l => l.ref === r.id)).map(c => esc(c.name));
+    return `<li><button class="small" data-pick="ref:${r.id}">${esc(r.name)}</button> ${r.pts ? `${r.pts.length} มุม` : `${r.len.toFixed(2)} × ${r.dep.toFixed(2)} ม.`}${n.length ? " · ผูกกับ " + n.join(", ") : ""}${w !== null ? ` · <span class="${w < .1 ? "ok" : w < .3 ? "warn" : "bad"}">กล้องคลาดสูงสุด ${w.toFixed(2)} ม.</span>` : ""}</li>`; }).join("") : '<li class="muted">ยังไม่มี: ▭ วาด Reference บนแผนที่ หรือ ✚ สร้างจากกล้อง</li>');
+  setHTML($("drawList"), drawings.length ? drawings.map(dr => `<li><button class="small" data-pick="drawing:${dr.id}" style="border-color:${dr.color}">${esc(dr.name || { rect: "สี่เหลี่ยม", poly: "รูปทรง", line: "เส้น", text: "ข้อความ" }[dr.kind])}</button> ${{ rect: "สี่เหลี่ยม", poly: "รูปทรง", line: "เส้น/ผนัง", text: "ข้อความ" }[dr.kind]}</li>`).join("") : '<li class="muted">ยังไม่มี (▭ ⬠ ╱ T บนแถบเครื่องมือ: เป็นแค่ภาพ ไม่นับคน)</li>');
+  setHTML($("areaList"), areas.length ? areas.map(a => `<li><button class="small" data-pick="area:${a.id}">${esc(a.name)}</button> ${a.kind === "shop" ? "พื้นที่ร้าน" : "โซน"} · ${Math.abs(ringArea(a.pts)).toFixed(1)} ตร.ม.</li>`).join("") : '<li class="muted">ยังไม่มี (ไม่มีพื้นที่ร้าน = นับทุกคน)</li>');
+  const now = mapPeople ?? [];
+  $("peopleOut").textContent = stats.detections ? `ตอนนี้บนแผนที่ ${now.length} คน · ในร้าน ${now.filter(p => p.counted).length} · เห็นในร้านทั้งหมด ${everCounted.size} คน · ID จากกล้อง ${stats.raw.size} → คน ${stats.persons.size}${stats.gaps?.length ? ` · คนเดียวกันจากหลายกล้องห่างกัน (กลาง) ${median(stats.gaps).toFixed(2)} ม.` : ""}` : "ยังไม่ได้เล่น";
+}
+function draw() { cams.forEach(drawCam); drawMap(); lists(); cams.forEach(updateCard); }
+
+// ---------------- selection panel (rename, size, angle) ----------------
+const sidesText = r => r.pts.map((q, i) => `${i + 1}–${(i + 1) % r.pts.length + 1}: ${dist(q, r.pts[(i + 1) % r.pts.length]).toFixed(2)} ม.`).join(" · ");
+function renderSel() {
+  const el = $("sel");
+  if (selected?.type === "ref" && refById(selected.id)?.pts) { const r = refById(selected.id);
+    el.innerHTML = `<div class="row"><strong>Reference ${r.pts.length} มุม</strong> <input class="name" id="sName" value="${esc(r.name)}" aria-label="ชื่อ"> <button class="small" id="sDel">ลบ</button></div>
+      <div class="muted">ด้าน: <span id="sSides">${sidesText(r)}</span></div>
+      <label title="จากผังร้าน: x,y ของแต่ละมุม (เมตร) คั่นด้วย ; เช่น 0,0; 2,0; 2,1.5; 0,1.5">ตำแหน่งมุม (ม.) <input id="sPts" style="width:260px" value="${r.pts.map(q => `${+q[0].toFixed(2)},${+q[1].toFixed(2)}`).join("; ")}"></label>
+      <div class="muted">ลากจุดมุมเพื่อปรับรูป · ลากตัวเพื่อย้าย · หมุนที่วงกลม · มุม 1–2 = เส้นหนา</div>`;
+    $("sPts").onchange = e => { const p = e.target.value.split(";").map(s => s.split(",").map(Number)).filter(q => q.length === 2 && q.every(isFinite));
+      if (p.length < 1) return say("ใส่ตำแหน่ง x,y อย่างน้อย 1 จุด (หลายจุดคั่นด้วย ;)", "warn"); save(); r.pts = p; cams.forEach(c => c.fitKey = null); renderSel(); persist(); draw(); };
+    $("sName").oninput = e => { r.name = e.target.value || "ไม่มีชื่อ"; persist(); draw(); };
+    $("sDel").onclick = () => { save(); refs = refs.filter(x => x !== r); cams.forEach(c => c.links = c.links.filter(l => l.ref !== r.id)); selected = null; renderSel(); persist(); draw(); };
+  } else if (selected?.type === "ref") { const r = refById(selected.id); if (!r) { selected = null; return renderSel(); }
+    el.innerHTML = `<div class="row"><strong>Reference</strong> <input class="name" id="sName" value="${esc(r.name)}" aria-label="ชื่อ">
+      <label>ยาว (ขอบหน้า 1–2) <input type="number" id="sLen" step="0.05" min="0.1" value="${r.len.toFixed(2)}"> ม.</label>
+      <label>ลึก <input type="number" id="sDep" step="0.05" min="0.1" value="${r.dep.toFixed(2)}"> ม.</label>
+      <label>หมุน <input type="number" id="sAng" step="1" value="${Math.round(r.ang * 180 / Math.PI)}">°</label>
+      <label title="จุดกลางตามผังร้าน (เมตร)">กลาง x <input type="number" id="sCx" step="0.05" value="${r.cx.toFixed(2)}"> y <input type="number" id="sCy" step="0.05" value="${r.cy.toFixed(2)}"> ม.</label>
+      <label title="ถ้าของจริงไม่ใช่สี่เหลี่ยมพอดี: ใส่ x,y ของมุม 1–4 จากผังร้าน (เมตร) คั่นด้วย ; แล้วจะกลายเป็นรูปทรงตามที่ใส่">หรือตำแหน่งมุม (ม.) <input id="sPts" style="width:220px" placeholder="x,y; x,y; x,y; x,y"></label>
+      <button class="small" id="sFront" title="ให้อีกด้านเป็นด้านหน้า (เลขมุมขยับ การผูกกล้องปรับตามเอง)">↻ เปลี่ยนด้านหน้า</button> <button class="small" id="sDel">ลบ</button></div>
+      ${r.unplaced ? '<div class="warn">ยังไม่ได้วาง: ลากบนแผนที่ไปที่ตำแหน่งจริง (หรือกด <button class="small" id="sPlaced">✓ อยู่ตรงนี้แล้ว</button>)</div>' : ""}
+      <div class="muted">มุม 1 = หน้าซ้าย, 2 = หน้าขวา, 3 = หลังขวา, 4 = หลังซ้าย (เส้นหนา = ขอบหน้า 1–2) · ย่อ/ขยายที่สี่เหลี่ยมมุม · หมุนที่วงกลม</div>`;
+    $("sName").oninput = e => { r.name = e.target.value || "ไม่มีชื่อ"; persist(); draw(); };
+    const num = (id, f) => { $(id).onchange = e => { const v = +e.target.value; if (!isFinite(v)) return; save(); f(v); persist(); draw(); }; };
+    num("sLen", v => { r.len = Math.max(.1, v); delete r.sizeGuess; }); num("sDep", v => { r.dep = Math.max(.1, v); delete r.sizeGuess; }); num("sAng", v => r.ang = v * Math.PI / 180);
+    num("sCx", v => { r.cx = v; r.unplaced = false; }); num("sCy", v => { r.cy = v; r.unplaced = false; });
+    $("sPts").onchange = e => { const p = e.target.value.split(";").map(s => s.split(",").map(Number)).filter(q => q.length === 2 && q.every(isFinite));
+      if (p.length < 3) return say("ใส่อย่างน้อย 3 มุม: x,y; x,y; x,y", "warn"); save(); ["cx", "cy", "len", "dep", "ang", "unplaced"].forEach(k => delete r[k]); r.pts = p; // corner numbers stay 1..n
+      cams.forEach(c => c.fitKey = null); renderSel(); persist(); draw(); };
+    if ($("sPlaced")) $("sPlaced").onclick = () => { save(); r.unplaced = false; renderSel(); persist(); draw(); };
+    $("sFront").onclick = () => { save(); turnFront(r); renderSel(); persist(); draw(); };
+    $("sDel").onclick = () => { save(); refs = refs.filter(x => x !== r); cams.forEach(c => c.links = c.links.filter(l => l.ref !== r.id)); selected = null; renderSel(); persist(); draw(); };
+  } else if (selected?.type === "drawing") { const dr = drawings.find(x => x.id === selected.id); if (!dr) { selected = null; return renderSel(); }
+    el.innerHTML = `<div class="row"><strong>${{ rect: "สี่เหลี่ยม", poly: "รูปทรง", line: "เส้น/ผนัง", text: "ข้อความ" }[dr.kind]}</strong> <input class="name" id="sName" value="${esc(dr.name)}" aria-label="${dr.kind === "text" ? "ข้อความ" : "ชื่อ"}" placeholder="${dr.kind === "text" ? "ข้อความ" : "ชื่อ (ไม่ใส่ก็ได้)"}">
+      <label>สี <input type="color" id="sColor" value="${dr.color}"></label>
+      ${dr.kind === "text" ? `<label>ขนาด <input type="number" id="sSize" step="0.1" min="0.1" value="${dr.size ?? .5}"> ม.</label>` : dr.kind === "line" ? `<label>ความหนา <input type="number" id="sSize" step="0.05" min="0.02" value="${dr.width ?? .15}"> ม.</label>` : ""}
+      ${dr.closed ? '<button class="small" id="sZone" title="ให้รูปนี้นับคน (ย้ายไปเป็นพื้นที่)">→ เป็นโซน</button> <button class="small" id="sShop">→ เป็นพื้นที่ร้าน</button>' : ""}
+      <button class="small" id="sDel">ลบ</button></div><div class="muted">ภาพวาดเป็นแค่ภาพ ไม่มีผลกับกล้องหรือการนับคน · ลากเพื่อย้าย · ลากจุดเพื่อปรับรูป</div>`;
+    $("sName").oninput = e => { dr.name = e.target.value; persist(); draw(); };
+    $("sColor").oninput = e => { dr.color = e.target.value; persist(); draw(); };
+    if ($("sSize")) $("sSize").onchange = e => { const v = +e.target.value; if (!(v > 0)) return; save(); if (dr.kind === "text") dr.size = v; else dr.width = v; persist(); draw(); };
+    const toArea = kind => { save(); drawings = drawings.filter(x => x !== dr); const n = areas.filter(a => a.kind === kind).length + 1;
+      const a = { id: newId("a"), name: dr.name || (kind === "shop" ? "พื้นที่ร้าน" : `โซน ${n}`), kind, pts: dr.pts }; areas.push(a); pick("area", a.id); persist(); say(`${esc(a.name)} นับคนแล้ว`, "ok"); };
+    if ($("sZone")) { $("sZone").onclick = () => toArea("zone"); $("sShop").onclick = () => toArea("shop"); }
+    $("sDel").onclick = () => { save(); drawings = drawings.filter(x => x !== dr); selected = null; renderSel(); persist(); draw(); };
+  } else if (selected?.type === "area") { const a = areas.find(x => x.id === selected.id); if (!a) { selected = null; return renderSel(); }
+    el.innerHTML = `<div class="row"><strong>พื้นที่</strong> <input class="name" id="sName" value="${esc(a.name)}" aria-label="ชื่อ">
+      <select id="sKind"><option value="shop">พื้นที่ร้าน (นับคนเฉพาะในนี้)</option><option value="zone">โซน</option></select> <button class="small" id="sDel">ลบ</button></div><div class="muted">ลากจุดมุมบนแผนที่เพื่อปรับรูป</div>`;
+    $("sKind").value = a.kind;
+    $("sName").oninput = e => { a.name = e.target.value || "ไม่มีชื่อ"; persist(); draw(); };
+    $("sKind").onchange = e => { save(); a.kind = e.target.value; persist(); draw(); };
+    $("sDel").onclick = () => { save(); areas = areas.filter(x => x !== a); selected = null; renderSel(); persist(); draw(); };
+  } else el.innerHTML = '<span class="muted">คลิก Reference หรือพื้นที่บนแผนที่เพื่อตั้งชื่อ ขนาด มุม</span>';
+}
+// Same rectangle, next side becomes the front: corner numbers move round; every camera link follows the physical corner.
+function turnFront(r) {
+  const old = rectCorners(r); Object.assign(r, { ang: r.ang + Math.PI / 2, len: r.dep, dep: r.len }); const now = rectCorners(r);
+  const map = old.map(p => now.reduce((b, q, j) => dist(p, q) < dist(p, now[b]) ? j : b, 0));
+  cams.forEach(c => c.links.forEach(l => { if (l.ref !== r.id) return; if (l.kind === "corner") l.i = map[l.i]; else { const a = map[l.i], b = map[(l.i + 1) % 4]; l.i = (b === (a + 1) % 4) ? a : b; } }));
+}
+
+// ---------------- map interaction ----------------
+const atMap = e => { const q = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse()); return [q.x, q.y]; };
+const pick = (type, id) => { selected = { type, id }; if (type === "ref" && cams[activeCam]) { const c = cams[activeCam]; if (c.ui.ref !== id) { c.ui.ref = id; c.ui.mode = "link"; c.ui.arm = null; c.ui.sel = null; } } renderSel(); draw(); };
+svg.onpointerdown = e => {
+  const p = atMap(e), t = e.target.closest("[data-corner],[data-resize],[data-rvertex],[data-rotate],[data-vertex],[data-dvertex],[data-ref],[data-area],[data-drawing]"), d = t?.dataset ?? {};
+  svg.setPointerCapture(e.pointerId);
+  if (d.corner && tool === "select") { const [id, i] = d.corner.split(":"), c = cams[activeCam]; pick("ref", id);
+    if (c) { c.ui.ref = id; chooseCorner(c, +i); }
+    return draw(); }
+  if (d.resize && !layers.refs.lock) { const [id, i] = d.resize.split(":"), r = refById(id), k = rectCorners(r); drag = e.shiftKey ? { resize: r, fixed: k[(+i + 2) % 4], moved: false } : { freeCorner: r, j: +i, moved: false }; return; } /* a corner moves on its own to fit the layout (the rectangle becomes a 4-corner shape); Shift keeps it a rectangle */
+  if (d.rvertex && !layers.refs.lock) { const [id, j] = d.rvertex.split(":"); drag = { vertex: refById(id), j: +j, moved: false }; return; } // a polygon reference's corner (same as an area corner)
+  if (d.rotate && !layers.refs.lock) { const r = refById(d.rotate); drag = r.pts ? { rotPoly: r, c: centre(r), start: r.pts.map(q => [...q]), a0: Math.atan2(p[1] - centre(r)[1], p[0] - centre(r)[0]), moved: false } : { rotate: r, moved: false }; return; }
+  if (d.vertex && !layers.areas.lock) { const [id, j] = d.vertex.split(":"); drag = { vertex: areas.find(a => a.id === id), j: +j, moved: false }; return; }
+  if (d.dvertex && !layers.drawings.lock) { const [id, j] = d.dvertex.split(":"); drag = { vertex: drawings.find(x => x.id === id), j: +j, moved: false }; return; }
+  if (tool === "ref" && refN !== 4) { if (!draft || draft.kind !== "refpoly") draft = { kind: "refpoly", pts: [] }; draft.pts.push(p);
+    if (draft.pts.length < refN) { draw(); return say(`มุมที่ ${draft.pts.length}/${refN}`); }
+    save(); const r = { id: newId("r"), name: `Reference ${String.fromCharCode(65 + (refs.length % 26))}`, pts: draft.pts } /* numbered in the order clicked */; draft = null; refs.push(r); pick("ref", r.id); persist();
+    return say(`สร้าง ${esc(r.name)} (${refN} มุม) แล้ว · ลากจุดมุมเพื่อปรับ · ตั้งชื่อได้ที่แผงด้านล่าง`, "ok"); }
+  if (tool === "ref") { drag = { newRect: [p, p] }; return; }
+  if (tool === "dRect") { drag = { newDRect: [p, p] }; return; }
+  if (tool === "dText") { save(); const dr = { id: newId("d"), kind: "text", name: "ข้อความ", color: "#2a211b", size: Math.max(.3, view[2] / 30), pts: [p] }; drawings.push(dr); pick("drawing", dr.id); persist(); setTimeout(() => $("sName")?.select(), 0); return say("พิมพ์ข้อความที่แผงใต้แผนที่", "ok"); }
+  if (tool === "shop" || tool === "zone" || tool === "dPoly" || tool === "dLine") return addDraftPoint(p);
+  if (tool === "check") { check = p; showCheck(); return draw(); }
+  if (d.ref) { pick("ref", d.ref); if (!layers.refs.lock) { const r = refById(d.ref); drag = r.pts ? { moveArea: r, from: p, start: r.pts.map(q => [...q]), moved: false } : { move: r, from: p, start: [r.cx, r.cy], moved: false }; } return; }
+  if (d.drawing) { pick("drawing", d.drawing); if (!layers.drawings.lock) { const dr = drawings.find(x => x.id === d.drawing); drag = { moveArea: dr, from: p, start: dr.pts.map(q => [...q]), moved: false }; } return; }
+  if (d.area) { pick("area", d.area); if (!layers.areas.lock) { const a = areas.find(x => x.id === d.area); drag = { moveArea: a, from: p, start: a.pts.map(q => [...q]), moved: false }; } return; }
+  selected = null; renderSel(); drag = { pan: [e.clientX, e.clientY], view: [...view] }; draw();
+};
+svg.onpointermove = e => { if (!drag) return; const p = atMap(e);
+  if (drag.pan) { const k = svg.getScreenCTM().a; view = [drag.view[0] - (e.clientX - drag.pan[0]) / k, drag.view[1] - (e.clientY - drag.pan[1]) / k, view[2], view[3]]; return drawMap(); }
+  if (drag.newRect) { drag.newRect[1] = p; return drawMap(); }
+  if (drag.newDRect) { drag.newDRect[1] = p; return drawMap(); }
+  if (!("moved" in drag)) return;
+  if (!drag.moved) { save(); drag.moved = true; }
+  fitFrozen = !!(drag.move || drag.rotate || drag.resize || drag.rotPoly || drag.freeCorner || (drag.vertex && refs.includes(drag.vertex)) || (drag.moveArea && refs.includes(drag.moveArea)));
+  if (drag.move) { drag.move.cx = drag.start[0] + p[0] - drag.from[0]; drag.move.cy = drag.start[1] + p[1] - drag.from[1]; }
+  else if (drag.moveArea) drag.moveArea.pts = drag.start.map(q => [q[0] + p[0] - drag.from[0], q[1] + p[1] - drag.from[1]]);
+  else if (drag.vertex) drag.vertex.pts[drag.j] = p;
+  else if (drag.freeCorner) { const r = drag.freeCorner; if (!r.pts) { r.pts = rectCorners(r); for (const f of ["cx", "cy", "len", "dep", "ang"]) delete r[f]; renderSel(); } r.pts[drag.j] = p; }
+  else if (drag.rotate) { const r = drag.rotate; r.ang = Math.atan2(p[1] - r.cy, p[0] - r.cx) + Math.PI / 2; }
+  else if (drag.rotPoly) { const a = Math.atan2(p[1] - drag.c[1], p[0] - drag.c[0]) - drag.a0; drag.rotPoly.pts = drag.start.map(q => { const [x, y] = turn([q[0] - drag.c[0], q[1] - drag.c[1]], a); return [drag.c[0] + x, drag.c[1] + y]; }); }
+  else if (drag.resize) { const r = drag.resize, f = drag.fixed, [lx, ly] = turn([p[0] - f[0], p[1] - f[1]], -r.ang);
+    r.len = Math.max(.1, Math.abs(lx)); r.dep = Math.max(.1, Math.abs(ly)); delete r.sizeGuess; const [ox, oy] = turn([lx / 2, ly / 2], r.ang); r.cx = f[0] + ox; r.cy = f[1] + oy; }
+  draw(); if (drag.move || drag.rotate || drag.resize || drag.rotPoly || drag.freeCorner || (drag.vertex && drag.vertex.pts && refs.includes(drag.vertex))) renderSelValues(); };
+svg.onpointerup = () => { const d = drag; drag = null; fitFrozen = false; if (!d) return;
+  const placedNow = [d.move, d.rotate, d.resize, d.moveArea, d.rotPoly, d.freeCorner].find(r => r?.unplaced && d.moved); if (d.freeCorner && d.moved) { renderSel(); persist(); }
+  if (placedNow) { placedNow.unplaced = false; say(`วาง ${esc(placedNow.name)} แล้ว · กล้องที่คลิกมุมของมันผูกผ่านมันได้แล้ว (ลาก/หมุนต่อได้ กล้องตามเอง)`, "ok"); renderSel(); }
+  if (d.newRect) { const [a, b] = d.newRect, w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+    if (w >= .1 && h >= .1) { save(); const r = { id: newId("r"), name: `Reference ${String.fromCharCode(65 + (refs.length % 26))}`, cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2, len: w, dep: h, ang: 0 };
+      refs.push(r); pick("ref", r.id); say(`สร้าง ${esc(r.name)} แล้ว: ตั้งชื่อ/ขนาดจริงได้ที่แผงใต้แผนที่ · เส้นหนา = ขอบหน้า (มุม 1–2)`, "ok"); } }
+  if (d.newDRect) { const [a, b] = d.newDRect;
+    if (Math.abs(b[0] - a[0]) >= .1 && Math.abs(b[1] - a[1]) >= .1) { save(); const dr = { id: newId("d"), kind: "rect", closed: true, name: "", color: "#8a6d5a", pts: [a, [b[0], a[1]], b, [a[0], b[1]]] };
+      drawings.push(dr); pick("drawing", dr.id); say("วาดแล้ว · ตั้งชื่อ/สีได้ที่แผงใต้แผนที่ · ลากจุดมุมเพื่อปรับรูป", "ok"); } }
+  persist(); draw(); };
+const renderSelValues = () => { const r = selected?.type === "ref" && refById(selected.id); if (r?.pts && $("sSides")) { $("sSides").textContent = sidesText(r); return; } if (!r || !$("sLen")) return; $("sLen").value = r.len.toFixed(2); $("sDep").value = r.dep.toFixed(2); $("sAng").value = Math.round(r.ang * 180 / Math.PI); };
+svg.addEventListener("wheel", e => { e.preventDefault(); zoomAt(atMap(e), e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
+svg.ondblclick = () => { if (draft) closeDraft(); };
+function zoomAt(p, f) { const [vx, vy, vw, vh] = view; if ((vw < 1 && f < 1) || (vw > 400 && f > 1)) return; view = [p[0] - (p[0] - vx) * f, p[1] - (p[1] - vy) * f, vw * f, vh * f]; persist(); drawMap(); }
+$("zin").onclick = () => zoomAt([view[0] + view[2] / 2, view[1] + view[3] / 2], 1 / 1.3);
+$("zout").onclick = () => zoomAt([view[0] + view[2] / 2, view[1] + view[3] / 2], 1.3);
+$("zfit").onclick = () => fitView();
+$("mapFull").onclick = () => toggleFull($("mapBox"));
+function fitView() {
+  const pts = [...refs.flatMap(corners), ...areas.flatMap(a => a.pts), ...drawings.flatMap(d => d.pts), ...cams.flatMap(c => [...(coverage(c) ?? []), ...(camFit(c).pos && coverage(c) && dist(camFit(c).pos, mean(coverage(c))) < 60 ? [camFit(c).pos] : [])]), ...Object.values(trails).flat()];
+  if (!pts.length) { view = [-6, -5, 12, 10]; return draw(); }
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), b = [Math.min(...xs) - 1, Math.min(...ys) - 1, Math.max(...xs) + 1, Math.max(...ys) + 1];
+  const aspect = svg.clientHeight / Math.max(1, svg.clientWidth) || .8, w = Math.max(3, b[2] - b[0], (b[3] - b[1]) / aspect);
+  view = [(b[0] + b[2]) / 2 - w / 2, (b[1] + b[3]) / 2 - w * aspect / 2, w, w * aspect]; persist(); draw();
+}
+document.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => { if (b.dataset.tool === "ref" && !b._asked) { askCorners(b, n => { refN = n; b._asked = true; b.click(); b._asked = false; }); return; } tool = b.dataset.tool; draft = null;
+  document.querySelectorAll("[data-tool]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+  say({ select: "คลิกเลือก/ลากย้าย · ลากพื้นว่าง = เลื่อน · ล้อเมาส์ = ซูม · คลิกเลขมุม = เลือกมุมที่จะคลิกในกล้อง", ref: "ลากกรอบบนแผนที่ = Reference ใหม่",
+    shop: "คลิกมุมพื้นที่ร้านบนแผนที่ (หรือบนพื้นในกล้องที่ผูกแล้ว) · ปิดรูป: คลิกจุดแรก ดับเบิลคลิก หรือ Enter", zone: "คลิกมุมโซนบนแผนที่หรือในกล้อง · ปิดรูป: คลิกจุดแรก ดับเบิลคลิก หรือ Enter",
+    check: "คลิกบนแผนที่หรือในกล้องที่ผูกแล้ว: กรอบชมพู 60 ซม. ขึ้นที่จุดเดียวกันทุกที่", dRect: "ลากบนแผนที่ = สี่เหลี่ยม (ภาพ)", dPoly: "คลิกมุม · ปิดรูป: คลิกจุดแรก ดับเบิลคลิก หรือ Enter",
+    dLine: "คลิกจุด · จบเส้น: ดับเบิลคลิก หรือ Enter", dText: "คลิกตำแหน่งข้อความบนแผนที่" }[tool] ?? ""); if (tool === "ref") say(refN === 4 ? "ลากกรอบบนแผนที่ = Reference 4 มุม" : `คลิก ${refN} มุมบนแผนที่ = Reference ${refN} มุม (วนรอบ) · Esc = ยกเลิก`); draw(); });
+let refN = 4;
+function applySetup() { document.body.classList.toggle("mapmode", !setup); $("setupBtn").textContent = setup ? "✓ เสร็จการตั้งค่า" : "🔧 ตั้งค่ากล้อง/Reference";
+  if (!setup && (tool === "ref")) document.querySelector('[data-tool="select"]').click();
+  if (!setup && selected?.type === "ref") { selected = null; renderSel(); } draw(); }
+$("setupBtn").onclick = () => { setup = !setup; persist(); applySetup(); say(setup ? "โหมดตั้งค่า: Reference เลขมุม และการผูกกล้องแสดงอยู่" : "โหมดแผนที่: Reference และการผูกกล้องถูกซ่อนและล็อกไว้ (ยังทำงานอยู่) · วาดแผนที่ได้ตามใจ · กด 🔧 เพื่อกลับไปตั้งค่า", "ok"); };
+document.querySelectorAll("[data-layer]").forEach(b => { b.checked = layers[b.dataset.layer].show; b.onchange = () => { layers[b.dataset.layer].show = b.checked; persist(); draw(); }; });
+document.querySelectorAll("[data-lock]").forEach(b => { b.checked = layers[b.dataset.lock].lock; b.onchange = () => { layers[b.dataset.lock].lock = b.checked; persist(); draw(); }; });
+document.addEventListener("click", e => { const b = e.target.closest("[data-pick]"); if (!b) return; const [type, id] = b.dataset.pick.split(":"); pick(type, id); });
+
+// ---------------- areas (drawn on the map, or on the floor in a tied camera) ----------------
+function addDraftPoint(p) {
+  if (!draft || draft.kind !== tool) draft = { kind: tool, pts: [] };
+  if (draft.kind !== "dLine" && draft.pts.length >= 3 && dist(p, draft.pts[0]) < view[2] / 40) return closeDraft();
+  draft.pts.push(p); draw(); say(draft.kind === "dLine" ? `จุดที่ ${draft.pts.length} · จบเส้น: ดับเบิลคลิก หรือ Enter · Esc = ยกเลิก` : `มุมที่ ${draft.pts.length} · ปิดรูป: คลิกจุดแรก ดับเบิลคลิก หรือ Enter · Esc = ยกเลิก`);
+}
+function closeDraft() {
+  if (!draft) return;
+  if (draft.kind === "dLine" || draft.kind === "dPoly") { const line = draft.kind === "dLine", pts = draft.pts.filter((q, i, a) => !i || dist(q, a[i - 1]) > 1e-6);
+    if (pts.length < (line ? 2 : 3)) return say(line ? "ต้องมีอย่างน้อย 2 จุด" : "ต้องมีอย่างน้อย 3 มุม", "warn");
+    save(); const dr = { id: newId("d"), kind: line ? "line" : "poly", closed: !line, name: "", color: line ? "#5a4636" : "#8a6d5a", width: .15, pts }; drawings.push(dr); draft = null; pick("drawing", dr.id); persist();
+    return say("วาดแล้ว · ตั้งชื่อ/สีได้ที่แผงใต้แผนที่", "ok"); }
+  if (draft.pts.length < 3) return say("ต้องมีอย่างน้อย 3 มุม", "warn");
+  save(); const n = areas.filter(a => a.kind === draft.kind).length + 1;
+  const a = { id: newId("a"), name: draft.kind === "shop" ? (n > 1 ? `พื้นที่ร้าน ${n}` : "พื้นที่ร้าน") : `โซน ${n}`, kind: draft.kind, pts: draft.pts };
+  areas.push(a); draft = null; pick("area", a.id); persist(); say(`เพิ่ม${esc(a.name)}แล้ว · ตั้งชื่อได้ที่แผงใต้แผนที่`, "ok");
+}
+function showCheck() {
+  const near = refs.map(r => ({ r, d: dist(centre(r), check) })).sort((a, b) => a.d - b.d)[0], inA = areas.filter(a => inside(check, a.pts)).map(a => a.name);
+  const seenBy = cams.filter(c => { const f = camFit(c); if (!f.H || !c.frame) return false; const q = toCam(c, [check]); return q && q[0][0] >= 0 && q[0][1] >= 0 && q[0][0] <= c.canvas.width && q[0][1] <= c.canvas.height; }).map(c => c.name);
+  $("checkOut").textContent = `จุดที่เลือก (${check[0].toFixed(2)}, ${check[1].toFixed(2)}) ม.${near ? ` · ห่างกลาง ${near.r.name} ${near.d.toFixed(2)} ม.` : ""}${inA.length ? " · " + inA.join(", ") : ""} · กล้องที่เห็น: ${seenBy.join(", ") || "ไม่มี"}`;
+}
+
+// ---------------- people: every camera -> one map ----------------
+// the same person from two cameras: within TRACK.mergeM on the map (TRACK.keepM if they were joined before)
+// ---- learning from people (collected while playing; nothing changes until the user clicks) ----
+function collectSamples(seen) {
+  const t = performance.now(), good = new Set(cams.map((c2, i) => { const f2 = camFit(c2); return f2.H && !weakFit(f2) && !f2.byLook ? i : -1; }).filter(i => i >= 0));
+  for (const p of seen) {
+    for (const [ci, i] of p.src) { const c = cams[ci], b = c?.people[i]?.box; if (!b || c.people[i].hidden) continue;
+      const edge = b[1] < 2 || b[3] > c.canvas.height - 3 || b[0] < 2 || b[2] > c.canvas.width - 2, tall = (b[3] - b[1]) > 1.6 * (b[2] - b[0]);
+      if (!edge && tall) { c.samples.heights.push({ foot: [(b[0] + b[2]) / 2, b[3]], head: [(b[0] + b[2]) / 2, b[1]] }); if (c.samples.heights.length > 400) c.samples.heights.shift(); }
+      const others = p.floors.filter(f => f.ci !== ci && good.has(f.ci)); /* only cameras tied from clicks: B3-18 run (T7) turned a good cam0 toward a people-tied cam1 that was 0.46 m off (joint 0.69 -> 2.13 m) */ if (edge || !others.length) continue;
+      c.samples.pairs.push({ x: [(b[0] + b[2]) / 2, b[3]], X: mean(others.map(f => f.floor)), t }); if (c.samples.pairs.length > 600) c.samples.pairs.shift(); } }
+}
+const OFFER_FOOT_TUNE = false;
+// ...but offered when a camera clearly disagrees with the others (people > 0.35 m apart): B1-01 run 3 (4-corner ties 0.4 m off):
+// alignment 0.37 -> 0.32 m, false people 0.68 -> 0.1 per frame, ids per person 1.67 -> 1.17. Well-tied cameras (EPFL samples,
+// 0.06 m) disagree by less, so they are not offered it.
+const FOOT_TUNE_FROM = .35, FOOT_TUNE_MIN_RMS = .25; // ...and never for a camera whose clicks already fit within 0.25 m (B1-01 run 6: 0.19 m tie re-fitted to 0.53 m off)
+function tuneWeak(c, f) { // badly tied camera: people matched by appearance (RANSAC: most pairs that agree), then a real camera fitted
+  const S0 = c.samples.look ?? []; if (S0.length < 24) return null;
+  const ransac = S => { let seed = 12345; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648; let best = null;
+    for (let it = 0; it < 300; it++) { const idx = new Set(); while (idx.size < 4) idx.add(Math.floor(rnd() * S.length)); const sub = [...idx].map(i => S[i]);
+      let H; try { H = fitH(sub.map(s => s.x), sub.map(s => s.X)); } catch { continue; } if (!H || H.some(v => !isFinite(v))) continue; // degenerate pick (points in a line)
+      const inl = S.filter(s => dist(proj(H, s.x), s.X) < .6); if (!best || inl.length > best.length) best = inl; } return best; };
+  // the camera's video may run ahead or behind the others (B3-20: one camera 1 s off): the same person then stands somewhere else
+  // in the other cameras at that moment. Try time shifts; keep 0 unless another one clearly makes more people agree.
+  let best = ransac(S0), shift = 0, alt = null, altD = 0; const Sc = S0.filter(s => s.ep === histEpoch && s.pid !== undefined), n0 = Sc.length >= 24 ? ransac(Sc)?.length ?? 0 : 0;
+  if (Sc.length >= 24) for (let d = -2; d <= 2.001; d += .25) { if (Math.abs(d) < .01) continue; // this play only: map numbers restart on each play
+    const S = Sc.map(s => { const X = posAt(s.pid, s.t + d * 1000); return X && { ...s, X }; }).filter(Boolean); if (S.length < 24) continue;
+    const b = ransac(S); if (b && b.length > (alt?.length ?? 0)) { alt = b; altD = +d.toFixed(2); } }
+  if (alt) for (const d of [altD - .125, altD + .125]) { // finer step around the best (0.25 s of walking is ~0.3 m)
+    const S = Sc.map(s => { const X = posAt(s.pid, s.t + d * 1000); return X && { ...s, X }; }).filter(Boolean); const b = S.length >= 24 ? ransac(S) : null;
+    if (b && b.length > alt.length) { alt = b; altD = +d.toFixed(3); } }
+  if (alt && alt.length > Math.max(1.3 * n0, n0 + 8)) { best = alt; shift = altD; }
+  const S = shift ? Sc : S0; if (!best || best.length < Math.max(12, .4 * S.length)) return null; // shifted pairs exist for this play only
+  // the people alone: on B1-01 the clicked corners of such a camera were the doubtful part (2-4 m off once people tied it)
+  // a camera not tied yet may still have a few clicked corners/edges (too few to tie it alone): they anchor the people (B3-20 run 4:
+  // people-only ties chained across cameras drifted 0.6-0.8 m). A weak camera's clicks were the doubtful part: left out.
+  const own = f.H ? { P: [], Ls: [] } : linkObs(c.links), CW = 3;
+  const s2 = solve({ P: [...best.map(q => ({ x: q.x, X: q.X, w: 1, robust: true })), ...own.P.map(o => ({ ...o, w: CW * o.w }))], Ls: own.Ls.map(o => ({ ...o, w: CW * o.w })) }, c.canvas.width, c.canvas.height, c.pp, { level: c.level, height: c.camH, people: [], robust: 15 });
+  if (f.byLook && (best.length < Math.max(60, 1.5 * (c.tune?.n ?? 0)) || (f.height > 0 && Math.abs(s2.height / f.height - 1) > .35))) return null; /* a refit needs clearly more pairs than the tie it replaces: B3-20 cam3 refit from a few cam0-only pairs went 0.29 -> 0.50 m off */ /* a refit that moves a people-tied camera up or down by more than a third is a different camera, not a correction (B3-20 run 8: cam2 1.63 -> 3.06 m took it from 0.21 to 0.78 m off) */ if (!s2.H || !s2.model || !(s2.height >= 1.2 && s2.height <= 8)) return null; /* above 8 m is no store camera either (B3-20 run: cam3 tied at 16.5 m, wrong) -  a camera this low cannot see people from above: such a tie is wrong (B1-10: 0.46-0.65 m; terrace tripods are ~1.7 m) */
+  const base = f.H ? median(best.map(s => dist(proj(f.H, s.x), s.X))) : null, to = median(best.map(s => dist(proj(s2.H, s.x), s.X))); // same pairs before / after (none: camera not tied yet)
+  const off = c.links.filter(l => l.kind === "corner" && !refById(l.ref)?.unplaced).map(l => ({ l, e: dist(proj(s2.H, l.x), corners(refById(l.ref))[l.i]) })).filter(o => o.e > .6);
+  return { shift, n: best.length, pts: best.map(q => ({ x: q.x, X: q.X })), from: base, to, H: (base === null ? to <= .35 : to < .7 * base) ? s2.H : null, base, recent: base, moved: false, weak: true, byLook: true, height: s2.height, cam: s2.cam, off };
+}
+// A camera whose floor has the right shape but is turned/shifted against the others (B1-01 run 4: one camera turned 17°) is fixed
+// best by turning the whole floor (4 values) to match the people the other cameras see, not by re-fitting the camera.
+function simFit2(A, B) { const ma = mean(A), mb = mean(B); let nr = 0, ni = 0, den = 0;
+  A.forEach((p, k) => { const u = [p[0] - ma[0], p[1] - ma[1]], v = [B[k][0] - mb[0], B[k][1] - mb[1]]; nr += u[0] * v[0] + u[1] * v[1]; ni += u[0] * v[1] - u[1] * v[0]; den += u[0] ** 2 + u[1] ** 2; });
+  const a = [nr / den, ni / den]; return { a, b: [mb[0] - (a[0] * ma[0] - a[1] * ma[1]), mb[1] - (a[0] * ma[1] + a[1] * ma[0])] }; }
+const simApply = (T, p) => [T.a[0] * p[0] - T.a[1] * p[1] + T.b[0], T.a[0] * p[1] + T.a[1] * p[0] + T.b[1]];
+function alignSuggest(c, f) {
+  const S = c.samples.pairs; if (!f.H || S.length < 60) return null;
+  const Y = S.map(s => proj(f.H, s.x)), X = S.map(s => s.X); let keep = S.map((_, i) => i), T = null;
+  for (let pass = 0; pass < 3; pass++) { T = simFit2(keep.map(i => Y[i]), keep.map(i => X[i])); const r = keep.map(i => dist(simApply(T, Y[i]), X[i])), cut = [...r].sort((p, q) => p - q)[Math.floor(r.length * .7)]; keep = keep.filter((_, k) => r[k] <= cut); }
+  const base = median(Y.map((y, i) => dist(y, X[i]))), to = median(Y.map((y, i) => dist(simApply(T, y), X[i])));
+  const ctr = mean(Y), shift = dist(simApply(T, ctr), ctr), rot = Math.atan2(T.a[1], T.a[0]) * 180 / Math.PI;
+  // well-tied cameras differ by box-bottom bias only (shift up to ~0.4 m, turn < 2°): not offered
+  if (Math.abs(rot) > 30) return null; /* a floor turned more than 30° is a wrong tie or wrong pairs, not a small misalignment (B2-14: -53° made cam1 2.07 m off; B3-18: -17..20° offers on a good cam0) */
+  return (Math.abs(rot) >= 6 || shift >= .5) && to <= .35 && to <= .6 * base ? { T, from: base, to, rot, shift } : null;
+}
+// "sync people" button: how far the matching of this camera's people with the other cameras has got
+function syncState(c) { const f = camFit(c), good = f.H && !weakFit(f) && !f.byLook, n = good ? c.samples.pairs.length : (c.samples.look ?? []).length, need = good ? 40 : f.byLook ? Math.max(60, Math.ceil(1.5 * (c.tune?.n ?? 0))) : 24; /* same minimums as tuneSuggest / tuneWeak (a refit of a people tie needs clearly more pairs than that tie) */
+  const msg = !n ? "ยังไม่มีคนที่เห็นพร้อมกันในกล้องนี้กับกล้องอื่น · กด ▶ เล่นวิดีโอให้คนเดินผ่านบริเวณที่สองกล้องเห็นร่วมกัน" : n < need ? `เก็บคู่คนได้ ${n}/${need} · เล่นวิดีโอต่ออีกสักพักแล้วกดใหม่` : c.sugg && c.sugg.to !== undefined ? (c.sugg.from === null || c.sugg.from === undefined ? `มีคู่คน ${n} คู่ แต่ยังตรงกันไม่พอ: คนห่างกันเฉลี่ย ${c.sugg.to.toFixed(2)} ม. (ต้องไม่เกิน 0.35) · เล่นต่อ หรือคลิกจุดบนพื้นในกล้องนี้ 2-3 จุดช่วย` : `มีคู่คน ${n} คู่ ปรับแล้วได้ ${c.sugg.from.toFixed(2)} → ${c.sugg.to.toFixed(2)} ม. ซึ่งดีขึ้นไม่พอ จึงไม่เปลี่ยน`)
+    : `มีคู่คน ${n} คู่ แต่คู่ที่ตรงกันมีน้อยเกินไป หรือความสูงกล้องที่คำนวณได้ดูไม่น่าใช่ จึงไม่เปลี่ยน`;
+  return { n, need, msg }; }
+function applyTune(c, auto = false) { save(); const sg = c.sugg; if (sg.shift) { c.offset = +(c.offset - sg.shift).toFixed(2); c.el.querySelector(".offset").value = c.offset; c.samples.look = []; }
+  c.tune = { n: sg.n, pts: sg.pts, byLook: !!sg.byLook, H: sg.byLook ? sg.H : undefined, height: sg.height, cam: sg.cam }; c.sugg = null; c.preview = false;
+  say(`${esc(c.name)}: ${auto ? "⇄ ซิงค์อัตโนมัติ ผูกจากคนเดินแล้ว" : "ปรับจากคนเดินแล้ว"} (คลาด ${sg.to.toFixed(2)} ม.) · Ctrl+Z = ย้อนกลับ`, "ok"); }
+/* auto sync: while on, every suggestion round (60 detections, ~7.5 s of video in steady mode) each camera that is not tied from clicks
+   takes its people tie, but only when two rounds in a row agree (same error within 0.1 m, same height within 10 %): one lucky round
+   of wrong matches cannot move a camera. Cameras tied from clicks are the anchors and never change. 3 quiet rounds = steady. */
+var autoSync = false, autoSteady = false; /* var + function: the camera cards may be drawn before this line runs */
+function syncAnchor(c) { const f = camFit(c); return !!f.H && !weakFit(f) && !f.byLook; }
+function autoSyncStep() {
+  if (!cams.some(syncAnchor)) { if (!autoSteady) say("⇄ ซิงค์อัตโนมัติ: ต้องมีกล้องที่ผูกจากจุดที่คลิกอย่างน้อย 1 ตัวเป็นหลักอ้างอิง"); autoSteady = true; return; }
+  let busy = 0; const stuck = [];
+  for (const c of cams) { if (syncAnchor(c)) continue; const s = c.sugg, p = c.autoPend;
+    if (s?.H) { busy++; c.autoQuiet = 0;
+      if (p && Math.abs(p.to - s.to) < .1 && Math.abs(s.height / p.height - 1) < .1) { c.autoPend = null; applyTune(c, true); } else c.autoPend = { to: s.to, height: s.height }; }
+    else { c.autoPend = null; c.autoQuiet = (c.autoQuiet ?? 0) + 1; if (c.autoQuiet < 3) busy++; else if (!camFit(c).H) stuck.push(c.name); } }
+  const was = autoSteady; autoSteady = !busy;
+  if (autoSteady && !was) say(`⇄ ซิงค์อัตโนมัติ: นิ่งแล้ว${stuck.length ? ` · ยังซิงค์ไม่ได้: ${stuck.map(esc).join(", ")} (คนที่เห็นร่วมกับกล้องอื่นน้อยหรือไม่ตรงกัน: คลิกจุดบนพื้น 2-3 จุดช่วย)` : " ทุกกล้อง"}`, stuck.length ? "" : "ok"); }
+function autoSyncLabel(c) { if (!autoSync) return ""; if (syncAnchor(c)) return " · หลักอ้างอิง (ไม่เปลี่ยน)"; if (c.autoPend) return " · พบผล รอยืนยันรอบถัดไป";
+  return (c.autoQuiet ?? 0) >= 3 ? (camFit(c).H ? " · นิ่งแล้ว" : " · ยังซิงค์ไม่ได้") : " · กำลังเก็บคู่คน"; }
+document.addEventListener("click", e => { if (e.target.id !== "autoSync") return; autoSync = !autoSync; autoSteady = false; cams.forEach(c => { c.autoPend = null; c.autoQuiet = 0; });
+  e.target.setAttribute("aria-pressed", autoSync); e.target.textContent = `⇄ ซิงค์คนอัตโนมัติ: ${autoSync ? "เปิด" : "ปิด"}`;
+  say(autoSync ? "⇄ ซิงค์อัตโนมัติเปิด: กด ▶ เล่นวิดีโอ ให้คนเดินผ่านบริเวณที่กล้องเห็นร่วมกัน ระบบจะผูกกล้องให้เองจนนิ่ง" : "⇄ ซิงค์อัตโนมัติปิด"); draw(); });
+function tuneSuggest(c) {
+  { const f = camFit(c); c.suggAlign = f.H && !weakFit(f) ? alignSuggest(c, f) : null; }
+  const f0 = camFit(c); if (!f0.H || weakFit(f0) || f0.byLook) { const w = tuneWeak(c, f0); if (w || !f0.H) return c.sugg = w; }
+  const f = camFit(c), S = c.samples.pairs; if (!f.H || S.length < 40) return c.sugg = null;
+  const off = H => S.map(s => dist(proj(H, s.x), s.X)), base = median(off(f.H)), recent = median(off(f.H).slice(-40));
+  // even spread: at most 150 points, every n-th
+  const step = Math.max(1, Math.floor(S.length / 150)), pts = S.filter((_, i) => i % step === 0).map(s => ({ x: s.x, X: s.X }));
+  const obs = linkObs(c.links); obs.P.push(...pts.map(q => ({ ...q, w: TUNE_W, l: TUNE_L })));
+  const weak = weakFit(f), poseOpt = { level: c.level, height: c.camH, people: c.peopleH ?? [] };
+  let s2 = solve(obs, c.canvas.width, c.canvas.height, c.pp, f.assumed || weak ? poseOpt : null); if (!s2.H && weak) s2 = solve(obs, c.canvas.width, c.canvas.height, c.pp, null);
+  // a weak camera's own clicks are the doubtful part (guessed corners outside the picture): only the ones inside the picture must still fit
+  // the clicked corners may get only a little worse (rms + 0.15 m): a well-tied camera whose people disagree only because box bottoms
+  // differ between views (B1-01 with perfect corners: 0.01 -> 0.32 m) is left alone, a 0.2-0.35 m tie may move (B1-01 runs 3-4)
+  const L = linkObs(c.links).P, cornerRms = H => Math.sqrt(L.reduce((t, o) => t + dist(proj(H, o.x), o.X) ** 2, 0) / Math.max(1, L.length));
+  const linkOk = s2.H && (weak ? L.filter(o => !outside(c, o.x)).every(o => dist(proj(s2.H, o.x), o.X) < .5) : cornerRms(s2.H) <= f.rms + .15);
+  const to = s2.H ? median(off(s2.H)) : Infinity;
+  // Not offered as a fix: on EPFL truth, fitting cameras to each other's feet made camera 2 worse (box bottoms differ between views
+  // by up to ~0.3 m depending on the direction, and all matches sit in the shared floor). Kept for the agreement figure and the
+  // "camera moved" warning. Set OFFER_FOOT_TUNE = true to try it again.
+  c.sugg = { n: pts.length, pts, from: base, to, H: (OFFER_FOOT_TUNE || weak || (base > FOOT_TUNE_FROM && f.rms > FOOT_TUNE_MIN_RMS)) && linkOk && to < .8 * base && base - to > .04 ? s2.H : null, weak, base, recent, moved: S.length >= 80 && recent > Math.max(.7, 2.5 * base) };
+}
+const trimmedHeights = c => { const hs = c.samples.heights, step = Math.max(1, Math.floor(hs.length / 80)); return hs.filter((_, i) => i % step === 0).slice(0, 80); };
+const HEAD_M = 1.7; // a person's height, for people whose feet are hidden
+// A camera whose clicks do not fit a real camera, or fit it badly, places people off (B1-01 run 2: one such camera put 3 extra
+// people on the map). Its sightings may only join people a well-tied camera found where a well-tied camera sees the floor.
+const weakFit = f => !!f.H && (!!f.notReal || f.rms > .45);
+const goodSees = (c, X) => cams.some(g => { if (g === c || !g.frame) return false; const f = camFit(g); if (!f.H || weakFit(f)) return false;
+  const q = toCam(g, [X]); return !!q && q.length === 1 && q[0][0] >= 0 && q[0][1] >= 0 && q[0][0] <= g.canvas.width && q[0][1] <= g.canvas.height; });
+// The head height that puts a fully visible person's head over their feet, through this camera's fit. Not always 1.7 m: on a
+// cropped view the optical centre is not the picture centre and the plan's metre scale may be estimated (B3-16: 2.8 for both
+// cameras, so hidden people were placed 6-10 m off with 1.7). Learned from people whose feet are visible; 1.7 until enough.
+function impliedHeadZ(fit, b) {
+  const foot = proj(fit.H, [(b[0] + b[2]) / 2, b[3]]), u = [(b[0] + b[2]) / 2, b[1]];
+  const e = z => { const p = proj(headToFloor(fit.cam, z), u); return isFinite(p[0]) && isFinite(p[1]) ? dist(p, foot) : 1e9; };
+  let lo = Math.log(.5), hi = Math.log(8);
+  for (let k = 0; k < 30; k++) { const a = lo + (hi - lo) * .382, d = lo + (hi - lo) * .618; if (e(Math.exp(a)) < e(Math.exp(d))) hi = d; else lo = a; }
+  const z = Math.exp((lo + hi) / 2); return e(z) < .5 ? z : null; }
+function learnHeadZ(c, fit) {
+  if (c.headFor !== fit) { c.headFor = fit; c.headZs = []; c.headZ = null; } // new ties: start again
+  if (!fit.cam || stats.detections % 3) return;
+  for (const p of c.people) { const b = p.box; if (b[1] < 2 || b[3] > c.canvas.height - 3 || b[0] < 2 || b[2] > c.canvas.width - 2) continue;
+    if (c.people.some(o => o !== p && Math.min(o.box[2], b[2]) - Math.max(o.box[0], b[0]) > 0 && Math.min(o.box[3], b[3]) - Math.max(o.box[1], b[1]) > 0)) continue; // alone in the picture
+    const z = impliedHeadZ(fit, b); if (z !== null) { c.headZs.push(z); if (c.headZs.length > 200) c.headZs.shift(); } }
+  if (c.headZs.length >= 15) { const z = median(c.headZs); if (c.headZ === null || Math.abs(z - c.headZ) > .05) { c.headZ = z; fit.headH = null; } } }
+function classifyCam(c, ci) {
+  const fit = camFit(c), H = fit.H, shops = areas.filter(a => a.kind === "shop"), weak = weakFit(fit);
+  if (H) learnHeadZ(c, fit);
+  if (fit.cam && !fit.headH) fit.headH = headToFloor(fit.cam, c.headZ ?? HEAD_M);
+  const over = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  return c.people.map((p, i) => { const b = p.box, w = b[2] - b[0], area = w * (b[3] - b[1]);
+    // feet hidden behind someone standing nearer (their box reaches lower and covers this box's bottom): the box bottom is not the
+    // feet (B1-01 truth: such detections are up to 4.5 m off). Use the head through the fitted camera instead, as a rough sighting.
+    const hidden = c.people.some((o, j) => j !== i && o.box[3] > b[3] + 3 && Math.min(o.box[2], b[2]) - Math.max(o.box[0], b[0]) > .3 * w && o.box[1] < b[3]);
+    const foot = [(b[0] + b[2]) / 2, b[3]], floor = !H ? null : hidden && fit.headH ? proj(fit.headH, [(b[0] + b[2]) / 2, b[1]]) : proj(H, foot);
+    const clear = !!p.look && c.people.every((o, j) => j === i || over(p.box, o.box) < .1 * area); // nobody in front: colours are this person's
+    const embOk = !!p.emb && !hidden && c.people.every((o, j) => j === i || over(b, o.box) < .3 * area); // vector mostly of this person
+    p.hidden = hidden; const weakSeen = weak && !!floor && goodSees(c, floor);
+    return { ...p, foot, floor, rough: hidden, weakSeen, clear, embOk, looks: clear ? [p.look] : [], counted: !!floor && (!shops.length || shops.some(a => inside(floor, a.pts))), zones: floor ? areas.filter(a => a.kind === "zone" && inside(floor, a.pts)).map(a => a.name) : [],
+      keys: [p.id === undefined ? undefined : `${c.id}:${p.id}`], src: [[ci, i]], floors: floor && !hidden && !weak ? [{ ci, floor }] : [] }; }); // floors: trusted spots, for the agreement figure and people-based tuning
+}
+function merge(a, b) {
+  const cand = [], pidOf = keys => keys.map(k => rawToPid[k]).filter(x => x !== undefined);
+  a.forEach((p, i) => b.forEach((q, j) => { if (!p.floor || !q.floor) return; const d = dist(p.floor, q.floor), before = pidOf(p.keys).some(x => pidOf(q.keys).includes(x));
+    const sim = lookSim(p.look, q.look); if (!before && sim !== null && sim < LOOK_DIFF) return; // clearly different clothes
+    if (d <= (before ? TRACK.keepM : TRACK.mergeM)) cand.push({ i, j, d: (before ? d / 2 : d) + (sim === null ? 0 : (1 - sim) * .5) }); }));
+  const usedA = new Set(), usedB = new Set(), out = [];
+  for (const c of cand.sort((x, y) => x.d - y.d)) { if (usedA.has(c.i) || usedB.has(c.j)) continue; usedA.add(c.i); usedB.add(c.j);
+    const p = a[c.i], q = b[c.j]; (stats.gaps ??= []).push(dist(p.floor, q.floor));
+    const floors = [...p.floors, ...q.floors].map(f => f.floor), looks = [...p.looks, ...q.looks];
+    out.push({ ...p, keys: [...p.keys, ...q.keys], floor: mean(floors), looks, clear: looks.length > 0, look: looks.length ? looks.reduce((acc, l, k) => lookMix(acc, l, 1 / (k + 1))) : p.look ?? q.look, counted: p.counted || q.counted, zones: [...new Set([...p.zones, ...q.zones])], src: [...p.src, ...q.src], floors: [...p.floors, ...q.floors] }); }
+  return [...out, ...a.filter((_, i) => !usedA.has(i)), ...b.filter((_, j) => !usedB.has(j))];
+}
+function resetSamples() { cams.forEach(c => { c.samples = { pairs: [], heights: [] }; c.sugg = null; c.preview = false; }); }
+function resetTracking() { pidHist = {}; histEpoch++; persons = []; rawToPid = {}; nextPid = 1; ghosts = []; stats = { detections: 0, raw: new Set(), persons: new Set(), gaps: [] }; mapPeople = null; trails = {}; everCounted = new Set(); insideHits = {};
+  cams.forEach(c => { c.newTrack = true; c.people = []; }); }
+const master = () => cams.find(c => c.isVideo && c.video.src);
+function grabAll() { const m = master(); if (!m) return;
+  for (const c of cams) { if (!c.frame || !c.isVideo) continue;
+    if (c !== m) { const want = m.video.currentTime + c.offset - m.offset; const sk = c.video.seekable; if (want >= 0 && Math.abs(c.video.currentTime - want) > .25 && sk.length && want <= sk.end(sk.length - 1)) c.video.currentTime = want; /* only jump when the video can jump */ if (playing && c.video.paused && !c.video.ended) c.video.play(); }
+    c.frame.getContext("2d").drawImage(c.video, 0, 0, c.frame.width, c.frame.height); } }
+function stopAll() { playing = false; cams.forEach(c => c.isVideo && c.video.pause()); $("play").textContent = "▶ เล่นทุกกล้อง"; }
+function render() { if (!playing) return; grabAll(); const now = performance.now(); if (now - lastDraw > 90) { lastDraw = now; draw(); } if (master()?.video.ended) return finished(); requestAnimationFrame(render); }
+function finished() { stopAll(); draw(); say(`วิดีโอจบแล้ว · เห็นคนในร้านทั้งหมด ${everCounted.size} คน · ⏮ = กลับเฟรมแรก`, "ok"); }
+const detectPeople = async c => { const r = await fetch("/people", { method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ image: c.frame.toDataURL("image/jpeg", .8), track: true, reset: c.newTrack, tuned: $("tuned").checked, fast: $("fast").checked, camera: c.id, ...($("steady").checked ? { t: c.video.currentTime } : {}) }) });
+  const out = await r.json(); if (!r.ok) throw new Error(out.error); return out.people; };
+// A badly tied camera cannot be paired with people by position (its floor is off). Pair its sightings with people that well-tied
+// cameras see right now by appearance instead: a clear view whose re-ID vector clearly matches one person and no other.
+// where each numbered person was on the map, by video time: lets the people-tie try a camera's time shift
+let pidHist = {}, histEpoch = 0; // samples remember the epoch: numbers restart on each new play
+function posAt(pid, t) { const h = pidHist[pid]; if (!h || !h.length || t < h[0][0] || t > h[h.length - 1][0]) return null;
+  let lo = 0, hi = h.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (h[m][0] <= t) lo = m; else hi = m; }
+  const a = h[lo], b = h[hi]; if (b[0] - a[0] > 600) return null; const w = b[0] === a[0] ? 0 : (t - a[0]) / (b[0] - a[0]); return [a[1] + w * (b[1] - a[1]), a[2] + w * (b[2] - a[2])]; }
+function collectLookPairs(live, perCam, now) {
+  for (const p of mapPeople ?? []) if (p.pid !== undefined && p.floor) { const h = (pidHist[p.pid] ??= []); if (!h.length || h[h.length - 1][0] < now) { h.push([now, p.floor[0], p.floor[1]]); if (h.length > 2400) h.shift(); } }
+  const good = new Set(cams.map((c2, i) => { const f2 = camFit(c2); return f2.H && !weakFit(f2) && !f2.byLook ? i : -1; }).filter(i => i >= 0));
+  live.forEach((c, k) => { const f = camFit(c); if (f.H && !weakFit(f) && !f.byLook) return; /* a camera tied from people keeps collecting: an early tie (B3-20 run 6, taken at 7.5 s) can then be refitted */ const S = (c.samples.look ??= []); // weak or not tied yet
+    const ref = persons.filter(q => q.pid !== undefined && (q.emb || q.look) && q.seen === persons.reduce((m, r) => Math.max(m, r.seen), 0)).map(q => { if (!f.H) return q; const g = (q.obsNow ?? []).filter(o => o.floor && o.src?.some(s => good.has(s[0]))); return g.length ? { ...q, pos: mean(g.map(o => o.floor)) } : null; }).filter(Boolean); /* a refit uses only where click-tied cameras put the person: refits scored against other people-tied cameras fed on each other (B3-20 run 7: 0.27 -> 0.42 m over 3 plays). A first tie may chain through people-tied cameras (B3-20 cam2 sees only those) */
+    for (const p of perCam[k]) { if (p.rough || !(p.emb ? p.embOk : p.clear && p.look)) continue; const b = p.box; // small people (< 48 px) have no re-ID vector: clothing colours (B2-15)
+      if (b[1] < 2 || b[3] > c.canvas.height - 3 || b[0] < 2 || b[2] > c.canvas.width - 2) continue;
+      const sims = ref.map(q => ({ q, s: appSim(q, p) })).sort((x, y) => y.s - x.s);
+      if (sims[0] && sims[0].s >= .75 && (!sims[1] || sims[0].s - sims[1].s >= .3)) { S.push({ x: p.foot, X: sims[0].q.pos, pid: sims[0].q.pid, t: now, ep: histEpoch }); if (S.length > 600) S.shift(); } } });
+}
+// one detection round of all cameras -> people on the map (also used to replay recorded rounds in tests)
+function peopleRound(live, now) {
+  const perCam = live.map(c => classifyCam(c, cams.indexOf(c))); stats.detections++; perCam.flat().forEach(p => p.keys.forEach(k => k !== undefined && stats.raw.add(k)));
+  let seen;
+  if ($("relink").checked) { seen = trackRound(perCam, now); mapPeople = seen.filter(p => p.floor && !p.dup); collectLookPairs(live, perCam, now); }
+  else { seen = perCam.reduce((acc, l) => merge(acc, l), []); link(seen, now); }
+  mapPeople = seen.filter(p => p.floor && !p.dup); return seen;
+}
+// detect all cameras' current frames and update the map (now = video time in ms)
+async function detectRound(live, now, started) {
+  const found = await Promise.all(live.map(detectPeople)); if (!playing) return;
+  live.forEach((c, k) => { c.people = found[k]; c.newTrack = false; });
+  const seen = peopleRound(live, now); collectSamples(seen);
+  if (stats.detections % 60 === 0) { cams.forEach(c => { try { tuneSuggest(c); } catch (err) { console.warn("tuneSuggest", err); } }); if (autoSync) try { autoSyncStep(); } catch (err) { console.warn("autoSync", err); } } // a suggestion failing must never stop playback
+  seen.forEach(p => p.src.forEach(([ci, i]) => { const q = cams[ci]?.people[i]; if (q) { q.pid = p.pid; q.counted = p.floor ? p.counted : undefined; } }));
+  for (const p of seen) if (p.pid !== undefined && p.smooth && !p.dup) { stats.persons.add(p.pid); const t = (trails[p.pid] ??= []); t.push(p.smooth); if (t.length > 3000) t.shift();
+    if (p.counted && (insideHits[p.pid] = (insideHits[p.pid] ?? 0) + 1) >= MIN_HITS) everCounted.add(p.pid); }
+  $("liveNote").textContent = `ตรวจจับ ${Math.round(1000 / (performance.now() - started))} รอบ/วินาที (${live.length} กล้อง)${$("steady").checked ? " · ทุก 1/8 วิของวิดีโอ" : ""}`; draw();
+}
+// Steady mode: all cameras step through the video together, 1/8 s of video per round, each round waiting for detection. Results do not
+// depend on how fast the computer or browser runs (B1-01 runs 5-6: a throttled page gave 0.325 vs 0.425 m and an id swap in a 3 s gap).
+// Still causal: each round only uses frames up to now.
+const STEP_S = .125;
+const seekTo = (v, t) => new Promise(ok => { if (!isFinite(t) || Math.abs(v.currentTime - t) < .002) return ok(); /* a video still loading has no duration yet: never hang the loop */ const done = () => { v.removeEventListener("seeked", done); ok(); }; v.addEventListener("seeked", done); v.currentTime = t; setTimeout(done, 3000); });
+const sigCanvas = document.createElement("canvas"); sigCanvas.width = 32; sigCanvas.height = 18;
+function frameSig(v) { const g = sigCanvas.getContext("2d", { willReadFrequently: true }); g.drawImage(v, 0, 0, 32, 18); const d = g.getImageData(0, 0, 32, 18).data; let h = 0;
+  for (let i = 0; i < d.length; i += 4) h = (h * 31 + d[i] + 3 * d[i + 1] + 7 * d[i + 2]) % 2147483647; return h; }
+async function steadyLoop() {
+  let failures = 0; const m = master(); cams.forEach(c => c.isVideo && c.video.pause());
+  let t = m.video.currentTime;
+  while (playing) {
+    if (t >= m.video.duration - .02) return finished();
+    const started = performance.now(), live = cams.filter(c => c.frame && c.isVideo);
+    await Promise.all(live.map(c => seekTo(c.video, Math.max(0, Math.min(c.video.duration - .02, t + c.offset - m.offset))))); if (!playing) break;
+    live.forEach(c => c.frame.getContext("2d").drawImage(c.video, 0, 0, c.frame.width, c.frame.height));
+    // a low-frame-rate video (WILDTRACK: 2 frames/s) shows the same picture for several 1/8 s steps: nothing new to detect
+    const sig = live.map(c => frameSig(c.video)), same = live.every((c, k) => c.lastSig === sig[k]); live.forEach((c, k) => c.lastSig = sig[k]);
+    if (same && stats.detections) { t += STEP_S; continue; }
+    try { await detectRound(live, t * 1000, started); failures = 0; t += STEP_S; }
+    catch (err) { if (++failures < 3) { await wait(300); continue; } say("ตรวจจับคนไม่สำเร็จ: " + err.message, "bad"); stopAll(); }
+  }
+}
+async function detectLoop() {
+  let failures = 0;
+  while (playing) {
+    const m = master(); if (!m || m.video.ended) return finished();
+    const started = performance.now(); grabAll();
+    try {
+      const live = cams.filter(c => c.frame && c.isVideo), now = m.video.currentTime * 1000; await detectRound(live, now, started); if (!playing) break; failures = 0;
+    } catch (err) { if (++failures < 3) { await wait(300); continue; } say("ตรวจจับคนไม่สำเร็จ: " + err.message, "bad"); stopAll(); }
+  }
+}
+$("play").onclick = () => {
+  if (playing) { stopAll(); return say("หยุดชั่วคราว · กด ▶ เพื่อเล่นต่อ"); }
+  const m = master(); if (!m) return say("ยังไม่มีวิดีโอ", "warn");
+  const loose = cams.filter(c => c.frame && !camFit(c).H).map(c => c.name);
+  say(loose.length ? `${loose.map(esc).join(", ")} ยังไม่ได้ผูกกับแผนที่: คนในกล้องนั้นจะไม่ขึ้นบนแผนที่` : "กำลังเล่น · แต่ละคนมีสีของตัวเอง เส้น = ทางที่เดิน", loose.length ? "warn" : "");
+  if (m.video.ended) cams.forEach(c => c.isVideo && (c.video.currentTime = Math.max(0, c.offset - m.offset)));
+  playing = true; $("play").textContent = "⏸ หยุด";
+  if ($("steady").checked) { steadyLoop(); return; }
+  cams.forEach(c => c.isVideo && c.video.play()); render(); detectLoop();
+};
+$("rewind").onclick = () => { stopAll(); const m = master(); cams.forEach(c => { if (!c.isVideo) return; c.video.currentTime = Math.max(0, c.offset - (m?.offset ?? 0)); c.frame.getContext("2d").drawImage(c.first, 0, 0); });
+  resetTracking(); draw(); say("กลับเฟรมแรกแล้ว"); };
+["tuned", "fast"].forEach(id => $(id).onchange = () => cams.forEach(c => c.newTrack = true));
+
+// ---------------- EPFL samples (research videos: one room, 4 people, cameras recording together) ----------------
+$("sample").onchange = async e => { const k = e.target.value; e.target.value = ""; if (!k) return;
+  try { const info = await (await fetch("/epfl/cases.json")).json(), cs = info.cases[k];
+    while (cams.length < 2) addCam();
+    const files = k === "full" ? ["cam0", "cam1"] : [`c1_case${k}`, `c2_case${k}`];
+    say("กำลังโหลดวิดีโอตัวอย่าง…"); await loadVideo(cams[0], `/epfl/${files[0]}.webm`); await loadVideo(cams[1], `/epfl/${files[1]}.webm`);
+    cams[0].pp = cs ? [180 - cs.crop1[0], 144 - cs.crop1[1]] : null; cams[1].pp = cs ? [180 - cs.crop2[0], 144 - cs.crop2[1]] : null; // a crop moves the lens centre
+    cams.forEach(c => { c.offset = 0; c.el.querySelector(".offset").value = 0; c.tune = null; c.peopleH = null; c.fitKey = null; });
+    const [L, W] = info.size; cams[0].el.querySelector(".nLen").value = L; cams[0].el.querySelector(".nDep").value = W;
+    save(); // floor plan: both rugs as references (patterned rug defines the map; carpet placed from EPFL's calibration)
+    if (!refs.some(r => r.name === "พรมลาย")) refs.push({ id: newId("r"), name: "พรมลาย", cx: 0, cy: 0, len: L, dep: W, ang: 0 });
+    if (!refs.some(r => r.name === "พรมฟ้า")) refs.push({ id: newId("r"), name: "พรมฟ้า", ...rectFromRing(info.carpet_map.map(([x, y]) => [x - L / 2, y - W / 2])) });
+    resetTracking(); persist(); fitView();
+    say(`วิดีโอตัวอย่างพร้อม · "พรมลาย" และ "พรมฟ้า" อยู่บนแผนที่แล้ว (เหมือนแผนผังร้าน) · ในแต่ละกล้อง: เลือก Reference แล้วคลิกมุมตามเลขบนแผนที่ (มุมที่หลุดจอ: ซูมออก แล้วคลิกนอกภาพได้)`, "ok");
+  } catch (err) { say("โหลดตัวอย่างไม่ได้ (ต้องมีโฟลเดอร์ epfl_lab และรัน epfl_cases.py): " + err.message, "bad"); } };
+
+// ---------------- video sets: one folder = one recording, one file per camera (no references are placed) ----------------
+fetch("/sets.json").then(r => r.json()).then(o => { $("vset").insertAdjacentHTML("beforeend", o.sets.map(x => `<option value="${esc(x.id)}">${esc(x.title)} (${x.files.length} กล้อง)</option>`).join("")); $("vset").sets = o.sets; }).catch(() => {});
+$("vset").onchange = async e => { const set = e.target.sets?.find(x => x.id === e.target.value); e.target.value = ""; if (!set) return;
+  try { stopAll(); while (cams.length < set.files.length) addCam();
+    while (cams.length > set.files.length) { const c = cams.pop(); c.el.remove(); } activeCam = 0; // one camera per file of the recording
+    say(`กำลังโหลด ${set.files.length} กล้อง…`);
+    save(); // a new recording = new cameras: their ties (corners, height, adjustments) belong to the old videos (Ctrl+Z brings them back)
+    for (const c of cams) { Object.assign(c, { links: [], camH: null, level: true, tune: null, align: null, peopleH: null, sugg: null, suggAlign: null, fitKey: null, samples: { pairs: [], heights: [] } }); c.ui = { ...c.ui, ref: null, mode: "link", arm: null, sel: null, sel2: null, lineFrom: null, edgePts: [], newPts: [] };
+      c.el.querySelector(".camH").value = ""; c.el.querySelector(".level").checked = true; }
+    for (let i = 0; i < set.files.length; i++) { const c = cams[i]; c.pp = null; c.offset = 0; c.el.querySelector(".offset").value = 0; c.tune = null; c.peopleH = null; c.fitKey = null;
+      if (/^กล้อง \d+$/.test(c.name)) { c.name = set.files[i].replace(/\.webm$/, ""); c.el.querySelector(".camName").value = c.name; }
+      await loadVideo(c, `/sets/${encodeURIComponent(set.id)}/${encodeURIComponent(set.files[i])}`); }
+    resetTracking(); persist(); draw();
+    say(`โหลด ${esc(set.title)} แล้ว: ${set.files.length} กล้อง · ต่อไป: สร้าง/เลือก Reference แล้วผูกแต่ละกล้อง`, "ok");
+  } catch (err) { say("โหลดชุดวิดีโอไม่ได้: " + err.message, "bad"); } };
+
+// ---------------- other controls ----------------
+$("addCam").onclick = () => { addCam(); persist(); draw(); say(`มี ${cams.length} กล้องแล้ว · เลือกวิดีโอให้กล้องใหม่`); };
+$("undo").onclick = undo; $("redo").onclick = redo;
+$("reset").onclick = () => { if (!confirm("ลบ Reference พื้นที่ และการผูกกล้องทั้งหมด?")) return; save(); refs = []; areas = []; drawings = []; cams.forEach(c => { c.links = []; c.ui.ref = null; }); selected = null; check = null; renderSel(); persist(); draw(); };
+addEventListener("keydown", e => { const typing = e.target instanceof HTMLInputElement && ["text", "number", "search", ""].includes(e.target.type); if (typing) return;
+  if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) { e.preventDefault(); return redo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+  if (e.key === "Enter" && draft) { e.preventDefault(); closeDraft(); }
+  if (e.key === "Escape") { // first cancel what is in progress; if nothing is, leave full view
+    const busy = draft || drag || askOpen() || cams.some(c => c.ui.arm || c.ui.sel || c.ui.lineFrom || c.ui.edgePts.length || c.ui.newPts.length || c.ui.mode !== "link");
+    if (!busy && document.querySelector(".full")) { document.querySelectorAll(".full").forEach(x => x.classList.remove("full")); fitFull(); return draw(); }
+    closeAsk(); draft = null; drag = null; cams.forEach(c => { c.ui.edgePts = []; c.ui.newPts = []; c.ui.arm = null; c.ui.sel = null; c.ui.sel2 = null; c.ui.lineFrom = null; c.ui.mode = "link"; }); draw(); say("ยกเลิกแล้ว"); }
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); // deletes what is selected: a map item (map focused) or the selected point in the camera
+    if (selected && document.activeElement === svg) return $("sDel")?.click();
+    const c = cams[activeCam]; if (c?.ui.sel) return deleteSel(c);
+    if (selected) return $("sDel")?.click();
+    say("เลือกก่อน (คลิกที่จุดในภาพ หรือสิ่งของบนแผนที่) แล้วกด Delete", "warn"); } });
+fetch("/status").then(r => r.json()).then(s => { $("modelNote").dataset.sam = s.sam ? "1" : "0"; $("modelNote").textContent = (s.sam ? "MobileSAM พร้อม" : "ใช้ GrabCut") + (s.yolo ? " · YOLO พร้อม" : " · ไม่พบ YOLO") + (s.openvino ? " · OpenVINO" : ""); }).catch(() => {});
+
+const savedCams = restore();
+(savedCams?.length ? savedCams : [{}, {}]).forEach(s => addCam(s));
+document.querySelectorAll("[data-layer]").forEach(b => b.checked = layers[b.dataset.layer].show); // after restore(): show the saved layer settings
+document.querySelectorAll("[data-lock]").forEach(b => b.checked = layers[b.dataset.lock].lock);
+resetTracking(); renderSel(); applySetup();
+</script>
+</body>
+</html>
