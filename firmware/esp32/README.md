@@ -57,24 +57,26 @@ Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
 
 ## How to Build and Flash
 
+These sketches have no OTA updater. Compile and upload with `PartitionScheme=huge_app` to use one 3 MB app slot; firmware updates require USB.
+
 ### 1. Local Testing Firmware (Default)
 
 For three local ESP32 readers, build and upload one sketch per board. Use the matching directories so every board publishes under a unique shelf ID:
 
 ```powershell
 # Compile Shelf 1
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-build firmware/esp32/local_shelf
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/local-shelf-build firmware/esp32/local_shelf
 
 # Compile Shelf 2
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-02-build firmware/esp32/local_shelf_02
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/local-shelf-02-build firmware/esp32/local_shelf_02
 
 # Compile Shelf 3
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-03-build firmware/esp32/local_shelf_03
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/local-shelf-03-build firmware/esp32/local_shelf_03
 
 # Upload to ESP32 (replace COM ports with the ports for each board)
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/local-shelf-build firmware/esp32/local_shelf
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM9 --input-dir tmp/local-shelf-02-build firmware/esp32/local_shelf_02
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM10 --input-dir tmp/local-shelf-03-build firmware/esp32/local_shelf_03
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM8 --input-dir tmp/local-shelf-build firmware/esp32/local_shelf
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM9 --input-dir tmp/local-shelf-02-build firmware/esp32/local_shelf_02
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM10 --input-dir tmp/local-shelf-03-build firmware/esp32/local_shelf_03
 
 # Open Serial Monitor
 arduino-cli monitor --port COM8 --config baudrate=115200
@@ -94,22 +96,22 @@ arduino-cli monitor --port COM8 --config baudrate=115200
 
 ```powershell
 # Compile Shelf 1
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-build firmware/esp32/aws_shelf
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/aws-shelf-build firmware/esp32/aws_shelf
 
 # Compile Shelf 2
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
 
 # Compile Shelf 3
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
 
 # Upload Shelf 1
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/aws-shelf-build firmware/esp32/aws_shelf
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM8 --input-dir tmp/aws-shelf-build firmware/esp32/aws_shelf
 
 # Upload Shelf 2
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM9 --input-dir tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM9 --input-dir tmp/aws-shelf-02-build firmware/esp32/aws_shelf_02
 
 # Upload Shelf 3 (change FQBN if this board is ESP32-S3)
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM10 --input-dir tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM10 --input-dir tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
 ```
 
 

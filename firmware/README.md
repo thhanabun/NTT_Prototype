@@ -53,14 +53,16 @@ Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
 
 ## How to Build and Flash
 
+These sketches have no OTA updater. Compile and upload with `PartitionScheme=huge_app` to use one 3 MB app slot; firmware updates require USB.
+
 ### 1. Local Testing Firmware (Default)
 
 ```powershell
 # Compile local firmware
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/local-shelf-build firmware/esp32/local_shelf
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/local-shelf-build firmware/esp32/local_shelf
 
 # Upload to ESP32 (replace COM8 with your port)
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/local-shelf-build firmware/esp32/local_shelf
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM8 --input-dir tmp/local-shelf-build firmware/esp32/local_shelf
 
 # Open Serial Monitor
 arduino-cli monitor --port COM8 --config baudrate=115200
@@ -74,10 +76,10 @@ arduino-cli monitor --port COM8 --config baudrate=115200
 
 ```powershell
 # Compile AWS firmware
-arduino-cli compile --fqbn esp32:esp32:esp32 --build-path tmp/aws-shelf-build firmware/esp32/aws_shelf
+arduino-cli compile --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app --build-path tmp/aws-shelf-build firmware/esp32/aws_shelf
 
 # Upload to ESP32
-arduino-cli upload --fqbn esp32:esp32:esp32:UploadSpeed=921600 --port COM8 --input-dir tmp/aws-shelf-build firmware/esp32/aws_shelf
+arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM8 --input-dir tmp/aws-shelf-build firmware/esp32/aws_shelf
 ```
 
 
