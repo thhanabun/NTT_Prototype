@@ -16,7 +16,7 @@
   const nav = document.createElement("nav"); nav.setAttribute("aria-label", "เมนู");
   nav.innerHTML = `<div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 16 16" width="16" height="16"><path d="M9,1 L3,9 H7.5 L7,15 L13,7 H8.5 Z" fill="#f47b3c"/></svg></span><b>FAST<i>.</i></b><span>กล้อง</span></div>`
     + Object.entries(VIEWS).map(([k, v]) => `<a href="#${k}" data-view="${k}"${v.sub ? ' class="sub"' : ""}>${v.name}${k === "sync" ? '<span class="badge" id="syncBadge" hidden></span>' : ""}</a>`).join("")
-    + `<div class="foot"><span id="camLive" class="mono">หยุด</span><a href="/">หน้าเดิม</a></div>`;
+    + `<div class="foot"><span id="camLive" class="mono">หยุด</span></div>`;
   const content = document.createElement("div"); content.className = "content";
   const head = document.createElement("div"); head.className = "vhead";
   head.innerHTML = `<div><h1 id="vTitle"></h1></div><button type="button" id="syncBig" hidden></button><button type="button" id="advBtn" aria-expanded="false">ขั้นสูง</button>`;

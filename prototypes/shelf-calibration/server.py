@@ -294,17 +294,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.path = self.path.split("?", 1)[0]  # ignore cache-busting query strings
-        if self.path in ("/", "/index.html"):
-            return self.send(200, (HERE / "index.html").read_bytes(), "text/html; charset=utf-8")
-        if self.path == "/cam":  # the same page in the redesign look (cam/theme.css + cam/shell.js); "/" stays as it was
+        if self.path in ("/", "/index.html", "/cam"):  # the page in the new design (cam/theme.css + cam/shell.js); /cam kept for old links
             page = (HERE / "index.html").read_text(encoding="utf-8")
             page = page.replace("</head>", '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">\n<link rel="stylesheet" href="/cam/theme.css">\n</head>', 1)
             page = page.replace("</body>", '<script src="/cam/shell.js"></script>\n</body>', 1)
             return self.send(200, page.encode("utf-8"), "text/html; charset=utf-8")
         if self.path in ("/cam/theme.css", "/cam/shell.js"):
             return self.send(200, (HERE / self.path[1:]).read_bytes(), "text/css; charset=utf-8" if self.path.endswith(".css") else "text/javascript; charset=utf-8")
-        if self.path == "/v1":  # the earlier one-reference-shelf page, kept for comparison
-            return self.send(200, (HERE / "index-v1.html").read_bytes(), "text/html; charset=utf-8")
         if self.path == "/geometry.js":
             return self.send(200, (HERE / "geometry.js").read_bytes(), "text/javascript; charset=utf-8")
         if self.path in ("/demo.webm", "/walk.webm"):  # Repo videos: cartoon shelf demo, and a real recorded clip with people.
