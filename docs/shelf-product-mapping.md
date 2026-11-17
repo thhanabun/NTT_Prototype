@@ -1,5 +1,7 @@
 # Shelf product mapping
 
+Mapping applies to new events after the API loads this policy. It is shared by the local API and Cloud IoT event path; the current deployed Cloud status is in [cloud-deployment-status.md](cloud-deployment-status.md).
+
 - `SHELF-02`: ทุก valid lane (`LANE-1`, `LANE-2`, `LANE-COKE`, `LANE-WATER`) map เป็น `SPRITE_PLUS_TEA` / **Sprite Plus Tea** ก่อนเข้า FSM
 - Firmware ส่ง `COKE` หรือ `WATER` ตาม lane เดิมได้ โดยเก็บเป็น `sourceSku` ใน event/audit; backend ใช้ SKU ใหม่สำหรับ Cart, Case, Agent history และ Checkout
 - ยังคงตรวจ lane และความสอดคล้องของ SKU ที่ firmware ส่ง; canonical `SPRITE_PLUS_TEA` ก็รับได้สำหรับ Shelf 2

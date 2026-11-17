@@ -28,9 +28,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
 | MQTT | 1883 | ESP32 events/telemetry forwarded to the API |
 | Web | 3001 | Shopper and Admin, including the recorded YOLO video/map |
 
+The full launcher does not start the separate **Shopper Agent Qwen** service. For that optional local chat, follow [Shopper Agent setup](shopper-agent.md) and start its model/API in separate terminals. It does not replace Laya, which handles ambiguous shelf cases and Admin Stat Query.
+
 - Shopper: <http://localhost:3001/shopper>
 - Admin: <http://localhost:3001/admin>
-- Local Admin account: `admin@basketly.test` / `BasketlyDemo123!`
+- Local Admin mock login is development-only; use the credentials configured for the local simulation. Do not use a demo credential for AWS Cognito or publish a production password.
 
 The launcher uses real Laya in agentic mode, a single-basket RSSI minimum of -80 dBm, and local persistence. It respects an existing `STORE_PATH`; otherwise it reuses `data/local-demo-new.json` if present, falling back to `data/demo-state.json`. It does not clear state.
 

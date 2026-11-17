@@ -1,5 +1,7 @@
 # Model-directed evidence investigation
 
+> The verification results near the end are local checkpoints from October 2026. The hosted Cloud Agent is deployed separately; its current resource state and remaining live acceptance are tracked in [cloud-deployment-status.md](cloud-deployment-status.md).
+
 ## Current behavior
 
 The HTTP server defaults to `AGENT_PROVIDER=laya`, `AGENT_MODE=agentic`. Each ambiguous case runs **select → execute → observe → select again**. Real local Laya chooses one typed action from the currently available tools/scripts using the observations returned so far. There is no fixed tool order in this mode and no silent mock-planner fallback.
@@ -72,7 +74,7 @@ These publish real local MQTT events/telemetry and wait for an application ACK. 
 
 `npm test` includes deterministic planner fixtures for different tool orders, script selection/conflict veto, missing evidence, invalid actions, deadlines, budget and read-only carts. Fixture choices are not claims about model accuracy. `npm run test:system:agentic` in `web/` uses actual Laya, MQTT telemetry, native SSE and Chromium, retaining reports/screenshots under `data/web-system-*/`. Stop the other Next.js dev server in this checkout first. The original `test:system` remains workflow regression coverage.
 
-Bedrock schema/instructions include the new tools/scripts. `get_basket_decision` remains the read-only Laya decision adapter for an outer Bedrock orchestrator. Local runtime uses the Laya selector directly. Live AWS deployment, trusted collectors, API authorization and Step Functions callbacks remain separate work.
+The Cloud stack now deploys a private Agent Lambda with Bedrock Converse tool selection and the shared Laya/YOLO evidence runtime; Shopper Agent uses a separate Bedrock adapter. The local runtime still uses the Laya selector directly. Resource deployment does not establish model decision accuracy or full AWS case-flow acceptance; verify those items in [Cloud deployment status](cloud-deployment-status.md). Camera collectors and local APIs also retain the trust boundaries described above.
 
 ## Verification on 22 October 2026
 

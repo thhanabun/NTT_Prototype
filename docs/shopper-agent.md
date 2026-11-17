@@ -1,6 +1,6 @@
 # Shopper Agent
 
-Status: local UI, read-only tools, lexical retrieval and an OpenAI-compatible Chat Completions adapter are implemented. Real local inference is verified with **Qwen3-4B-Instruct-2507 / Q4_K_M** using llama.cpp on this machine. The Cloud API uses Bedrock Converse through a separate adapter and the configured deployment model; it does not call the local endpoint. These Cloud code/config changes require a Cloud build and deployment before they are available in the hosted app. Fixtures and the small real-model sample do not prove general accuracy or safety.
+Status (2026-11-17): local UI, read-only tools, lexical retrieval and an OpenAI-compatible Chat Completions adapter are implemented. Real local inference is verified with **Qwen3-4B-Instruct-2507 / Q4_K_M** using llama.cpp. The deployed Cloud API uses Bedrock Converse through a separate adapter and does not call the local endpoint. Cloud resource status is in [cloud-deployment-status.md](cloud-deployment-status.md); the small real-model sample and deployment check do not prove general answer accuracy or safety.
 
 ## Cloud model runtime
 
@@ -111,7 +111,7 @@ Before replacing the verified local model with the team's endpoint, repeat guide
 - Public queries can use catalog/guide tools; private tools require the signed owner of an active session. Revalidate that ownership after model execution before returning private data. Staff cases are sanitized: no other basket identities, RSSI, camera frames, internal reasoning or raw evidence.
 - Response: `queryId`, `answer`, `kind` (`answer`, `blocked`, `unsupported`), `mode`, `sources`, `model`, `usage` and `modelCalls`. Source cards are server-created; the model can cite only IDs returned by executed tools. React renders text, never model-generated HTML/code.
 - Local `/api/sessions` now also issues a signed `HttpOnly; SameSite=Lax` chat capability cookie scoped to `/api/shopper`, separately per basket. The signing key is process-local. **This does not retrofit authorization onto the legacy local API**, which still permits demo pairing by A/B. Use it only as a local harness. Cloud pairing uses the existing signed session and ownership checks instead.
-- New cloud handler/proxy code is prepared, but no infrastructure settings/resources were changed or deployed. The real cloud API environment needs the endpoint configuration and network reachability before it can answer. Cloud staff cookies are ignored for this route in favor of the selected basket's shopper cookie. Default missing configuration fails closed.
+- The Cloud route uses Bedrock Converse and the selected basket's signed shopper session; it does not forward to a local model endpoint. Cloud staff credentials do not substitute for the shopper's basket session. Default missing configuration fails closed. Full Cloud Shopper Agent acceptance remains outstanding; see [cloud-deployment-status.md](cloud-deployment-status.md).
 
 Tools (no SQL, shell, arbitrary URL, file-path or mutation parameters):
 

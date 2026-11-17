@@ -1,8 +1,8 @@
 # Web App Plan
 
-Status: frontend scope and current local API documented; teammate agreement on the cloud contract is pending.
+Historical planning document from the first local frontend phases. Phases/checklists below record the original design and must not be read as current implementation status. The current local/Cloud behavior is documented in [web/README.md](../web/README.md), [README.md](../README.md), and [Cloud deployment status](cloud-deployment-status.md).
 
-This plan covers the Shopper App and Admin Dashboard. It is based on `src/server.mjs`, `src/domain.mjs`, `public/`, and `docs/event-contract.md`. Current behavior and proposed frontend behavior are identified separately. Acceptance checkboxes below are future verification tasks, not claims that the new web app has been implemented.
+This plan covers the initial Shopper App and Admin Dashboard. It is based on the source available when the plan was written. Acceptance checkboxes below are historical planning/verification items; they do not describe the deployed Next.js/Cognito Cloud implementation.
 
 ## 1. Scope and ownership
 

@@ -1,5 +1,7 @@
 # หลักฐานประกอบ FAST Tech Data Response
 
+ไฟล์หลักฐานนี้รองรับคำตอบ snapshot เดิม; สถานะ Cloud ปัจจุบันอาจเปลี่ยนแล้ว ให้ยึด [cloud-deployment-status.md](../cloud-deployment-status.md) สำหรับ resource/release ล่าสุด และอย่าใช้ภาพหรือรายงาน fixture เป็นหลักฐาน Cloud E2E.
+
 อ่านไฟล์ [FAST_Tech_Data_Response.md](../../FAST_Tech_Data_Response.md) ที่ root ของโครงการเป็นหลัก
 
 - `reports/`: รายงานที่คัดจากการทดสอบเดิม 14 ชุด พร้อมตัวเลขที่คำนวณจากรายงานและตัวอย่าง audit อีก 2 ไฟล์

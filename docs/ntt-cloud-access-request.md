@@ -2,6 +2,8 @@
 
 **แนวทางปัจจุบัน:** ใช้ Lambda container สำหรับ Web และ Agent/Laya/YOLO ผ่าน AWS Lambda Web Adapter โดย Agent ไม่มี public URL และเรียกผ่าน IAM InvokeFunction; ยังคง Bedrock Converse และ ChallengerAccess เดิม ไม่ต้องเพิ่ม AgentCore permission สำหรับแนวทางนี้
 
+อัปเดต 17 พ.ย. 2026: stack `fast-prototype` รวม AWS IoT Core, Bedrock Converse และ Lambda runtime ถูก deploy ในบัญชี Team 14 แล้วโดยใช้ ChallengerAccess เดิม. การขอสิทธิ์ AgentCore ในเอกสารนี้เป็นทางเลือกสำหรับ runtime แบบอื่น ไม่ใช่ blocker ของแนวทางปัจจุบัน. ดูผลและ acceptance ที่ยังเหลือใน [Cloud deployment status](cloud-deployment-status.md).
+
 ## สิทธิ์สำหรับทางเลือก AgentCore
 
 ขอให้ผู้ดูแล NTT เพิ่ม `iam:PassRole` สำหรับ `bedrock-agentcore.amazonaws.com` ให้ permission set **ChallengerAccess** ในบัญชี **NTT – Challenger Team 14 (`134250568427`)** แล้ว provision permission set ลงบัญชีนี้อีกครั้ง หรือให้ใช้ deployment role ที่ได้รับอนุมัติและมีสิทธิ์นี้อยู่แล้ว
@@ -31,13 +33,13 @@
 
 Bedrock Nova Lite มี authorization, entitlement และ region availability แล้ว จุดที่ติดคือการ pass execution role ให้ **AgentCore Runtime** ซึ่งเป็นคนละส่วนกับสิทธิ์เรียกโมเดล
 
-## สถานะ deployment — 25 ต.ค. 2026
+## สถานะ deployment — 25 ต.ค. 2026 (historical)
 
 - ECR bootstrap และ Web/Agent images สำหรับ Lambda amd64 push สำเร็จ
 - App Runner CreateService จริงไม่ผ่าน PassRole แม้ simulation ของ generic service context เป็น allowed จึงไม่ใช้แนวทางนั้น
 - Lambda CreateFunction ผ่านจุดตรวจสิทธิ์แล้ว แต่ memory 8,192 MB เกิน quota บัญชี 3,008 MB จึงปรับ template ให้ตรง quota และ retry
 - Failed stack rollback โดยเก็บ retained resources ไว้ ไม่ลบ DB/archive/secret; inventory อยู่ ignored `data/cloud-recovery-retained.json`
-- ไม่มีการสร้าง IoT Thing/device policy/rule และไม่ได้เปลี่ยน firmware หรือข้อมูล local demo
+- ใน snapshot วันที่ 25 ต.ค. ยังไม่มี IoT Thing/device policy/rule; สถานะนี้ถูกแทนที่ด้วยการเปิด IoT และ provision อุปกรณ์ในรอบถัดมา
 - Lambda stack deploy สำเร็จ, Cognito login เข้า Admin ได้ และ Laya/YOLO health เป็น Healthy
 - Bedrock Converse รอบแรกติด HTTP 403 account verification แต่ตรวจซ้ำวันที่ 25 ต.ค. เรียกจริงผ่านแล้ว: Nova Lite เลือก `STOP_STAFF` สำเร็จใน 1,738 ms โดยใช้ ChallengerAccess เดิม ไม่ได้เปลี่ยน IAM/profile; full investigation ผ่าน Agent/Step Functions ยังต้องตรวจแยก
 - ดูผลล่าสุดใน [รายงาน deployment](cloud-deployment-status.md)
@@ -50,7 +52,7 @@ Bedrock Nova Lite มี authorization, entitlement และ region availabilit
 powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-config.json
 ```
 
-สคริปต์ตรวจ account ID, ใช้ Singapore, ตั้ง `EnableIoT=false` และเปิด mock signal เฉพาะ STAFF มี budget alert US$50 ต่อเดือน ซึ่งไม่ใช่ spending cap ไม่ต้องส่ง access keys หรือรหัสผ่านให้ผู้พัฒนา
+ตัวอย่าง config เริ่มต้นอาจตั้ง `EnableIoT=false`; Cloud stack ที่ deploy อยู่เปิด IoT แล้ว. การเปิด IoT ในบัญชีใหม่ต้องตรวจ permission/resource และ provision certificates แยก. Budget alert US$50 ต่อเดือนไม่ใช่ spending cap. ไม่ส่ง access keys หรือรหัสผ่านให้ผู้พัฒนา
 
 ## อ้างอิง
 

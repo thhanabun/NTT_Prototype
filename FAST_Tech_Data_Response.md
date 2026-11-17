@@ -2,9 +2,11 @@
 
 **จัดทำ:** 23 ตุลาคม 2026 (Asia/Bangkok)  
 **ฐานข้อมูล:** source/working tree และ retained reports ถึง 22 ตุลาคม 2026; ไม่ได้รันทดสอบใหม่หรือ deploy AWS เพื่อทำเอกสารนี้  
-**Repository:** [thhanabun/NTT_Prototype](https://github.com/thhanabun/NTT_Prototype) (private)  
-**Branch:** codex/agentic-evidence; HEAD 26d39292e543c1a8bf44331385c7077f25859ea6; Cloud kit ล่าสุดยังเป็น uncommitted working tree  
-**ชื่อในซอฟต์แวร์:** Basketly / Hybrid Smart-Basket Prototype; ใช้ชื่อ Project FAST ตามแบบขอข้อมูล ไม่ได้เปลี่ยน branding ในโค้ด
+**Repository at document creation:** [thhanabun/NTT_Prototype](https://github.com/thhanabun/NTT_Prototype) (was private at the time; it is public now)
+**Branch:** codex/agentic-evidence; HEAD 26d39292e543c1a8bf44331385c7077f25859ea6; Cloud kit ล่าสุดยังเป็น uncommitted working tree
+**ชื่อใน snapshot เดิม:** Basketly / Hybrid Smart-Basket Prototype; branding ปัจจุบันใช้ Project FAST
+
+> **สถานะล่าสุด — 17 พ.ย. 2026:** ย่อหน้าด้านบนและคำตอบทั้งชุดเป็น snapshot เก่าถึง 23 ต.ค. ไม่ใช่สถานะปัจจุบัน. ปัจจุบัน Project FAST deploy `fast-prototype` ใน NTT Team 14, Singapore (`ap-southeast-1`); AWS IoT เปิดใช้งานและ Thing/certificate/policy สำหรับ 3 shelf ถูก provision. ดู [Cloud deployment status](docs/cloud-deployment-status.md) สำหรับ URL, image release, alarm subscription และงาน acceptance ที่ยังค้าง. ไม่ได้ตรวจ Cost Explorer/invoice ใหม่ และไม่ได้ทำ physical E2E ทั้งสาม shelf ในรอบเอกสารนี้.
 
 ## อ่านสถานะก่อนใช้ใน Presentation
 
@@ -182,7 +184,7 @@
 | คำถามตามต้นฉบับ | คำตอบและหลักฐาน |
 | --- | --- |
 | Login ใช้ Amazon Cognito ไหม? แยกกลุ่ม customer / staff ยังไง | ใช้งานlocalเป็นmockstaffloginในsessionStorageเฉพาะแท็บ. Cloudproductioncodeใช้CognitoSTAFFgroup; shopperใช้QRsignedbasket-sessioncapability แยกbasket/session. ไม่ได้ใช้Cognitoสำหรับลูกค้า; hostedflowตรวจด้วยfixtureยังไม่ต่อCognitoจริง |
-| ลูกค้า login ด้วยอะไร (เบอร์ OTP / Google / Guest) — staff login ด้วยอะไร, มี MFA ไหม | Customer guest+QRsession, ไม่มีOTP/Google. Localstaffใช้บัญชีสมมติadmin@basketly.test / BasketlyDemo123!; เป็นdummycredentialที่แสดงในฟอร์ม. Cloudstaffใช้Cognitoaccountที่ต้องสร้างและเพิ่มSTAFF; ยังไม่มีtestaccountจริง/MFApolicy |
+| ลูกค้า login ด้วยอะไร (เบอร์ OTP / Google / Guest) — staff login ด้วยอะไร, มี MFA ไหม | คำตอบนี้เป็น snapshot 23 ต.ค. เท่านั้น: Shopper ใช้ guest + QR session; local mock Admin และ Cloud Cognito เป็นคนละระบบ. Cloud staff user ถูก provision ภายหลังและใช้ Cognito/PKCE; ดู [Cloud status](docs/cloud-deployment-status.md). ไม่บันทึกรหัสผ่านไว้ในเอกสาร |
 | Frontend host ที่ไหน (Amplify / S3 + CloudFront / EC2) | ใช้งานจริงlocalNextdevที่3001 (API3000); CloudkitเลือกAppRunnerproductionDocker ไม่ใช่Amplify/S3hosting/EC2; ยังไม่มีhostedserviceURLจริง |
 | มีโดเมนไหม (Route 53) — ชื่อโดเมน, มี SSL (ACM) ไหม | ไม่มีcustomdomain/Route53record/ACMcertificateที่ยืนยันprovision; AppRunnerHTTPS/WSSURLsจะได้หลังdeploy และยังไม่มีในworkspaceนี้ |
 | ใช้ WAF ไหม เปิด rule อะไร | ไม่มีWAFในimplementation/template; ไม่มีrulesที่เปิดใช้งาน |
@@ -200,7 +202,7 @@
 
 | คำถามตามต้นฉบับ | คำตอบและหลักฐาน |
 | --- | --- |
-| AWS Architecture Diagram ทั้งระบบ (ถ้ามี AWS icons จะดีมาก) | มีMermaidAWSarchitectureจากชุดCloudkitในภาคผนวก D แสดงสถานะPREPARED/NOT DEPLOYED; ไม่มีAWSiconartwork/draw.ioที่พบ |
+| AWS Architecture Diagram ทั้งระบบ (ถ้ามี AWS icons จะดีมาก) | คำตอบนี้บันทึก architecture ตาม Cloud kit ก่อน deploy ใน snapshot 23 ต.ค.; สถานะ deployment ปัจจุบันดู addendum ด้านบนและ [Cloud status](docs/cloud-deployment-status.md) |
 | Flow: เคสปกติ (หยิบ → cart อัปเดต) | มีflowเคสปกติในภาคผนวก D สรุปจากโค้ดที่ทำแล้ว |
 | Flow: เคสคลุมเครือ (→ Agent → HITL) | มีflowambiguous→Agent→policy→HITLในภาคผนวก D; RAGไม่มี |
 | Flow: login + เริ่ม session | มีguestQR/localstaffmockloginและpreparedCognito+PKCEแยกในภาคผนวก D |
@@ -569,7 +571,7 @@ flowchart LR
   ACK --> MQTT
 ```
 
-### D2. CLOUD PREPARED — NOT DEPLOYED
+### D2. CLOUD PREPARED — snapshot ณ 23 ต.ค. (ก่อน deploy)
 
 ```mermaid
 flowchart TD
@@ -1112,4 +1114,4 @@ Physical shelf/wiring/basket photographs, realhardwaredemofootage, publicdemoURL
 
 ### ข้อความสรุปสำหรับ Project Summary ที่ตรงกับหลักฐาน
 
-> FAST/Basketly เป็นprototypeSmartShelfสองช่อง/สองตะกร้า ใช้deterministicFSMคุมconfirmedcart และเรียกlocaltyped-decisionAgentเฉพาะเคสกำกวม Agentเลือกread-onlyevidencetools/analysis scriptsและใช้YOLO11nบนภาพMOCKได้ มีhumanapprovalและaudittrailก่อนเปลี่ยนยอดที่ยังไม่ยืนยัน ระบบlocalมีผลMQTT/DB/realtimewebintegrationและหลักฐานESPtelemetryจริงบางส่วน ส่วนAWSdeploymentkitเตรียมแล้วแต่ยังไม่deploy; RAG, physicalattributionaccuracy, productioncloudlatency/costและbusinessimpactยังไม่ยืนยัน
+> สรุปเดิมเป็นสถานะ ณ 23 ต.ค. 2026 เท่านั้น. สถานะปัจจุบัน: AWS stack deploy ใน Singapore และเปิด IoT; Agent/Shopper Cloud ใช้ Bedrock ตามคนละ flow กับ Laya/Qwen local. Full Cloud E2E, physical attribution accuracy, measured cost/latency และ business impact ยังไม่ยืนยัน. รายละเอียดและ release อยู่ใน [Cloud deployment status](docs/cloud-deployment-status.md).

@@ -1,6 +1,6 @@
-# Primary IoT roadmap
+# IoT roadmap and current status
 
-Accepted on 2026-10-09. This is the primary plan for IoT work in Basketly. It takes precedence over older hardware delivery and AWS-first provisioning instructions. The existing firmware is a draft; the milestones below describe planned work, not completed capabilities.
+Accepted on 2026-10-09. The milestone sections below are the original implementation plan, not a current deployment checklist. As of 2026-11-17, the AWS stack has IoT enabled and has a Thing, active certificate and device policy for `SHELF-01` through `SHELF-03`. This is cloud provisioning evidence only; physical board flashing, per-shelf MQTT connection and PICK/PUT_BACK E2E still need to be recorded. See [current Cloud status](cloud-deployment-status.md) and [replication guide](replicate-fast.md).
 
 ## Delivery order and equipment
 
@@ -79,7 +79,7 @@ Show last-seen time and RSSI history. Label the receiver SHELF-01. Reception mea
 
 The source implementation is in `scripts/iot-bridge.mjs`, `infra/aws-iot/policies/` and `firmware/esp32/local_shelf/local_shelf.ino` and `firmware/esp32/aws_shelf/aws_shelf.ino`. AWS resource creation, certificates and physical verification remain operator steps.
 
-This establishes the AWS device path and now includes an optional DynamoDB persistence adapter for the existing Node API. The API still runs locally and consumes the state through one versioned prototype item. Lambda/API Gateway, a normalized multi-item data model, Step Functions and a hosted application are subsequent backend milestones.
+This section describes the original staged design. The hosted Cloud stack now also includes the IoT Rule/Ingest Lambda path, API Gateway, Step Functions, Bedrock and split DynamoDB records. The separately documented local bridge remains available for local validation; it is not the hosted IoT architecture. Resource creation and physical verification must still be checked per account/device.
 
 ## Verification and acceptance
 

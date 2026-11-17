@@ -1,5 +1,7 @@
 # Hardware PR #9: integration review
 
+> This is the result of the original source/protocol review, not a current AWS or physical-device acceptance report. Cloud certificates/resources were provisioned later; see [current Cloud status](cloud-deployment-status.md) for the distinction between provisioning and board E2E.
+
 Reviewed 22 October 2026 (Asia/Bangkok). Original hardware head: 8268c60ba657f8d40ab2d17405412cc1f152a34e. Original base main: ded5e91a12747cf9b9772f5c9a73199fcd9c36f8. Backend/model baseline: 653cd409188bd32bcf13a96280bbaad768ce3c09.
 
 At the start of review, PR #9 was OPEN, not merged into main. Its hardware code and the existing backend are integrated together because the older main backend did not implement delayed-event quarantine.

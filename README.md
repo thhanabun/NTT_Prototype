@@ -35,7 +35,7 @@ Optional real CPU **YOLO11n** is available as `inspect_vision_evidence`. Start `
 
 The Admin **Stat Query Chat** uses real Laya to select read-only daily-sales/product-ranking queries and bar/line/table views. It aggregates completed mock-checkout orders from the full DB, with a separately labelled demo dataset and query audit. See [examples, execution and checks](docs/stat-query.md).
 
-The new **Shopper Agent** opens from the floating FAST menu on `/shopper`. It reads catalog/guide information and the current shopper's basket/cases without changing them. Real local inference is verified with **Qwen3-4B-Instruct-2507 Q4_K_M** via llama.cpp: run `npm run model:shopper -- -Install` once, then `npm run model:shopper`, `npm run start:shopper` and the frontend in separate terminals. Explicit demo mode remains available without inference. See [Shopper Agent setup, review steps and boundaries](docs/shopper-agent.md). This does not change the existing Laya case Agent or invoke AWS/OpenAI hosted inference.
+The **Shopper Agent** opens from the floating FAST menu on `/shopper`. It reads catalog/guide information and the current shopper's basket/cases without changing them. Local inference uses **Qwen3-4B-Instruct-2507 Q4_K_M** via llama.cpp; the deployed Cloud API uses Bedrock Converse through a separate adapter. These are distinct runtimes. See [Shopper Agent setup, review steps and boundaries](docs/shopper-agent.md).
 
 - A clear RSSI lead of at least 10 dB selects the nearest basket and bypasses the Agent. This is an initial demo threshold; calibrate it on the physical shelf.
 - RSSI inside that margin is ambiguous. Laya runs a real typed decision after the evidence tools; a person must confirm before the item reaches the cart. Model errors route to staff without a mock fallback. Set AGENT_PROVIDER=mock explicitly only for a software simulation.
@@ -117,9 +117,9 @@ The local app uses the Node.js standard library in local JSON mode. DynamoDB mod
 | --- | --- |
 | 1 · Software first | Local simulator, event API, cart, shopper view, staff monitor and live updates implemented. |
 | 2 · Agentic flow | Local Laya and evidence tools run in the app; deployed Agent Lambda calls Bedrock Converse. Cloud full-case acceptance and model decision accuracy still need evaluation. |
-| 3 · Hardware / IoT | Firmware and IoT resources cover three shelf identities. The user reported the IoT signal flow passed; per-board physical acceptance artifacts are not stored in this repo. |
-| 4 · Audit and stability | Local case timeline and software acceptance checks are included; CloudWatch log retention is 14 days and a monthly budget alert is configured. The 20–30 physical cycles and measured cost/latency acceptance remain. |
-| 5 · Demo freeze | The three journeys are implemented; full Cloud rehearsals, physical failure rehearsal and backup video remain demo preparation tasks. |
+| 3 · Hardware / IoT | Cloud Things, certificates and policies are provisioned for three shelves. Physical flash/acceptance evidence for each board is not stored in this repo. |
+| 4 · Audit and stability | Cloud audit/archive and 14-day log retention are deployed. Physical cycles and measured cost/latency acceptance remain. |
+| 5 · Demo freeze | The three journeys are implemented; full Cloud rehearsal, physical failure rehearsal and backup video remain demo preparation tasks. |
 
 ## Optional DynamoDB mode
 

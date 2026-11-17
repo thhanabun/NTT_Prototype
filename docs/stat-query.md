@@ -1,5 +1,7 @@
 # Admin Stat Query Chat
 
+> Local inference/check results below are historical. The hosted Admin path uses Bedrock Converse and server-side read-only aggregation; current Cloud deployment status and live-query acceptance are tracked in [cloud-deployment-status.md](cloud-deployment-status.md).
+
 Open `/admin`, sign in with the existing development mock login, and use **Stat Query Chat** below the store metrics. Keep the local Laya service and Node API running from this branch. Restart the API after updating code; Next dev refreshes the UI automatically.
 
 ## Examples
@@ -41,7 +43,7 @@ npm run model:laya
 
 `npm test` covers exact aggregation, date boundaries, zero-filled/empty results, metric-dependent ranking, full history, read-only behavior, audit persistence, invalid/model-conflicting responses and rejected parameters. `npm --prefix web run test:stats` uses actual local Laya, Chromium, an isolated production API and DB, and UI routing only to connect that browser to the isolated API. It checks daily bars, revenue ranking, unit ranking/table, line-chart follow-ups, explicit sources, failure/empty states and responsive widths. Start the existing development frontend before this command; reports/images are saved under ignored `data/stats-web-*`.
 
-Cloud deployment and API authorization retain the prototype's existing boundaries. The local Admin login is a frontend development simulation, not server authorization. The DynamoDB adapter still uses an aggregate item with the same size limit as the rest of the prototype.
+The deployed Cloud Admin uses Cognito/PKCE and the Cloud API runs the query through Bedrock Converse with the same constrained plan/schema and read-only aggregation rules. The local Admin login remains a development simulation, not server authorization. Cloud resource status and outstanding live-query acceptance are in [cloud-deployment-status.md](cloud-deployment-status.md). The single-item DynamoDB note applies to the older local adapter; the integrated Cloud stack stores normalized records.
 
 ## Observed verification, 22 October 2026
 

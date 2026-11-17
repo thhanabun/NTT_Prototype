@@ -1,6 +1,6 @@
 # DynamoDB state store
 
-The existing Node API can persist its application state to DynamoDB instead of the local JSON file. It uses the AWS SDK for JavaScript v3 DocumentClient and the default AWS credential chain. The API and shopper/staff UI remain the same.
+This guide describes the optional legacy Node API adapter, which stores one versioned aggregate item instead of the local JSON file. The integrated Cloud stack uses a separate normalized records repository and provisions its StateTable/ControlTable through [`infra/cloud`](../cloud/README.md). Do not use this standalone table as a substitute for the deployed Cloud data model. Current Cloud status is in [deployment status](../../docs/cloud-deployment-status.md).
 
 ## Deploy the table
 
@@ -37,5 +37,5 @@ This is deliberately a prototype store, not the final event-data model: DynamoDB
 
 - Create the table and IAM policy before setting `STORE_BACKEND=dynamodb`.
 - Choose the AWS region explicitly and keep the IAM permissions scoped to the named table.
-- The Node app writes structured logs to stdout. Lambda handlers in `../lambda/` write the same JSON log style, which Lambda can send to CloudWatch. This DynamoDB template does not deploy Lambda, API Gateway, Step Functions, Bedrock, or log resources.
+- The standalone Node app writes structured logs to stdout. The integrated Cloud template deploys its own Lambda, API Gateway, Step Functions, Bedrock permissions, and CloudWatch resources; this standalone DynamoDB template does not.
 - Remove the stack with CloudFormation when the prototype data is no longer needed.

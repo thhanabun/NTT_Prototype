@@ -1,4 +1,19 @@
-# FAST cloud deployment — 25 ต.ค. 2026
+# FAST cloud deployment status and history
+
+## Current snapshot — 17 พ.ย. 2026
+
+- Account: NTT Challenger Team 14 (`134250568427`), region Singapore (`ap-southeast-1`), stack `fast-prototype`.
+- CloudFormation update completed. `WebService`, `AgentRuntime` and `ApiFunction` were `Active` / `Successful` at the post-deploy check.
+- Web/Admin: <https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/admin>; Shopper: <https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/shopper>.
+- API Gateway HTTP: `https://22k71qppag.execute-api.ap-southeast-1.amazonaws.com`; realtime WebSocket: `wss://fbvi7lhah0.execute-api.ap-southeast-1.amazonaws.com/live`.
+- IoT is enabled. `SHELF-01`, `SHELF-02` and `SHELF-03` each have an active certificate and attached device policy. This confirms provisioning only; it does not prove all three physical boards are flashed or pass end-to-end shelf tests.
+- CloudWatch Lambda log retention is 14 days. The monthly AWS Budget is US$50 with an actual-cost notification at 80%; this is an alert, not a spending cap. The SNS alarm email subscription was still `PendingConfirmation` at the latest check, so confirm the AWS email to receive alarm notifications.
+- Release tag: `fast-final-20261117-02b30d3-delta`. Web image digest: `sha256:08d61ae9d8d96d5730c71ef2f8c33a583df1011fadced40114e27b4e89707882`; Agent image digest: `sha256:fd4cfee0494209351b2572050cc9de572a4949d747357977b3b889134d01ed2f`.
+- The release was built from `codex/cloud-without-iot` at `02b30d3` plus a local OAuth proxy change that was not committed at the time of deployment. The deployed image therefore is not reproducible from that commit alone. Do not treat this documentation commit as publishing that source change.
+
+This is a resource/runtime check, **not full Cloud acceptance**. No physical IoT-to-cart run, complete shopper/staff journeys, camera session, live Stat Query, cost measurement or failure rehearsal was performed as part of this deployment check. AWS billed cost was not verified. See [Cloud acceptance](#acceptance-still-required) before claiming the entire system works end to end.
+
+## Historical deployment record — 25 ต.ค. 2026
 
 ## Target
 
@@ -26,7 +41,7 @@
 
 ## Activation
 
-Per user request, the existing FAST demo account `admin@basketly.test` was provisioned in Cognito with the existing local demo password and `STAFF` group. No email was sent; no new password was recorded in deployment outputs. This demo password is present in the source and is suitable only for the temporary demonstration. To replace it with your own password, run:
+The demo account `admin@basketly.test` was provisioned in Cognito and added to `STAFF`; no password is printed or stored in this document. Use the Cognito password-setting script below to set a private password for the account before continued use. The local mock login and AWS Cognito are separate authentication paths.
 
 ```powershell
 .\.venv-cloud\Scripts\python.exe scripts/set-cloud-staff-password.py --email admin@basketly.test
@@ -40,15 +55,15 @@ Already generated with `node scripts/cloud-pairing.mjs`:  Basket A/B URLs (`clou
 
 Basket QR sessions, clear/ambiguous/Staff HITL flows, Bedrock investigation/tool execution through the deployed Agent, checkout, Stat Query, camera permission/inference, realtime reconnect, duplicate/retry behavior, latency and billing must be exercised on AWS before claiming full system acceptance. Cloud reset remains disabled. Payment is mock; camera positions still need physical calibration.
 
-## Bedrock activation — resolved on 25 Oct 2026
+## Bedrock activation — resolved on 25 Oct 2026 (historical readiness check)
 
 A subsequent actual Converse call using `ChallengerAccess` and the existing planner succeeded with model `apac.amazon.nova-lite-v1:0`, selecting the sole allowed action `STOP_STAFF`. Observed request duration was 1,738 ms (508 input / 78 output tokens). No customer data was sent and no cart/case was mutated. The account-verification denial is no longer the active blocker; no profile or IAM permission change was needed.
 
 This checks actual model access and the tool-selection contract from the deployment machine. It does not prove that a full investigation through the deployed Agent execution role and Step Functions has passed.
 
-## Verified final deployment
+## Verified 25 Oct deployment checkpoint (historical)
 
-- CloudFormation `fast-prototype`: `UPDATE_COMPLETE`; latest resource inventory has no unfinished resources. Web and Agent Lambda are `Active` / `Successful`.
+- At that checkpoint, CloudFormation `fast-prototype` was `UPDATE_COMPLETE`; Web and Agent Lambda were `Active` / `Successful`.
 - Bedrock actual Converse readiness passed after the initial account-verification denial cleared.
 - [Admin](https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/admin)
 - [Shopper](https://syryfs6jflfyqbskcrp425zdfq0ocuqy.lambda-url.ap-southeast-1.on.aws/shopper)
@@ -56,8 +71,8 @@ This checks actual model access and the tool-selection contract from the deploym
 - Private Agent `/ping`: HTTP 200 `Healthy` with both Laya/YOLO loaded after the cache permission fix. Measured cold invocation: **176.01 seconds**. This is startup readiness, not a model accuracy or full flow result.
 - Anonymous `/api/state` returns an empty public scaffold by design; `/api/audit` returned 403. Source `scopedState()` controls that separation. Full cross-basket acceptance is still pending.
 - Cognito callback exactly matches the deployed HTTPS origin.
-- Current read-only inventory: three `AWS::IoT::Thing` resources, one `AWS::IoT::Policy` and one `AWS::IoT::TopicRule`; stack `EnableIoT=true`. CloudFormation status does not itself verify physical firmware flashing or per-shelf end-to-end acceptance. All 12 Lambda log groups have 14-day retention; retention handler returned `{ "ok": true }`.
-- Release tag: `fast-lambda-cachefix-20261025`; Web digest `sha256:8a06cc0af896e13b8446906c7d74bb987fee93dae45402e29b8b82d46fd041d5`, Agent digest `sha256:05740914a3ceb922ce8088d916922df800c1f9be2062345e142eeae75b837a87`.
+- At that checkpoint, the stack had three `AWS::IoT::Thing` resources, one `AWS::IoT::Policy` and one `AWS::IoT::TopicRule`; all 12 Lambda log groups had 14-day retention.
+- Historical release tag: `fast-lambda-cachefix-20261025`; its image digests are retained in the original deployment report and are superseded by the 17 Nov snapshot above.
 - Ignored evidence: `data/cloud-agent-cachefix-health.json`, `data/cloud-config-health.json`, `data/cloud-bedrock-readiness.json`, `data/cloud-staff-setup.json` and `tmp/cloud-ui/fast-cloud-admin.png`.
 
 Before a demo, run `.\.venv-cloud\Scripts\python.exe scripts/warm-cloud-agent.py`. It invokes the private read-only health route, validates the AWS account and waits for model initialization. Lambda can start a fresh environment later; warming once does not guarantee every later invocation is warm. Initial Stat Query/live camera calls can exceed their short request budgets during a cold start. No scheduled keep-warm resources were added.

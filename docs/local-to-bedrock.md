@@ -1,6 +1,6 @@
 # Local model and AWS migration contract
 
-Checked 21 October 2026. Working checkout: codex/fsm-iotcore.
+Updated 17 November 2026. The historical model comparison below is retained; the current deployment snapshot is in [cloud-deployment-status.md](cloud-deployment-status.md).
 
 ## Model roles
 
@@ -19,11 +19,14 @@ Local:
 
 AWS target:
 
-    IoT Core -> Lambda/FSM -> Step Functions -> agent using Bedrock Nova Micro
-      -> read-only tools, including get_basket_decision -> same Laya HTTP service
-      -> deterministic policy/HITL/validator -> DynamoDB + audit + PWA
+    IoT Core / API -> Lambda + deterministic FSM -> Step Functions
+      -> private Agent Lambda: Bedrock Converse chooses allowed evidence actions
+      -> local Laya typed decision + YOLO evidence tools -> policy/HITL/validator
+      -> DynamoDB + audit + WebSocket/BFF
 
-Host the same Laya container on CPU compute such as ECS or EC2. Change LAYA_ENDPOINT to its reachable private endpoint. Preserve model revision, input projection, answer labels, probability semantics, confidence threshold and validator rules. The cloud compute and Bedrock inference have AWS charges.
+    Shopper Agent API -> Bedrock Converse + validated read-only tools
+
+The deployed Cloud stack bundles the same pinned Laya service and YOLO runtime inside a private Agent Lambda container; the model service listens only on container loopback. Shopper Agent calls Bedrock Converse from the API Lambda. Preserve the model revision, input projection, answer labels, probability semantics, confidence threshold and validator rules when rebuilding. Cloud compute and Bedrock inference incur AWS charges.
 
 The shared request is POST /v1/systemone with state and questions.basket (choice A, B or NONE). Full session IDs and unrelated orders are excluded to keep sensor evidence within the token budget. Selected-option probability is the policy score: Laya's field named confidence measures normalized entropy, so copying Jev's threshold onto that field would change its meaning. Neither score is validated as a probability of physical ownership on this store.
 
@@ -34,13 +37,13 @@ The local app and case-manager Lambda use src/agent/investigate-stored-case.mjs.
 | Model | Local availability | Bedrock role |
 | --- | --- | --- |
 | Laya typed-decisions | Open weights; current real local provider | Not a native catalog model. Keep as an HTTP tool/service to retain the same model. |
-| Amazon Nova Micro | No local open weights | Recommended small text orchestrator; Converse and tool calling supported. Model ID amazon.nova-micro-v1:0 where directly available. |
-| Amazon Nova Lite | No local open weights | Alternative if the agent later needs image/video evidence; current prototype does not. |
+| Amazon Nova Micro | No local open weights | Candidate small text orchestrator; not the deployed model in this stack. Verify account and regional availability before selecting it. |
+| Amazon Nova Lite | No local open weights | Deployed Bedrock Converse model/inference profile: `apac.amazon.nova-lite-v1:0`. The private agent sends structured tool-selection prompts; YOLO handles image inference separately. |
 | Meta Llama 3.2 3B Instruct | Can be self-hosted under its model license | Native Bedrock model and an alternative if identical local/cloud generative weights are required. It would need a separate adapter and evaluation; it is not the selected Laya provider. |
 
 Do not assume Laya can be uploaded through Bedrock Custom Model Import: its ModernBERT plus custom decision-head architecture is not on the documented supported architecture list. Hosting a service that an agent calls is the migration route chosen here.
 
-Bedrock Agents Classic closed to new customers on 30 July 2026. For a new account, target Bedrock AgentCore with a Bedrock foundation model and read-only tool bindings. Existing eligible Classic accounts can use the included function-details Lambda wrapper. AgentCore infrastructure, a live Bedrock orchestration loop, IAM and cloud deployment are not implemented or validated by the local check.
+AgentCore was considered but the NTT deployment role lacked `iam:PassRole` for `bedrock-agentcore.amazonaws.com`. The project uses a private Lambda container plus Bedrock Converse and allowlisted tools instead; it does not require AgentCore permissions. The stack is deployed, while full Cloud investigation/HITL acceptance remains to be recorded. See [NTT access notes](ntt-cloud-access-request.md) and [Cloud status](cloud-deployment-status.md).
 
 Model access and model IDs must be verified for the deployment account/region. The direct Nova Micro sample uses us-east-1; the existing app's DynamoDB region need not imply that the model is directly available there. Never copy a cross-region inference profile from another geography without checking account availability.
 

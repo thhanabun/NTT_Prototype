@@ -1,6 +1,6 @@
-# AWS IoT Core device path
+# AWS IoT Core device paths
 
-This branch implements `ESP32 → AWS IoT Core → local bridge → POST /api/events → deterministic FSM`. The bridge sends an application ACK only after the local API accepts the event. The ESP32 retains the event ID in its bounded RAM queue and retries until it receives that ACK.
+FAST has two IoT paths. **Local validation** uses `ESP32 → AWS IoT Core → laptop MQTT bridge → local API`; the bridge ACKs only after the local API accepts the event. **Hosted Cloud** uses `ESP32 → AWS IoT Core → IoT Rule → Ingest Lambda → DynamoDB/FSM/Step Functions`; it does not require a laptop bridge. The NTT Cloud stack has IoT enabled and provisions `SHELF-01` to `SHELF-03`. Current resource and physical-test status is in [Cloud deployment status](../../docs/cloud-deployment-status.md).
 
 ## Topics and clients
 
@@ -11,7 +11,7 @@ This branch implements `ESP32 → AWS IoT Core → local bridge → POST /api/ev
 
 The policy templates are `policies/device.json` and `policies/bridge.json`. Replace `REGION` and `ACCOUNT_ID` before creating the policies. The device policy is limited to this shelf's event/ACK topics. If `AWS_IOT_CLIENT_ID` is overridden, update the bridge policy to match.
 
-## AWS setup
+## Optional local bridge setup
 
 1. Replace `REGION` and `ACCOUNT_ID` in each policy, then create them with `aws iot create-policy --policy-name smartbasket-shelf-device --policy-document file://infra/aws-iot/policies/device.json` and `aws iot create-policy --policy-name smartbasket-local-bridge --policy-document file://infra/aws-iot/policies/bridge.json`.
 2. Create the IoT Thing `SHELF-01` and a device X.509 certificate in the AWS IoT Core console. Attach the certificate to the Thing and attach the device policy.
@@ -31,4 +31,4 @@ The app and bridge run on the same laptop, so the API can stay bound to localhos
 
 ## Scope
 
-This guide covers only the IoT device path. The optional DynamoDB state table is provisioned separately using [the DynamoDB guide](../dynamodb/README.md). These source changes do not deploy AWS resources; an AWS account, endpoint, certificates and policy attachment are still required. Lambda, API Gateway, Step Functions and Bedrock are not deployed here. The cart-event path consumes the two basket iBeacons; the third high-value-item tag and telemetry dashboard are outside this integration.
+The manual policy/certificate steps above are for the optional laptop bridge path and for learning the per-device MQTT contract; they do not replace the integrated Cloud template/provisioning script. Do not mix the bridge certificate with any ESP32 certificate. Shelf Thing names and certificates are unique per board. Physical MQTT connection and end-to-end cart behavior must be checked on each flashed shelf; CloudFormation resource success alone is not that proof.

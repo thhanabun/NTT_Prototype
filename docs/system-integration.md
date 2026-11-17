@@ -1,5 +1,7 @@
 # Local system integration — 22 October 2026 (Asia/Bangkok)
 
+> Historical local verification snapshot. The statement below that no production AWS resources were changed applies only to this 22 Oct run. The Cloud stack has since been deployed; current resource status and remaining acceptance are in [cloud-deployment-status.md](cloud-deployment-status.md). The old test counts and live-device observations are not new Cloud or current-device acceptance results.
+
 Integrated inputs: `main` at `f3f7d5d` (reviewed ESP32 hardware + backend) and `feature/web-app` at `44b5222` (Next.js Shopper/Staff). The root backend remains the single source of truth. No production AWS resources were changed.
 
 ```mermaid

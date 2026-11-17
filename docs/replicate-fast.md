@@ -1,6 +1,6 @@
 # Replicate FAST: Cloud, Local และ Hardware
 
-คู่มือนี้ใช้ clone public repository แล้วทำ FAST demo ขึ้นใหม่ในเครื่องหรือ AWS account ของผู้ทำซ้ำ อัปเดตจาก scripts และ firmware ใน repository วันที่ 25 ตุลาคม 2026
+คู่มือนี้ใช้ clone public repository แล้วทำ FAST demo ขึ้นใหม่ในเครื่องหรือ AWS account ของผู้ทำซ้ำ อัปเดตจาก scripts และ firmware ใน repository วันที่ 17 พฤศจิกายน 2026. สถานะบัญชี FAST ที่ deploy อยู่แล้วดูใน [Cloud deployment status](cloud-deployment-status.md); ขั้นตอนด้านล่างสร้าง stack แยกในบัญชีผู้ทำซ้ำ ไม่ได้เชื่อม/แก้ stack NTT ให้โดยอัตโนมัติ.
 
 > การสร้าง AWS stack มีค่าใช้จ่ายจริง และ budget ใน stack เป็นการแจ้งเตือน ไม่ใช่การหยุดค่าใช้จ่ายอัตโนมัติ อย่า deploy ใน account ที่ไม่ได้รับอนุญาต
 
@@ -73,7 +73,7 @@ npm run mock:evidence -- stable
 ### อุปกรณ์และการต่อสาย
 
 - ESP32-WROOM DevKit, KW11-N/KW12 roller microswitch และ iBeacon BLE tags สำหรับ Basket A/B; tag HV01 เป็นหลักฐานอ้างอิงทางเลือก
-- Product mapping ใน source ปัจจุบัน: event จาก Shelf 1 ถูก map เป็น Cola และ Shelf 2 เป็น Sprite Plus Tea; หน้า Shopper แสดง Shelf 3 เป็น Fanta floral bloom แต่ SKU ที่หน้าเว็บกำหนดไว้ยังเป็น `COKE` และ backend ใช้ SKU ที่มากับ lane event
+- Product mapping: event ที่มี `shelfId=SHELF-01` map เป็น Cola; `SHELF-02` map ทุก valid lane เป็น Sprite Plus Tea. Shelf 3 แสดง Fanta floral bloom ในหน้าเว็บเท่านั้น; ยังไม่มี product/SKU mapping ให้ถือว่า Shelf 3 ใช้งานขายได้. ดู [Shelf product mapping](shelf-product-mapping.md)
 - ปิดไฟ USB ก่อนต่อสายสวิตช์: `COM` ไป `GND`, `NO` ไป GPIO และไม่ใช้ `NC`
 - Shelf 1/2 ใช้ GPIO 26 สำหรับ LANE-1 และ GPIO 27 สำหรับ LANE-2 (`INPUT_PULLUP`); ปิดสวิตช์หมายถึง `LOW`/มีสินค้า, เปิดวงจรหมายถึง `HIGH`/สินค้าถูกหยิบ
 - Shelf 3 sketch กำหนด GPIO 4/5 และเอกสารบอร์ดระบุ ESP32-S3; ตรวจรุ่นบอร์ดและ pinout ก่อนใช้ sketch นี้
@@ -153,7 +153,7 @@ Copy-Item infra/cloud/config.example.json data/cloud-config.json
 notepad data/cloud-config.json
 ```
 
-กรอก account ID, region, profile, stack name, unique image tag, Bedrock model ID และ **exact** model/inference-profile ARNs ที่ role เรียกได้ รวมถึง budget email และวงเงินแจ้งเตือน ห้ามใส่ wildcard ใน `bedrockInvokeResources` ถ้าต้องการ IoT กับ hardware ให้ตั้ง `enableIoT` เป็น `true`; ถ้าทำเฉพาะ mock event ให้ใช้ `false`. ตรวจ model access ของ account/region ใหม่ เพราะชื่อ model ในไฟล์ config ไม่ได้เปิดสิทธิ์ให้ account นั้นโดยอัตโนมัติ
+กรอก account ID, region, profile, stack name, unique image tag, Bedrock model ID และ **exact** model/inference-profile ARNs ที่ role เรียกได้ รวมถึง budget email และวงเงินแจ้งเตือน ห้ามใส่ wildcard ใน `bedrockInvokeResources` ถ้าต้องการ IoT กับ hardware ให้ตั้ง `enableIoT` เป็น `true`; ถ้าทำเฉพาะ mock event ให้ใช้ `false`. ตรวจ model access ของ account/region ใหม่ เพราะชื่อ model ในไฟล์ config ไม่ได้เปิดสิทธิ์ให้ account นั้นโดยอัตโนมัติ. Budget เป็นการเตือน ไม่ได้หยุดการใช้จ่าย.
 
 ตรวจ source/templates ก่อน deploy:
 
@@ -171,7 +171,7 @@ aws sso login --profile <YOUR_PROFILE>
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-config.json
 ```
 
-เก็บ outputs ไว้ใน `data/cloud-outputs.json`; ใช้ตรวจ Web URL และ resource IDs หลัง deploy ไฟล์นี้ไม่ควร commit แม้ไม่เก็บ private key ก็ตาม Stack มี Lambda containers สำหรับ Web/Agent, API Gateway HTTP/WebSocket, Cognito, DynamoDB, Step Functions, Bedrock call, CloudWatch, CloudTrail, S3 archive และ budget/alarms ตาม template
+เก็บ outputs ไว้ใน `data/cloud-outputs.json`; ใช้ตรวจ Web URL และ resource IDs หลัง deploy ไฟล์นี้ไม่ควร commit แม้ไม่เก็บ private key ก็ตาม Stack มี Lambda containers สำหรับ Web/Agent, API Gateway HTTP/WebSocket, Cognito, DynamoDB, Step Functions, Bedrock call, CloudWatch, CloudTrail, S3 archive และ budget/alarms ตาม template. หากสมัคร SNS alarm email ให้กด confirmation link ในอีเมลก่อนคาดหวังการแจ้งเตือน.
 
 หลัง deploy:
 

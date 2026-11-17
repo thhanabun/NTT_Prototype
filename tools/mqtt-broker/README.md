@@ -1,6 +1,6 @@
-# Basketly Local MQTT Broker & HTTP Bridge
+# FAST Local MQTT Broker & HTTP Bridge
 
-A lightweight local MQTT Broker (powered by [Aedes](https://github.com/moscajs/aedes)) designed for local hardware testing of the ESP32 smart shelf (`SHELF-01`).
+A lightweight local MQTT broker (powered by [Aedes](https://github.com/moscajs/aedes)) for hardware testing. This is a local development/test broker, not the hosted AWS IoT Core endpoint.
 
 ---
 

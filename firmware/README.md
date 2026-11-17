@@ -1,6 +1,6 @@
 # ESP32 Shelf Firmware
 
-This directory contains the firmware implementations for the Basketly Smart Shelf (`SHELF-01`).
+This directory contains local and AWS IoT firmware for FAST shelves `SHELF-01` to `SHELF-03`. The Cloud Things/certificates/policies are provisioned for all three identities; provisioning does not prove a board is flashed or physically passing E2E. See [Cloud deployment status](../docs/cloud-deployment-status.md).
 
 ---
 
@@ -10,7 +10,9 @@ This directory contains the firmware implementations for the Basketly Smart Shel
 | :--- | :--- | :--- |
 | [`esp32/esp32.ino`](esp32/esp32.ino) | **Main Firmware (Local & Demo - Default)** | The primary sketch in `esp32/`. Pre-configured with the 3 physical beacon MACs. Runs standalone on USB Serial Monitor without Wi-Fi, or dispatches HTTP POST events to local server (`/api/events`). |
 | [`esp32/local_shelf/local_shelf.ino`](esp32/local_shelf/local_shelf.ino) | **Local Shelf Standalone** | Local development implementation; the root esp32.ino includes this file. |
-| [`esp32/aws_shelf/aws_shelf.ino`](esp32/aws_shelf/aws_shelf.ino) | **AWS IoT Core Firmware (not deployed/physically verified)** | Implements the source protocol described in [`esp32-firmware-requirements.md`](../docs/esp32-firmware-requirements.md). Uses MQTT over TLS 1.2 (Port 8883) to **AWS IoT Core** with X.509 certificates, 1 Hz telemetry, and 8-slot outbox. |
+| [`esp32/aws_shelf/aws_shelf.ino`](esp32/aws_shelf/aws_shelf.ino) | **AWS IoT Core Firmware — Shelf 1** | Uses MQTT over TLS 1.2 (Port 8883), the per-shelf X.509 certificate, 1 Hz telemetry, and an 8-slot outbox. |
+| [`esp32/aws_shelf_02/aws_shelf_02.ino`](esp32/aws_shelf_02/aws_shelf_02.ino) | **AWS IoT Core Firmware — Shelf 2** | Same device protocol with identity `SHELF-02` and its own certificate. |
+| [`esp32/aws_shelf_03/aws_shelf_03.ino`](esp32/aws_shelf_03/aws_shelf_03.ino) | **AWS IoT Core Firmware — Shelf 3** | Same device protocol with identity `SHELF-03`; check the board FQBN and GPIO wiring before upload. |
 | [`esp32/ble_test/ble_test.ino`](esp32/ble_test/ble_test.ino) | **Standalone BLE Scanner** | Scans, decodes, and calibrates DX-CP101 beacons and iBeacon tags with distance estimation and lead margin evaluation. |
 | [`esp32/limit_switch_test/limit_switch_test.ino`](esp32/limit_switch_test/limit_switch_test.ino) | **Standalone Switch Test** | Tests mechanical roller switch debouncing on GPIO 26 without networking. |
 | [`esp32/wifi_test/wifi_test.ino`](esp32/wifi_test/wifi_test.ino) | **Standalone Wi-Fi Test** | Validates 2.4 GHz WLAN connectivity and DHCP IP assignment. |
@@ -19,7 +21,7 @@ This directory contains the firmware implementations for the Basketly Smart Shel
 
 ## Hardware Pinout & Wiring
 
-Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
+Mechanical roller microswitches (KW11-N / KW12) connected to ESP32. Physical lane wiring is separate from the shelf-level product mapping: Shelf 1 maps its valid lanes to Cola; Shelf 2 maps them to Sprite Plus Tea.
 
 | Switch Terminal | ESP32 Pin | Logic Mode | State Description |
 | :--- | :--- | :--- | :--- |
@@ -91,5 +93,5 @@ arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge
 - Explicit beacon MACs are authoritative. To use UUID/major/minor matching, leave the role MAC empty and configure SHELF_PROJECT_UUID. An unrelated beacon with matching default major/minor cannot replace a configured MAC.
 - The median ages individual samples, so a new advertisement cannot revive old RSSI readings.
 - Simulation commands are disabled unless SHELF_ENABLE_TEST_COMMANDS is explicitly enabled. Exact water_pick/water_put commands use lane 2 and do not overwrite the physical switch baseline.
-- Telemetry is published/logged for diagnostics; the web backend's high-value telemetry/history/offline dashboard is not implemented by this firmware PR.
+- Telemetry is published for shelf status and Agent evidence. The third beacon HV01 is reference/proximity evidence only; it does not identify the person holding an item or create a cart line.
 - RAM events are lost on power loss; buffer overflow is counted. No persistent outbox or claim of physical delivery/accuracy is made.

@@ -1,5 +1,7 @@
 # YOLO11n evidence tool
 
+> Local verification results below are dated historical checks. The Cloud Agent now bundles YOLO11n in its private Lambda container; deployed camera/Agent E2E and physical shelf accuracy are still separate acceptance items. See [cloud-deployment-status.md](cloud-deployment-status.md).
+
 The Agent can choose `inspect_vision_evidence` like any other evidence tool. It runs **real YOLO11n** on CPU through a separate local HTTP service. Laya chooses actions and basket recommendations; YOLO detects generic objects in pixels. Selecting this tool is optional, never a forced stage of the live Agent loop.
 
 ## Start
@@ -12,7 +14,7 @@ powershell -NoProfile -File scripts/start-vision.ps1 -Python C:\path\to\python31
 
 After setup: `npm run model:vision`. This creates `.venv-vision`, downloads hash-pinned official weights and the demo image into ignored `data/vision`, loads/warmups the model, then serves `127.0.0.1:8001`. It does not change the Laya environment. `GET /health` reports readiness/model/hash. `POST /infer` accepts only `{"frameId":"demo-people"}`. The service has no uploads, URL fetcher, filesystem path argument or camera capture. Downloads happen during setup, not inference.
 
-Node uses `VISION_ENDPOINT=http://127.0.0.1:8001/infer` by default. The Lambda tool handler awaits the same async adapter; cloud requires an accessible hosted service and registered assets. Localhost in Lambda does not reach this PC. No AWS resources are deployed here.
+Node uses `VISION_ENDPOINT=http://127.0.0.1:8001/infer` by default. The Cloud Agent container bundles the YOLO service and approved image assets; Lambda localhost points to that same container, not this PC. The Cloud stack is deployed, but the deployed camera/Agent paths still need end-to-end acceptance. See [Cloud deployment status](cloud-deployment-status.md).
 
 Keep Laya, API, MQTT broker and Shopper A/B sessions running from this branch, then:
 

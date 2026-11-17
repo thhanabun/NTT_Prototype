@@ -25,12 +25,12 @@ This directory contains the firmware implementations for the FAST Smart Shelf pr
 
 Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
 
-| Switch Terminal | ESP32 Pin | Logic Mode | State Description |
-| :--- | :--- | :--- | :--- |
-| **Coke Lane (LANE-1) NO** | **GPIO 26** | `INPUT_PULLUP` | Closed = `LOW` (Product Present), Open = `HIGH` (Empty / Picked) |
+| Switch Terminal                  | ESP32 Pin         | Logic Mode       | State Description                                                    |
+| :------------------------------- | :---------------- | :--------------- | :------------------------------------------------------------------- |
+| **Coke Lane (LANE-1) NO**  | **GPIO 26** | `INPUT_PULLUP` | Closed = `LOW` (Product Present), Open = `HIGH` (Empty / Picked) |
 | **Water Lane (LANE-2) NO** | **GPIO 27** | `INPUT_PULLUP` | Closed = `LOW` (Product Present), Open = `HIGH` (Empty / Picked) |
-| **Common (COM)** | **GND** | Ground | Both switches share a single common GND line |
-| **Normally Closed (NC)** | *Unconnected* | - | Leave disconnected |
+| **Common (COM)**           | **GND**     | Ground           | Both switches share a single common GND line                         |
+| **Normally Closed (NC)**   | *Unconnected*   | -                | Leave disconnected                                                   |
 
 > [!NOTE]
 > No external resistors or 5V/3.3V supplies are required. The internal `INPUT_PULLUP` resistors of the ESP32 are used.
@@ -39,18 +39,22 @@ Mechanical roller microswitches (KW11-N / KW12) connected to ESP32:
 
 ## Configured BLE Beacons (3 Devices)
 
-| Device | Role | Configured MAC | iBeacon Major / Minor |
-| :--- | :--- | :--- | :--- |
-| **Basket A** | Shopper A Cart | `48:87:2d:9e:3e:c5` (`48872D9E3EC5`) | `1` / `1` |
-| **Basket B** | Shopper B Cart | `48:87:2d:9e:3c:0e` (`48872D9E3C0E`) | `1` / `2` |
-| **High-Value Item** | Asset Tag (`HV-001`) | `48:87:2d:9e:3e:49` (`48872D9E3E49`) | `1` / `3` |
+| Device                    | Role                   | Configured MAC                           | iBeacon Major / Minor |
+| :------------------------ | :--------------------- | :--------------------------------------- | :-------------------- |
+| **Basket A**        | Shopper A Cart         | `48:87:2d:9e:3e:c5` (`48872D9E3EC5`) | `1` / `1`         |
+| **Basket B**        | Shopper B Cart         | `48:87:2d:9e:3c:0e` (`48872D9E3C0E`) | `1` / `2`         |
+| **High-Value Item** | Asset Tag (`HV-001`) | `48:87:2d:9e:3e:49` (`48872D9E3E49`) | `1` / `3`         |
+
+Shelf-level product mapping is applied by the backend: all valid lanes on `SHELF-01` become Cola and on `SHELF-02` become Sprite Plus Tea. `SHELF-03` currently has a display label only; see [product mapping](../../docs/shelf-product-mapping.md).
 
 ### Signal Processing & Decision Rules
+
 - **Rolling Median**: Median of up to five samples, excluding each sample older than 5000 ms.
 - **Freshness Window**: 5000 ms (`TAG_FRESH_MS`). Stale readings become `null`.
 - **Proximity Lead ($\ge 10\text{ dB}$)**:
-  - If `|RSSI_A - RSSI_B| >= 10 dB` $\rightarrow$ `CONFIRMED CLEAR LEAD` (assigned automatically).
-  - If `|RSSI_A - RSSI_B| < 10 dB` $\rightarrow$ `AMBIGUOUS_ZONE` (backend model/policy selects customer confirmation or staff review).
+  - If `|RSSI_A - RSSI_B| >= 10 dB` $\rightarrow$ a clear zone candidate. The deterministic policy updates only when the basket session and other guards pass.
+  - If `|RSSI_A - RSSI_B| < 10 dB` $\rightarrow$ `AMBIGUOUS_ZONE`; Agent evidence is advisory and human/validator checks remain required.
+- With exactly one active basket and one fresh matching tag, local API default threshold is `-80 dBm` inclusive; missing/mismatched/stale RSSI routes to Staff.
 - **High-Value Item Status**: Evaluates `RECENTLY_SEEN`, `STALE`, or `NOT_YET_SEEN`.
 
 ---
@@ -114,7 +118,6 @@ arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge
 arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge_app,UploadSpeed=921600 --port COM10 --input-dir tmp/aws-shelf-03-build firmware/esp32/aws_shelf_03
 ```
 
-
 ## Protocol review fixes
 
 - Configure credentials in ignored secrets.h copied from the example. No real Wi-Fi passwords are embedded in the sketches.
@@ -124,4 +127,6 @@ arduino-cli upload --fqbn esp32:esp32:esp32 --board-options PartitionScheme=huge
 - The median ages individual samples, so a new advertisement cannot revive old RSSI readings.
 - Simulation commands are disabled unless SHELF_ENABLE_TEST_COMMANDS is explicitly enabled. Exact water_pick/water_put commands use lane 2 and do not overwrite the physical switch baseline.
 - The Admin page shows current RSSI and BLE location; coordinates stay uncalibrated until per-tag thresholds and fingerprint data are added.
+- Telemetry is published for shelf status and Agent evidence. HV01 is reference/proximity evidence only; it does not identify who picked an item or create a cart line.
+- Cloud certificates are provisioned for all three shelf IDs, but physical flash and E2E acceptance remain device-specific; see [Cloud status](../../docs/cloud-deployment-status.md).
 - RAM events are lost on power loss; buffer overflow is counted. No persistent outbox or claim of physical delivery/accuracy is made.

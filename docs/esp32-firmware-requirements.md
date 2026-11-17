@@ -1,9 +1,11 @@
 # ESP32 Firmware Requirements Specification
 
-**Project:** SmartBasket (Basketly) - NTT DATA Hackathon  
+**Project:** FAST Smart Basket - NTT DATA Hackathon
 **Target Hardware:** ESP32-WROOM-32 Dev Module  
-**Document Status:** Approved Specification  
+**Document Status:** Original Shelf-01 firmware specification; see current implementation notes below
 **Version:** 1.0.0  
+
+> This specification describes the initial single-shelf/two-lane design. Current backend mapping is shelf-based: all valid lanes from `SHELF-01` become Cola and all valid lanes from `SHELF-02` become Sprite Plus Tea. `SHELF-03` is a display label only. Cloud IoT resources are provisioned for three shelf identities; see [current Cloud status](cloud-deployment-status.md). This document does not prove physical hardware acceptance.
 
 ---
 
@@ -13,10 +15,10 @@ This Software Requirements Specification (SRS) defines the functional, structura
 
 ### Key Objectives:
 1. Detect real-time item removals and returns across two physical shelf lanes (Coke, Water) via mechanical roller microswitches.
-2. Continuously scan, filter, and track signals from **three BLE Beacons**:
+2. Continuously scan and filter signals from **three BLE Beacons**:
    - **Basket A (Tag 1):** Associated with Shopper A's basket session.
    - **Basket B (Tag 2):** Associated with Shopper B's basket session.
-   - **High-Value Item (Tag 3):** Attached to a high-value asset (e.g., premium liquor/perfume `HV-001`) for proximity monitoring and anti-theft tracking.
+   - **High-Value Item (Tag 3):** Optional reference beacon (`HV-001`) for proximity evidence only. It does not identify a person or prove item ownership.
 3. Perform edge filtering (Switch Debouncing & Rolling Median Filter) to eliminate signal noise and minimize cloud bandwidth and AWS credit consumption.
 4. Transmit telemetry and events over **MQTT over TLS 1.2 (Port 8883)** with an in-memory fallback outbox buffer for network resilience.
 

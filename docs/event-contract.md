@@ -5,9 +5,9 @@ The ESP32 and simulator publish the same event shape. The local server validates
 | Field | Required | Example | Rule |
 | --- | --- | --- | --- |
 | eventId | Yes | esp32-1a2b-14 | Idempotency key; repeated IDs are ignored |
-| shelfId | No | SHELF-01 | Defaults to the configured demo shelf |
-| laneId | Yes | LANE-1 | LANE-1 maps to COKE; LANE-2 maps to WATER |
-| sku | No | COKE | If supplied, must match the lane |
+| shelfId | Required for multi-shelf / AWS device events; optional in the one-shelf local simulator | SHELF-01 | Identifies the shelf-level product mapping |
+| laneId | Yes | LANE-1 | Valid lane names are checked before mapping. Shelf 1 maps valid lanes to Cola; Shelf 2 maps valid lanes to Sprite Plus Tea |
+| sku | No | COKE | Validated against the lane, then the shelf mapping selects the cart SKU; the source value is retained for evidence/audit when remapped |
 | eventType | Yes | PICK | PICK or PUT_BACK |
 | timestamp | No | 2026-10-03T10:30:00Z | ISO timestamp from the device; server also records receivedAt |
 | delayed | No | false | `true` when the event is queued offline/backlogged or retried without an application ACK; staff must review it |
@@ -31,6 +31,7 @@ Example payload:
 | Evidence | Case manager | Cart effect | Next action |
 | --- | --- | --- | --- |
 | Both readings and lead ≥ 10 dB; active session | Not called | Apply PICK/PUT_BACK deterministically | Continue |
+| Exactly one active basket session and its fresh RSSI is at least `SINGLE_BASKET_MIN_RSSI` (default -80 dBm) | Not called | Apply deterministically if event is not delayed and PUT_BACK quantity exists | Continue |
 | Both readings and lead < 10 dB | Called only for this ambiguous case | No mutation while pending | Customer YES or staff |
 | Tied readings or low recommendation confidence | Called for ambiguous case | No mutation while pending | Staff HITL |
 | Missing/stale tag evidence | Not called | No mutation; zone remains unknown | Staff HITL |

@@ -17,7 +17,7 @@ Typing Approve does **not** mutate a cart. The staff member must inspect the car
 
 ## Live camera on the device opening Admin
 
-1. Keep API, Laya, MQTT and Web running as usual.
+1. Keep API, Laya, YOLO vision, MQTT and Web running as usual.
 2. Restart **only YOLO** after this update: Ctrl+C in its terminal, then `npm run model:vision` from the repository root. The old running Python process does not reload source automatically.
 3. Open Admin → Object Detection → **กล้องสด**.
 4. Choose the primary/rear camera, front camera or an enumerated webcam, then press **เชื่อมต่อกล้อง** and grant the browser's camera permission. No audio is requested.

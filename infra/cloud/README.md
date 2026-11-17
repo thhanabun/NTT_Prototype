@@ -106,8 +106,8 @@ cfn-lint infra/cloud/template.json infra/cloud/bootstrap.json
 ตรวจ image ภายในเครื่อง:
 
 ```powershell
-docker buildx build --platform linux/amd64 --provenance=false --load -f infra/cloud/Web.Dockerfile -t basketly-cloud-web:check .
-docker buildx build --platform linux/amd64 --provenance=false --load -f infra/cloud/Agent.Dockerfile -t basketly-cloud-agent:check .
+docker buildx build --platform linux/amd64 --provenance=false --load -f infra/cloud/Web.Dockerfile -t fast-cloud-web:check .
+docker buildx build --platform linux/amd64 --provenance=false --load -f infra/cloud/Agent.Dockerfile -t fast-cloud-agent:check .
 npm run cloud:images
 ```
 
@@ -193,7 +193,7 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 
 รายงาน Docker ล่าสุดในเครื่อง: `data/cloud-images-Lm7uGX/report.json` และ `data/cloud-web-image-final.json` ส่วน browser cloud: `data/cloud-browser-1792686913994/report.json` ไฟล์เหล่านี้อยู่ใน ignored `data/` จึงไม่มีใน clone ใหม่ ความสำเร็จของ Laya บน Windows native และ typed inference ใน image ไม่ยืนยันว่า Stat Query จะทันเวลาบน cloud ต้องตรวจ `STAT_PLAN` บน ARM64 native/AgentCore จริง โดยยังคง timeout และ fallback เดิมไว้
 
-## สถานะเตรียม deployment — 24–25 ต.ค. 2026
+## ประวัติเตรียม deployment — 24–25 ต.ค. 2026
 
 - ติดตั้ง AWS CLI v2 แบบ local ใน ignored `data/cloud-tools/` และ SAM CLI ใน `.venv-cloud` แล้ว deploy script เพิ่ม PATH ให้เมื่อพบไฟล์
 - Production web build, TypeScript, ESLint, SAM validation และ Lambda SAM build แบบ `--no-cached` ผ่าน ไม่ได้รัน test suites เพิ่มในรอบนี้
@@ -204,4 +204,13 @@ powershell -NoProfile -File scripts/deploy-cloud.ps1 -ConfigPath data/cloud-conf
 - Image Lambda amd64 ของ Web/Agent build และ push ECR ผ่านแล้ว รอบแรกของ Lambda พบ memory quota สูงสุด 3,008 MB จึงปรับ Agent ให้ตรง quota; ดูสถานะล่าสุดและหลักฐานใน [รายงาน deployment](../../docs/cloud-deployment-status.md) ยังไม่ถือว่าผ่าน cloud acceptance จนกว่าจะตรวจ flow จริง
 - Failed stack ถูก rollback แล้วลบเฉพาะ stack container เพื่อ retry เก็บ retained DB/archive/secret ของแต่ละรอบใน ignored `data/cloud-recovery-retained.json` โดยไม่ลบข้อมูล retained
 
-- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, IoT rule/policy และ Things รองรับสาม shelf; ผู้ใช้รายงานว่า signal flow ผ่านแล้ว แต่ไม่มีผลทดสอบแยกตามบอร์ดแนบอยู่ในรายงานนี้ ดู [รายงาน deployment](../../docs/cloud-deployment-status.md) และ [คู่มือ replicate](../../docs/replicate-fast.md)
+- อัปเดต 25 ต.ค.: stack หลัก `UPDATE_COMPLETE`, Web/Agent Lambda `Active`, IoT rule/policy และ Things รองรับสาม shelf; ผู้ใช้รายงานว่า signal flow ผ่านแล้ว แต่ไม่มีผลทดสอบแยกตามบอร์ดแนบอยู่ในรายงานนี้ รายการนี้เป็น snapshot เก่า ดู [รายงาน deployment ปัจจุบัน](../../docs/cloud-deployment-status.md) และ [คู่มือ replicate](../../docs/replicate-fast.md)
+
+## Deployment ปัจจุบัน — 17 พ.ย. 2026
+
+- Stack `fast-prototype` ใน NTT Challenger Team 14 (`134250568427`, `ap-southeast-1`) อัปเดตสำเร็จ; `WebService`, `AgentRuntime` และ `ApiFunction` รายงาน `Active` / `Successful` ใน post-deploy check.
+- Web/Shopper, API Gateway HTTP/WebSocket, Cognito, DynamoDB, Step Functions, Bedrock Converse, S3 archive, CloudWatch, CloudTrail และ AWS Budgets ถูก deploy; IoT เปิดใช้งานด้วย.
+- Thing `SHELF-01`, `SHELF-02`, `SHELF-03` มี active certificate และ device policy ที่ผูกไว้ครบ ณ การตรวจล่าสุด. ยังต้องยืนยันการแฟลชและ physical E2E ของแต่ละบอร์ด.
+- Release tag `fast-final-20261117-02b30d3-delta`; exact image digests และ URL อยู่ใน [deployment status](../../docs/cloud-deployment-status.md). Deployment นี้ใช้ source working tree ที่มี OAuth proxy fix ซึ่งยังไม่ได้ commit จึง build ซ้ำจาก Git SHA อย่างเดียวไม่ได้.
+- SNS subscription สำหรับอีเมล alarm ยัง pending confirmation ณ การตรวจล่าสุด; Budget US$50/เดือนแจ้งเมื่อ actual cost ถึง 80% และไม่ใช่ spending cap.
+- ดู acceptance ที่ยังเหลือใน [Cloud deployment status](../../docs/cloud-deployment-status.md#acceptance-still-required). การ deploy และสถานะ resource ไม่ได้แปลว่าผ่าน full Cloud E2E หรือวัดค่าใช้จ่ายจริงแล้ว.

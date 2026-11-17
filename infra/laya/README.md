@@ -17,6 +17,6 @@ Container recipe, from the repository root:
     docker build -f infra/laya/Dockerfile -t basket-laya .
     docker run --rm -p 127.0.0.1:8000:8000 -v basket-laya-models:/models basket-laya
 
-The container recipe is prepared for cloud hosting but has not been build-tested here because Docker Desktop is not running. For AWS, expose it on a private reachable endpoint, pass LAYA_API_KEY from a secret, and configure Lambda's LAYA_ENDPOINT accordingly. The 842 MB model is persisted in the model cache; it is not committed to Git.
+The integrated Cloud Agent container bundles this pinned Laya runtime with the YOLO service and listens on loopback inside the Lambda container; it is not exposed as a separate public endpoint. The model artifact is fetched and hash-checked during image build, then served offline at runtime. The standalone recipe above remains useful for local/container checks. The model is not committed to Git.
 
 See docs/local-to-bedrock.md for the selected Bedrock orchestrator, compatibility and measured limits.

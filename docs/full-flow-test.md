@@ -60,11 +60,11 @@ The script stops its app, proxy, broker and MQTT clients after the run. It leave
 
 ## Coverage boundaries and outstanding work
 
-These checks exercise local compute and source handler code, not managed AWS infrastructure. There is no claim that IoT Core certificates/policies, Lambda packaging/IAM, Step Functions callback wiring, Bedrock orchestration, or live DynamoDB were exercised. The hosted IoT-to-event-processor Lambda path and customer/staff handoff callbacks still require implementation/deployment integration; the current executable transport uses the MQTT-to-HTTP bridge.
+These checks exercise local compute and source handler code, not managed AWS infrastructure. They do not verify the deployed IoT certificates/policies, Lambda IAM/package behavior, Step Functions callbacks, Bedrock orchestration, or live DynamoDB. Those Cloud resources are now deployed; full AWS acceptance remains separate and is tracked in [Cloud deployment status](cloud-deployment-status.md). This local script uses the MQTT-to-HTTP bridge and is not evidence that the hosted IoT Rule/Ingest Lambda path passed.
 
 SSE is the current local realtime transport. Two network subscribers are checked; browser rendering, camera/QR interaction and visual layout are not covered by this command.
 
-Real Laya scores in the sample keep ambiguous cases in staff review. The real-model integration must not manufacture high confidence to force the Customer Confirm branch. Customer YES and NO paths are covered by separate deterministic policy fixtures in npm test; they are not real-model acceptance claims. Local automatic customer-response deadline escalation is not implemented; the future Step Functions definition contains a customer timeout route, but its execution and callbacks are unverified.
+Real Laya scores in the sample keep ambiguous cases in staff review. The real-model integration must not manufacture high confidence to force the Customer Confirm branch. Customer YES and NO paths are covered by separate deterministic policy fixtures in `npm test`; they are not real-model acceptance claims. Local automatic customer-response deadline escalation is not implemented by this local harness. The deployed Step Functions workflow has a customer timeout route, but that Cloud callback path is not covered by this command and remains part of Cloud acceptance.
 
 The simulator starts at the firmware event boundary. Physical switch debounce, BLE scanning/RSSI filtering, ESP32 outbox capacity, offline detection and real Wi-Fi loss need device tests. Software transport cycles are not physical detection-accuracy measurements. Model recommendation quality and the end-to-end physical latency target also remain unestablished.
 
