@@ -6,6 +6,7 @@ import { ingestTelemetry, ingestCameraEvidence } from "./evidence.mjs";
 import { queryStatistics, planStatsQuery } from "./stats-query.mjs";
 import { createStoreMapFile } from "./store-map.mjs";
 import { createPresence, validateTracksMessage } from "./presence.mjs";
+import { createShopperAgent } from "./shopper-agent/index.mjs";
 import {
   checkout,
   addAuditEntry,
@@ -28,6 +29,8 @@ export function createPrototypeApplication({
   statsPlanner = planStatsQuery,
   storeMapFile = createStoreMapFile(),
   onLiveEvent = () => {},
+  shopperCompletion,
+  shopperEnv = process.env,
 }) {
   if (!repository) throw new Error("repository is required");
   const selectedAgentProvider = String(agentProvider).toLowerCase();
@@ -36,6 +39,7 @@ export function createPrototypeApplication({
   const presence = createPresence({ getMap: () => storeMapFile.get() });
   let presenceTimer = null;
   let lastPresence = "";
+  const queryShopper = createShopperAgent({ repository, complete: shopperCompletion, env: shopperEnv, logger });
 
   function notifyStateChange() {
     onStateChange(snapshot(store));
@@ -137,6 +141,8 @@ export function createPrototypeApplication({
       notifyStateChange();
       return response;
     },
+
+    queryShopper,
 
     async startSession(basketId) {
       const { result, store: next } = await repository.mutate((draft) => startSession(draft, basketId));

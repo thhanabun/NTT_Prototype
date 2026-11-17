@@ -7,6 +7,7 @@ import { BasketScanner } from "./basket-scanner";
 import { ConnectionStatus } from "@/components/connection-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useShopper } from "./use-shopper";
+import { ShopperChat } from "./shopper-chat";
 import { ProductArt } from "./product-art";
 import { getShelfProduct } from "@/lib/shelves";
 import type { RssiReadings } from "@/lib/api/types";
@@ -54,6 +55,7 @@ export function ShopperApp() {
 
   return (
     <div className={`shopper-flow ${styles.shopper} ${styles.flow}`} lang="th">
+      <ShopperChat key={`${shop.basketId}:${basket.session?.sessionId ?? "guest"}`} basketId={shop.basketId} hasSession={!!basket.session} />
       <header className={styles.topBar}>
         <span className={styles.brand}><span className={styles.brandLogo}><Zap size={14} fill="currentColor" aria-hidden="true" /></span><span>FAST<i>.</i></span></span>
         {basket.session && basketPicker}

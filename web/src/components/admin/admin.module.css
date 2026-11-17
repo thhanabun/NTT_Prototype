@@ -101,6 +101,15 @@
 .hardwareMetrics { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px; margin-top: 14px; font-size: 12px; }
 .hardwareMetrics dt { color: var(--c-soft); margin-bottom: 4px; }
 .hardwareMetrics dd { font: 650 13px var(--c-mono); }
+.bleLocationSection { border-top: 1px solid var(--c-line); margin-top: 18px; padding-top: 14px; }
+.bleLocationSection .sectionHeading { margin-bottom: 10px; }
+.bleLocationSection h3 { font: 700 16px var(--c-display); }
+.bleLocationList { display: grid; gap: 8px; }
+.bleLocationRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; padding: 10px 12px; border-radius: 14px; background: var(--c-bg); }
+.bleLocationRow > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bleLocationRow > div strong { font-size: 12.5px; }
+.bleLocationRow > strong { font: 600 12px var(--c-mono); text-align: right; }
+.bleLocationRow small { grid-column: 1 / -1; color: var(--c-soft); font-size: 11px; line-height: 1.6; }
 .signalTrack, .confidenceTrack { background: var(--c-track); border-radius: 99px; height: 8px; overflow: hidden; }
 .signalTrack > span, .confidenceTrack > span { display: block; height: 100%; border-radius: 0 99px 99px 0; background: var(--c-mint); }
 .signalRow:nth-of-type(3) .signalTrack > span { background: var(--c-soft); }

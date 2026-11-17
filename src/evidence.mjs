@@ -1,3 +1,6 @@
+import { BLE_LOCATION_CONFIG } from "./ble-location-config.mjs";
+import { updateBleLocation } from "./ble-location.mjs";
+
 function identifier(value, label) {
   if (typeof value !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) throw new Error(`Invalid ${label}`);
   return value;
@@ -42,6 +45,7 @@ export function ingestTelemetry(store, input, receivedAt = new Date().toISOStrin
   store.telemetry ||= [];
   store.telemetry.unshift(sample);
   store.telemetry = store.telemetry.slice(0, 120);
+  if (sample.source === "DEVICE") updateBleLocation(store, Date.parse(receivedAt), BLE_LOCATION_CONFIG);
   return sample;
 }
 

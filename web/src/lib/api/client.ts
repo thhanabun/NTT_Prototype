@@ -13,6 +13,7 @@ import type {
   StatsPlan,
   StatsResponse,
 } from "@/lib/api/types";
+import type { ShopperAgentResponse } from "./shopper-agent-types";
 
 export class ApiError extends Error {
   constructor(
@@ -143,4 +144,14 @@ export function getPresence(): Promise<PresenceView> {
 
 export function setPresenceLink(shopperId: string, tag: BasketId | null): Promise<PresenceView> {
   return post("/api/presence/links", { shopperId, tag });
+}
+
+export async function queryShopperAgent(message: string, basketId: BasketId, history: string[], signal: AbortSignal): Promise<ShopperAgentResponse> {
+  const value = await request<ShopperAgentResponse>("/api/shopper/query", {
+    method: "POST", body: JSON.stringify({ message, basketId, history }), signal,
+    headers: { "x-basket-id": basketId },
+  });
+  if (typeof value.answer !== "string" || !Array.isArray(value.sources) || !["demo", "model"].includes(value.mode) ||
+      !["answer", "blocked", "unsupported"].includes(value.kind) || value.sources.some(source => !source || typeof source.title !== "string" || typeof source.excerpt !== "string" || !source.data)) throw new ApiError("ผู้ช่วยส่งข้อมูลไม่ครบ กรุณาลองใหม่", 502);
+  return value;
 }
