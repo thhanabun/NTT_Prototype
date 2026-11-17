@@ -2,6 +2,8 @@
 
 The three ESP32 shelves are fixed receivers. Basket A, Basket B and HV-001 are the moving BLE tags. Each receiver already publishes a five-sample RSSI median at about 1 Hz; this feature reuses those readings.
 
+> **Status as of 17 Nov 2026:** This is an optional RSSI-fingerprinting experiment. The active basket/FSM policy uses RSSI as zone evidence only; these estimated coordinates do not assign cart ownership or authorize payment. No physical location-accuracy result has been measured. For the separate recorded-camera map, see [customer detection](customer-detection.md).
+
 ## Configure calibration
 
 Edit `src/ble-location-config.mjs` after installing the receivers. Set thresholds separately for each tag because their transmit power and mounting can differ:
