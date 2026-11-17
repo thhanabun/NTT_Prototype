@@ -87,9 +87,12 @@ export async function runAgentInvestigation(repository, caseId, {
       if (missingCoreEvidence.length && (remainingSteps <= missingCoreEvidence.length + 1 || remainingTimeMs <= (missingCoreEvidence.length + 2) * estimatedModelMs + 500)) {
         actions = actions.filter(action => missingCoreEvidence.includes(action.id) || action.id === "STOP_STAFF");
       }
-      const budgetDecision = !missingCoreEvidence.length && (remainingSteps === 1 || remainingTimeMs <= estimatedModelMs * 2 + 500);
+      // When only one more model call fits, keep it for the basket decision: the policy then reads missing core evidence itself (read-only, no model call).
+      const lastModelCall = remainingTimeMs <= estimatedModelMs * 2 + 500;
+      const budgetDecision = !missingCoreEvidence.length && (remainingSteps === 1 || lastModelCall);
+      const budgetCore = missingCoreEvidence.length > 0 && lastModelCall;
       const selectionStarted = performance.now();
-      const selection = budgetDecision ? { action: "DECIDE" } : await withinDeadline(signal, () => planner({ signal, actions, context: {
+      const selection = budgetDecision ? { action: "DECIDE" } : budgetCore ? { action: missingCoreEvidence[0] } : await withinDeadline(signal, () => planner({ signal, actions, context: {
         task: { type: item.type, eventType: item.eventType, sku: item.sku, visionFrames: (store.cameraEvidence || []).filter(frame => frame.eventId === item.eventId && frame.frameId).map(frame => ({ frameId: frame.frameId, source: frame.source })).slice(0, 2) },
         remainingSteps,
         remainingTimeMs,
@@ -97,10 +100,11 @@ export async function runAgentInvestigation(repository, caseId, {
         observations: observations.map(entry => ({ action: entry.action, summary: entry.summary.slice(0, 240) })),
       } }));
       const selectionDurationMs = Math.round(performance.now() - selectionStarted);
-      if (!budgetDecision) estimatedModelMs = Math.max(estimatedModelMs, selectionDurationMs * 1.25);
+      const byPolicy = budgetDecision || budgetCore;
+      if (!byPolicy) estimatedModelMs = Math.max(estimatedModelMs, selectionDurationMs * 1.25);
       const action = actions.find(entry => entry.id === selection.action);
       if (!action) throw new Error("Planner selected an unavailable or repeated action");
-      await persistStep({ number, phase: "SELECT", action: action.id, source: budgetDecision ? "POLICY" : "MODEL", summary: budgetDecision ? "Core evidence is complete; reserve the remaining budget for the basket decision model." : `Selected ${action.id}`, model: selection.model, confidence: selection.confidence, probabilities: selection.probabilities, durationMs: selectionDurationMs, remainingTimeMs: Math.max(0, Math.floor(deadlineAt - performance.now())), availableActions: actions.map(entry => entry.id) });
+      await persistStep({ number, phase: "SELECT", action: action.id, source: byPolicy ? "POLICY" : "MODEL", summary: budgetDecision ? "Core evidence is complete; reserve the remaining budget for the basket decision model." : budgetCore ? `Little time left: read required ${action.id} without a model call, so the basket decision model keeps the remaining budget.` : `Selected ${action.id}`, model: selection.model, confidence: selection.confidence, probabilities: selection.probabilities, durationMs: selectionDurationMs, remainingTimeMs: Math.max(0, Math.floor(deadlineAt - performance.now())), availableActions: actions.map(entry => entry.id) });
       if (action.id === "STOP_STAFF") return finish({ escalateReason: "The model stopped evidence collection and requested staff review." });
       if (action.id === "DECIDE") {
         const latest = activeCase(await repository.read());

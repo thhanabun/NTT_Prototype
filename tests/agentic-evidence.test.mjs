@@ -106,20 +106,22 @@ test("Agent can stop after unavailable evidence; no forced fallback tools or dec
 test("Invalid planner action, step budget and deadline all preserve carts and route to staff", async () => {
   for (const mode of ["invalid", "budget", "deadline"]) await fixture(async repository => {
     const { result, store } = await runAgentInvestigation(repository, "CASE-001", { provider: "LAYA", maxSteps: 2, timeoutMs: mode === "deadline" ? 10 : 25000, planner: async ({ actions }) => {
-      if (mode === "deadline") await delay(30);
       return { action: mode === "invalid" ? "exec_shell" : actions[0].id, model: "fixture" };
+    }, toolRunner: async (...args) => {
+      if (mode === "deadline") await delay(30);
+      return runAgentTool(...args);
     }, decision: async () => { throw new Error("Must not run"); } });
     assert.equal(result.status, "OPEN_STAFF"); assert.deepEqual(store.carts, { A: {}, B: {} });
     assert.match(result.reason, mode === "invalid" ? /unavailable/ : mode === "budget" ? /budget/ : /deadline/);
   });
 });
 
-test("Agent excludes unavailable cameras and reserves the deadline for the real decision provider", async () => {
+test("Short on steps: the model picks only core evidence; unavailable cameras are excluded", async () => {
   await fixture(async repository => {
     const order = ["get_cart_history", "get_basket_evidence", "get_shelf_event"];
     let planned = 0, decisions = 0;
     const { result, store } = await runAgentInvestigation(repository, "CASE-001", {
-      provider: "LAYA", timeoutMs: 1000,
+      provider: "LAYA", maxSteps: 4,
       planner: async ({ actions, context }) => {
         assert.ok(context.remainingTimeMs > 0);
         assert.ok(actions.every(action => order.includes(action.id) || action.id === "STOP_STAFF"));
@@ -141,6 +143,27 @@ test("Agent excludes unavailable cameras and reserves the deadline for the real 
     assert.equal(result.agent.steps.at(-1).action, "DECIDE");
     assert.equal(result.agent.steps.at(-1).source, "POLICY");
     assert.ok(store.auditLog.some(item => item.action === "AGENT_BUDGET_DECISION" && item.actor === "POLICY"));
+    assert.deepEqual(store.carts, { A: {}, B: {} });
+  });
+});
+
+test("Short on time: the policy reads missing core evidence so the deadline is kept for the decision model", async () => {
+  await fixture(async repository => {
+    let decisions = 0;
+    const { result, store } = await runAgentInvestigation(repository, "CASE-001", {
+      provider: "LAYA", timeoutMs: 1000,
+      planner: async () => { throw new Error("No time for planner calls"); },
+      decision: async ({ context }) => {
+        decisions++;
+        assert.equal(context.event.eventId, event.eventId);
+        return { candidate: "A", confidence: 0.9, model: "fixture-decision" };
+      },
+    });
+    assert.equal(decisions, 1);
+    assert.equal(result.agent.status, "COMPLETED");
+    assert.equal(result.status, "WAITING_CUSTOMER");
+    assert.deepEqual(result.toolCalls.map(call => call.name), ["get_shelf_event", "get_basket_evidence", "get_cart_history"]);
+    assert.ok(result.agent.steps.filter(step => step.phase === "SELECT").every(step => step.source === "POLICY"));
     assert.deepEqual(store.carts, { A: {}, B: {} });
   });
 });

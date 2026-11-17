@@ -4,7 +4,7 @@
 
 The HTTP server defaults to `AGENT_PROVIDER=laya`, `AGENT_MODE=agentic`. Each ambiguous case runs **select → execute → observe → select again**. Real local Laya chooses one typed action from the currently available tools/scripts using the observations returned so far. There is no fixed tool order in this mode and no silent mock-planner fallback.
 
-`DECIDE` becomes available after the three core tools have been read, in any order. It calls the basket-choice model, then deterministic policy and human confirmation. `STOP_STAFF` lets the model stop gathering evidence without inventing missing data. Unavailable/repeated actions, malformed responses, transport errors, an eight-action limit and a 25-second investigation deadline all keep the case for staff.
+`DECIDE` becomes available after the three core tools have been read, in any order. It calls the basket-choice model, then deterministic policy and human confirmation. `STOP_STAFF` lets the model stop gathering evidence without inventing missing data. Unavailable/repeated actions, malformed responses, transport errors, an eight-action limit and a 25-second investigation deadline all keep the case for staff. When only one more model call fits in the deadline, the policy reads any missing core evidence itself (read-only, no model call) and keeps that call for the basket decision; on a CPU Laya the decision alone takes 8.6–10 s.
 
 Laya is a typed decision model. It does not generate a reasoning narrative or arbitrary scripts. The trace records model-selected actions, probabilities and observations; it does not fabricate hidden chain of thought. Selection quality on retail evidence still requires evaluation.
 
