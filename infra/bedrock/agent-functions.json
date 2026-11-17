@@ -2,7 +2,7 @@
   "functions": [
     {
       "name": "get_basket_decision",
-      "description": "Call the same self-hosted Laya decision model used locally for an ambiguous shelf event. Returns candidate, option probabilities and model identity; never changes a cart.",
+      "description": "Legacy Classic Agent compatibility action for an ambiguous shelf event. Calls the read-only Laya typed-decision adapter; the current Cloud deployment runs Laya inside its private AgentRuntime. Returns candidate, option probabilities and model identity; never changes a cart.",
       "parameters": {
         "eventId": {
           "description": "Source event ID of the ambiguous case.",
