@@ -1,0 +1,9 @@
+# ByteTrack tuned for slow live detection (about 3-12 detections per second on a CPU instead of 30).
+# People move further between detections, so boxes overlap less; keep lost people a little longer.
+tracker_type: bytetrack
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.4   # default 0.25: fewer new ids from weak, flickering detections
+track_buffer: 45        # default 30 detections: lost people are kept longer before a new id is given
+match_thresh: 0.9       # default 0.8: accept matches down to ~10% box overlap (people move more between detections)
+fuse_score: True

@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, CheckCheck, CircleAlert, Clock3, LoaderCircle, QrCode, ReceiptText, RefreshCw, ShieldCheck, ShoppingBasket, X } from "lucide-react";
+import { ArrowRight, Check, CheckCheck, CircleAlert, Clock3, LoaderCircle, QrCode, ReceiptText, RefreshCw, ShieldCheck, ShoppingBasket, WifiOff, X, Zap } from "lucide-react";
 import { ArcGauge } from "@/components/arc-gauge";
 import { BasketScanner } from "./basket-scanner";
 import { ConnectionStatus } from "@/components/connection-status";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useShopper } from "./use-shopper";
 import { ShopperChat } from "./shopper-chat";
 import { ProductArt } from "./product-art";
-import { SHELF_OPTIONS, SHELF_PRODUCTS, getShelfProduct } from "@/lib/shelves";
+import { getShelfProduct } from "@/lib/shelves";
 import type { RssiReadings } from "@/lib/api/types";
 import styles from "./shopper.module.css";
 
@@ -29,18 +30,17 @@ function SignalCompare({ rssi, margin }: { rssi?: RssiReadings; margin?: number 
   );
 }
 
+// New design (S1-S11): one column, one main number and one main button per screen; a question takes the whole screen.
 export function ShopperApp() {
   const shop = useShopper();
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [selectedShelf, setSelectedShelf] = useState("SHELF-01");
   const { basket, loading, pending, stale } = shop;
-  const shelfProduct = SHELF_PRODUCTS.find(product => product.shelfId === selectedShelf)!;
-  const catalogProduct = shop.state?.products.find(product => product.sku === shelfProduct.sku);
   const product = shop.state?.products.find((item) => item.sku === shop.currentCase?.sku);
   const caseShelfId = shop.currentCase?.shelfId ?? shop.state?.recentEvents.find(event => event.eventId === shop.currentCase?.eventId)?.shelfId;
   const caseProduct = getShelfProduct(caseShelfId);
   const isReturn = shop.currentCase?.eventType === "PUT_BACK";
-  const canCheckout = Boolean(basket.session && basket.lines.length && basket.payable && !loading && !pending && !stale);
+  const busy = loading || pending;
+  const canCheckout = Boolean(basket.session && basket.lines.length && basket.payable && !busy && !stale);
   const reason = loading || stale ? "รอข้อมูลล่าสุดก่อนชำระเงิน" : pending ? "กำลังส่งคำขอ กรุณารอสักครู่"
     : !basket.session ? "เลือกตะกร้าเพื่อเริ่มช้อป" : basket.unresolvedCaseCount ? "รอผลยืนยันรายการก่อนชำระเงิน"
       : !basket.lines.length ? "ยังไม่มีสินค้าที่ยืนยันแล้ว" : "";
@@ -49,57 +49,67 @@ export function ShopperApp() {
     .reduce((sum, item) => sum + (shop.state?.products.find((entry) => entry.sku === item.sku)?.price ?? 0), 0);
   const gaugeNote = shop.waitingCases.length ? `${pendingValue ? `+${money(pendingValue)} ` : ""}รอยืนยัน ${shop.waitingCases.length} รายการ`
     : shop.staffCases.length ? `พนักงานกำลังตรวจ ${shop.staffCases.length} รายการ`
-      : basket.lines.length ? "ทุกรายการยืนยันแล้ว" : basket.session ? "เริ่มหยิบสินค้าได้เลย" : "เริ่มต้นด้วยการเลือกตะกร้า";
+      : basket.lines.length ? "ทุกรายการยืนยันแล้ว" : basket.session ? "หยิบจากชั้นได้เลย รายการขึ้นเอง" : "เริ่มต้นด้วยการเลือกตะกร้า";
   const noteTone = shop.waitingCases.length ? styles.toneWarn : shop.staffCases.length ? styles.toneInfo : styles.toneOk;
-  const stepDone = [Boolean(basket.session) || Boolean(shop.receipt), basket.lines.length > 0 || Boolean(shop.receipt), Boolean(shop.receipt)];
+  const basketPicker = <fieldset className={`${styles.basketPicker} ${basket.session ? styles.basketCompact : ""}`} disabled={busy}><legend>เลือกตะกร้า</legend>{(["A", "B"] as const).map((id) => <label key={id} className={`${styles.basketOption} ${shop.basketId === id ? styles.selectedBasket : ""}`}><input type="radio" name="basket" checked={shop.basketId === id} onChange={() => shop.selectBasket(id)} /><span className={styles.basketLetter}>{id}</span><span>Basket {id}</span>{shop.basketId === id && !basket.session && <Check size={16} aria-hidden="true" />}</label>)}</fieldset>;
 
   return (
-    <div className={styles.shopper} lang="th">
+    <div className={`shopper-flow ${styles.shopper} ${styles.flow}`} lang="th">
       <ShopperChat key={`${shop.basketId}:${basket.session?.sessionId ?? "guest"}`} basketId={shop.basketId} hasSession={!!basket.session} />
-      <div className={styles.hero}>
-        <div><p className={styles.eyebrow}>SHOPPER</p><h1>ช้อปได้เลย<span>.</span></h1></div>
-        <button className={styles.scanButton} disabled={loading || pending || stale} onClick={() => setScannerOpen(true)}><QrCode size={20} aria-hidden="true" /> สแกนตะกร้า</button>
-      </div>
-      <ol className={styles.progress} aria-label="ขั้นตอนการซื้อสินค้า">
-        {["เชื่อมตะกร้า", "หยิบสินค้า", "ชำระเงิน"].map((label, index) => (
-          <li key={label} className={stepDone[index] ? styles.progressDone : index === stepDone.filter(Boolean).length ? styles.progressNow : ""}>
-            <span aria-hidden="true" />{index + 1} {label}
-          </li>
-        ))}
-      </ol>
-      <div className={styles.grid}>
-        <div className={styles.leftColumn}>
-          <section className={styles.card} aria-labelledby="basket-heading">
-            <div className={styles.cardHeading}><span className={styles.iconTile}><ShoppingBasket size={23} aria-hidden="true" /></span><div><h2 id="basket-heading">{basket.session ? "ตะกร้าที่เชื่อมต่อ" : "เลือกตะกร้า"}</h2></div>{basket.session && <span className={styles.activeBadge}>เชื่อมแล้ว</span>}</div>
-            <fieldset className={styles.basketPicker} disabled={loading || pending}><legend>เลือกตะกร้า</legend>{(["A", "B"] as const).map((id) => <label key={id} className={`${styles.basketOption} ${shop.basketId === id ? styles.selectedBasket : ""}`}><input type="radio" name="basket" checked={shop.basketId === id} onChange={() => shop.selectBasket(id)} /><span className={styles.basketLetter}>{id}</span><span>Basket {id}</span>{shop.basketId === id && <Check size={16} aria-hidden="true" />}</label>)}</fieldset>
-            {basket.session ? <p className={styles.sessionTime}>เริ่ม {new Date(basket.session.startedAt).toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" })}</p> : <div className={styles.connectActions}><button className={styles.primaryButton} disabled={loading || pending || stale} onClick={() => void shop.beginSession()}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <ShoppingBasket size={17} aria-hidden="true" />} เริ่มช้อป <ArrowRight size={16} aria-hidden="true" /></button></div>}
-            <div className={styles.connectionRow}><div className={styles.connection}><span className={stale ? styles.offlineDot : styles.onlineDot} /><ConnectionStatus connection={shop.connection} retryAttempt={shop.retryAttempt} stale={stale} /></div>
-            <button className={styles.refreshIcon} aria-label="อัปเดตตะกร้า" disabled={loading || pending} onClick={() => void shop.refresh()}><RefreshCw size={16} aria-hidden="true" /></button></div>
-          </section>
-          <section className={styles.card} aria-labelledby="products-heading"><div className={styles.sectionHeading}><div><h2 id="products-heading">สินค้าในร้าน</h2></div><span className={styles.smallLabel}>{catalogProduct ? 1 : 0} รายการ</span></div>
-            <div className={styles.shelfPicker} role="group" aria-label="เลือกชั้นวางสินค้า">{SHELF_OPTIONS.map(shelf => <button type="button" key={shelf.shelfId} disabled={!shelf.enabled} aria-pressed={selectedShelf === shelf.shelfId} onClick={() => setSelectedShelf(shelf.shelfId)}>{shelf.label}{!shelf.enabled && <small>ยังไม่เปิดใช้</small>}</button>)}</div>
-            {catalogProduct && <div className={styles.productRow}><ProductArt sku={catalogProduct.sku} variant={shelfProduct.art} /><div className={styles.productCopy}><h3>{shelfProduct.name}</h3><strong>{money(catalogProduct.price)} <small>/ ชิ้น</small></strong></div></div>}
-          </section>
+      <header className={styles.topBar}>
+        <span className={styles.brand}><span className={styles.brandLogo}><Zap size={14} fill="currentColor" aria-hidden="true" /></span><span>FAST<i>.</i></span></span>
+        {basket.session && basketPicker}
+        <div className={styles.topTools}>
+          <span className={styles.livePill}><span className={stale ? styles.offlineDot : styles.onlineDot} /><ConnectionStatus connection={shop.connection} retryAttempt={shop.retryAttempt} stale={stale} /></span>
+          <button className={styles.refreshIcon} aria-label="อัปเดตตะกร้า" disabled={busy} onClick={() => void shop.refresh()}><RefreshCw size={16} aria-hidden="true" /></button>
+          {basket.session && <button className={styles.refreshIcon} aria-label="สแกนตะกร้า" disabled={busy || stale} onClick={() => setScannerOpen(true)}><QrCode size={17} aria-hidden="true" /></button>}
+          <ThemeToggle />
         </div>
-        <section className={`${styles.card} ${styles.cartCard}`} aria-labelledby="cart-heading" aria-busy={loading || pending}>
-          <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>YOUR CART</p><h2 id="cart-heading">รายการของคุณ <span className={styles.cartBasket}>{shop.basketId}</span></h2></div><span className={styles.itemCount}>{itemCount} ชิ้น</span></div>
-          <div className={styles.gauge}>
-            <ArcGauge confirmed={basket.total} pending={pendingValue} />
-            <div className={styles.gaugeText} aria-hidden="true">
-              <span className={styles.gaugeLabel}>ยืนยันแล้ว · {itemCount} ชิ้น</span>
-              <strong className={styles.gaugeValue}><span>฿</span>{!shop.state ? "—" : basket.total.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</strong>
-              <span className={`${styles.gaugeNote} ${noteTone}`}>{gaugeNote}</span>
-            </div>
+      </header>
+
+      {stale && !loading && <section className={styles.offline} aria-labelledby="offline-heading"><WifiOff size={26} aria-hidden="true" /><div><p className={styles.eyebrow}>OFFLINE</p><h2 id="offline-heading">การเชื่อมต่อขาดหาย</h2><p>รายการที่หยิบไว้ยังอยู่ครบ ระบบจะลองเชื่อมต่อใหม่เอง</p><button className={styles.outlineButton} disabled={busy} onClick={() => void shop.refresh()}><RefreshCw size={15} aria-hidden="true" /> ลองใหม่</button></div></section>}
+      {shop.error && <div className={styles.errorNotice} role="alert"><CircleAlert size={18} aria-hidden="true" /><div>{shop.error}<button disabled={busy} onClick={() => void shop.refresh()}>ลองโหลดข้อมูลอีกครั้ง</button></div></div>}
+      {shop.notice && <p className={styles.actionNotice} role="status">{shop.notice}</p>}
+
+      {!basket.session && <section className={styles.connect} aria-labelledby="connect-heading">
+        <p className={styles.eyebrow}>SHOPPER</p>
+        <h1 id="connect-heading">หยิบ จ่าย<br />ไปได้เลย<span>.</span></h1>
+        <p className={styles.lead}>สแกน QR บนตะกร้าเพื่อเริ่ม ระบบจะนับของที่คุณหยิบให้เอง</p>
+        <button className={styles.primaryButton} disabled={busy || stale} onClick={() => setScannerOpen(true)}><QrCode size={20} aria-hidden="true" /> สแกนตะกร้า</button>
+        <p className={styles.orPick}>สแกนไม่ได้? เลือกตะกร้าเอง</p>
+        {basketPicker}
+        <button className={styles.outlineButton} disabled={busy || stale} onClick={() => void shop.beginSession()}>{pending ? <LoaderCircle className={styles.spin} size={17} aria-hidden="true" /> : <ShoppingBasket size={17} aria-hidden="true" />} เริ่มช้อป <ArrowRight size={16} aria-hidden="true" /></button>
+      </section>}
+
+      <section className={styles.cartScreen} aria-labelledby="cart-heading" aria-busy={busy}>
+        <div className={styles.sectionHeading}><h2 id="cart-heading">รายการของคุณ <span className={styles.cartBasket}>{shop.basketId}</span></h2>{basket.session && <span className={styles.activeBadge}>เชื่อมแล้ว</span>}<span className={styles.itemCount}>{itemCount} ชิ้น</span></div>
+        {!shop.receipt && <div className={styles.gauge}>
+          <ArcGauge confirmed={basket.total} pending={pendingValue} />
+          <div className={styles.gaugeText} aria-hidden="true">
+            <span className={styles.gaugeLabel}>ยืนยันแล้ว · {itemCount} ชิ้น</span>
+            <strong className={styles.gaugeValue}><span>฿</span>{!shop.state ? "—" : basket.total.toLocaleString("th-TH")}</strong>
+            <span className={`${styles.gaugeNote} ${noteTone}`}>{gaugeNote}</span>
           </div>
-          {shop.error && <div className={styles.errorNotice} role="alert"><CircleAlert size={18} aria-hidden="true" /><div>{shop.error}<button disabled={loading || pending} onClick={() => void shop.refresh()}>ลองโหลดข้อมูลอีกครั้ง</button></div></div>}
-          {shop.notice && <p className={styles.actionNotice} role="status">{shop.notice}</p>}
-          <div className={styles.cartContents}>{loading ? <div className={styles.emptyState} role="status"><LoaderCircle className={styles.spin} size={32} aria-hidden="true" /><h3>กำลังโหลดตะกร้า</h3></div> : basket.lines.length ? <div className={styles.cartLines}>{basket.lines.map((line) => <div className={styles.cartLine} key={line.sku}><ProductArt sku={line.sku} /><div><h3>{line.name}</h3><p>{money(line.price)} / ชิ้น</p></div><span className={styles.quantity}>×{line.quantity}</span><strong>{money(line.subtotal)}</strong></div>)}</div> : <div className={styles.emptyState}><div className={styles.emptyBasket}><ShoppingBasket size={43} aria-hidden="true" /></div><h3>{stale ? "ยังโหลดข้อมูลไม่ได้" : "ตะกร้ายังว่างอยู่"}</h3><p>{basket.session ? "หยิบสินค้าที่ต้องการได้เลย" : "เลือกตะกร้าหรือสแกน QR เพื่อเริ่มช้อป"}</p></div>}</div>
-          {shop.currentCase && <section className={styles.confirmPanel} aria-labelledby="confirm-heading"><div className={styles.confirmTag}><CircleAlert size={14} aria-hidden="true" /> ต้องการคำยืนยัน · {shop.waitingCases.length} รายการ</div><div className={styles.confirmProduct}><ProductArt sku={shop.currentCase.sku} variant={caseProduct?.art} /><div><h3 id="confirm-heading">คุณ{isReturn ? "คืน" : "หยิบ"} {caseProduct?.name ?? product?.name ?? shop.currentCase.sku} ใช่ไหม?</h3></div></div><SignalCompare rssi={shop.currentCase.evidence.rssi} margin={shop.currentCase.evidence.marginDb} /><p className={styles.pendingExplanation}>{isReturn ? "รายการจะถูกนำออกหลังยืนยันเท่านั้น" : "รายการนี้ยังไม่รวมในยอดรวม"}</p><div className={styles.confirmActions}><button className={styles.yesButton} disabled={loading || pending || stale} onClick={() => void shop.confirmItem("YES")}><Check size={17} aria-hidden="true" /> ใช่, ฉัน{isReturn ? "คืน" : "หยิบ"}</button><button className={styles.noButton} disabled={loading || pending || stale} onClick={() => void shop.confirmItem("NO")}><X size={17} aria-hidden="true" /> ไม่ใช่, ให้พนักงานดู</button></div></section>}
-          {shop.staffCases.length > 0 && <div className={styles.staffNotice} role="status"><Clock3 size={23} aria-hidden="true" /><div><h3>พนักงานกำลังตรวจสอบ</h3><p>{shop.staffCases.length} รายการรอผลก่อนชำระเงิน</p></div></div>}
-          {shop.receipt ? <section className={styles.receipt} aria-labelledby="receipt-heading"><span className={styles.receiptCheck}><CheckCheck size={27} aria-hidden="true" /></span><p className={styles.eyebrow}>ขอบคุณที่ใช้ FAST</p><h3 id="receipt-heading">ขอบคุณที่ช้อปกับเรา</h3><p>Basket {shop.receipt.basketId} · เสร็จสิ้น</p><dl><div><dt>Order</dt><dd>{shop.receipt.orderId}</dd></div>{shop.receipt.lines.map((line) => <div key={line.sku}><dt>{line.name} ×{line.quantity}</dt><dd>{money(line.subtotal)}</dd></div>)}<div className={styles.receiptTotal}><dt>รวม</dt><dd>{money(shop.receipt.total)}</dd></div></dl><p className={styles.mockLabel}>การชำระเงินจำลอง · ไม่เรียกเก็บเงินจริง</p><button className={styles.outlineButton} disabled={loading || pending} onClick={shop.dismissReceipt}>เตรียมช้อปครั้งใหม่ <ArrowRight size={15} aria-hidden="true" /></button></section>
-            : <div className={styles.checkoutArea}><div className={styles.totalRow}><span>ยอดรวม</span><strong>{!shop.state ? "—" : money(basket.total)}</strong></div><p className={styles.checkoutReason} id="checkout-reason">{reason && <><ShieldCheck size={14} aria-hidden="true" />{reason}</>}</p><button className={styles.primaryButton} disabled={!canCheckout} aria-describedby="checkout-reason" onClick={() => void shop.finishCheckout()}>{pending ? <LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />} ชำระเงิน <ArrowRight size={16} aria-hidden="true" /></button><p className={styles.mockLabel}>การชำระเงินจำลอง · ไม่เรียกเก็บเงินจริง</p></div>}
-        </section>
-      </div>
+        </div>}
+        {!shop.receipt && <div className={styles.cartContents}>{loading ? <div className={styles.emptyState} role="status"><LoaderCircle className={styles.spin} size={32} aria-hidden="true" /><h3>กำลังโหลดตะกร้า</h3></div> : basket.lines.length ? <div className={styles.cartLines}>{basket.lines.map((line) => <div className={styles.cartLine} key={line.sku}><ProductArt sku={line.sku} /><div><h3>{line.name}</h3><p>{money(line.price)} / ชิ้น</p></div><span className={styles.quantity}>×{line.quantity}</span><strong>{money(line.subtotal)}</strong></div>)}</div> : <div className={styles.emptyState}><div className={styles.emptyBasket}><ShoppingBasket size={36} aria-hidden="true" /></div><h3>{stale ? "ยังโหลดข้อมูลไม่ได้" : "ตะกร้ายังว่างอยู่"}</h3>{!basket.session && <p>สแกน QR หรือเลือกตะกร้าเพื่อเริ่มช้อป</p>}</div>}</div>}
+        {shop.staffCases.length > 0 && <div className={styles.staffNotice} role="status"><Clock3 size={23} aria-hidden="true" /><div><h3>พนักงานกำลังตรวจสอบ</h3><p>{shop.staffCases.length} รายการรอผลก่อนชำระเงิน · รอที่ตะกร้าได้เลย</p></div></div>}
+        {shop.receipt ? <section className={styles.receipt} aria-labelledby="receipt-heading"><span className={styles.receiptCheck}><CheckCheck size={27} aria-hidden="true" /></span><p className={styles.eyebrow}>เรียบร้อย</p><h3 id="receipt-heading">ขอบคุณที่ช้อปกับเรา</h3><p>Basket {shop.receipt.basketId} · วางตะกร้าคืนได้เลย</p><dl>{shop.receipt.lines.map((line) => <div key={line.sku}><dt>{line.name} ×{line.quantity}</dt><dd>{money(line.subtotal)}</dd></div>)}<div className={styles.receiptTotal}><dt>รวม</dt><dd>{money(shop.receipt.total)}</dd></div><div className={styles.orderId}><dt>Order</dt><dd>{shop.receipt.orderId}</dd></div></dl><p className={styles.mockLabel}>การชำระเงินจำลอง · ไม่เรียกเก็บเงินจริง</p><button className={styles.primaryButton} disabled={busy} onClick={shop.dismissReceipt}>เตรียมช้อปครั้งใหม่ <ArrowRight size={15} aria-hidden="true" /></button></section>
+          : <div className={styles.checkoutArea}><div className={styles.totalRow}><span>ยอดรวม</span><strong>{!shop.state ? "—" : money(basket.total)}</strong></div><p className={styles.checkoutReason} id="checkout-reason">{reason && <><ShieldCheck size={14} aria-hidden="true" />{reason}</>}</p><button className={styles.primaryButton} disabled={!canCheckout} aria-describedby="checkout-reason" onClick={() => void shop.finishCheckout()}>{pending ? <LoaderCircle className={styles.spin} size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />} ชำระเงิน <ArrowRight size={16} aria-hidden="true" /></button><p className={styles.mockLabel}>การชำระเงินจำลอง · ไม่เรียกเก็บเงินจริง</p></div>}
+      </section>
+
+      {shop.currentCase && <section className={styles.question} aria-labelledby="confirm-heading">
+        <div className={styles.questionBody}>
+          <p className={styles.confirmTag}><CircleAlert size={14} aria-hidden="true" /> คำถาม 1 จาก {shop.waitingCases.length}</p>
+          <ProductArt sku={shop.currentCase.sku} variant={caseProduct?.art} />
+          <h2 id="confirm-heading">คุณ{isReturn ? "คืน" : "หยิบ"} {caseProduct?.name ?? product?.name ?? shop.currentCase.sku} ใช่ไหม?</h2>
+          <p className={styles.pendingExplanation}>{isReturn ? "รายการจะถูกนำออกหลังยืนยันเท่านั้น" : "ยังไม่รวมในยอดจนกว่าคุณจะตอบ"}</p>
+          <SignalCompare rssi={shop.currentCase.evidence.rssi} margin={shop.currentCase.evidence.marginDb} />
+        </div>
+        <div className={styles.confirmActions}>
+          <button className={styles.yesButton} disabled={busy || stale} onClick={() => void shop.confirmItem("YES")}><Check size={18} aria-hidden="true" /> ใช่, ฉัน{isReturn ? "คืน" : "หยิบ"}</button>
+          <button className={styles.noButton} disabled={busy || stale} onClick={() => void shop.confirmItem("NO")}><X size={18} aria-hidden="true" /> ไม่ใช่, ให้พนักงานดู</button>
+        </div>
+      </section>}
       {scannerOpen && <BasketScanner onClose={() => setScannerOpen(false)} onPair={(id, code) => { setScannerOpen(false); shop.selectBasket(id, code); void shop.beginSession(id); }} />}
     </div>
   );

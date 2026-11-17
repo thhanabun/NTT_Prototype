@@ -1,0 +1,83 @@
+/* /cam: the store-map + cameras page in the FAST redesign look (design canvas boards A, B, C, E).
+   Same page and logic as / (index.html); this file and shell.js only restyle and regroup it. */
+:root { --bg:#f1ebe3; --surface:#fbf8f4; --ink:#2b2420; --soft:#6f6258; --line:#e2d8cb; --hi:#c4521a; --hiInk:#a84a12; --ok:#1f5e39; --okBg:#dcebdf; --warn:#8a5a12; --warnBg:#f8ecc4; --bad:#a8362a; --sel:#ece3d8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16120f; --surface:#211b17; --ink:#f3ebe4; --soft:#b3a397; --line:#3a2f28; --sel:#2e2520; --okBg:#1d3326; --warnBg:#3a2f12; --ok:#7cc79a; --warn:#e2b25a; --hiInk:#f08a4f; } }
+body.camui { font:15px/1.5 "Anuphan", system-ui, sans-serif; background:var(--bg); }
+body.camui .mono, body.camui .camName, body.camui #camLive { font-family:"JetBrains Mono", ui-monospace, monospace; }
+body.camui button, body.camui select, body.camui input { border-radius:8px; border-color:var(--line); background:var(--surface); min-height:36px; }
+body.camui button[aria-pressed=true], body.camui button.primary { background:var(--hi); border-color:var(--hi); color:#fff; }
+body.camui :focus-visible { outline-color:var(--hi); }
+body.camui > header { display:none; }
+
+.shell { display:flex; min-height:100vh; }
+.shell > nav { flex:0 0 216px; box-sizing:border-box; padding:24px 14px; display:flex; flex-direction:column; gap:4px; background:var(--surface); border-right:1px solid var(--line); position:sticky; top:0; height:100vh; }
+.brand { display:flex; align-items:center; gap:10px; padding:0 8px 20px; }
+.brand .logo { width:32px; height:32px; border-radius:9px; background:#2b2420; display:flex; align-items:center; justify-content:center; }
+.brand b { font-size:20px; } .brand b i { font-style:normal; color:var(--hi); } .brand span { font-size:13px; color:var(--soft); }
+.shell > nav a { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:0 12px; border-radius:12px; color:var(--ink); text-decoration:none; }
+.shell > nav a.sub { margin-left:14px; font-size:14px; }
+.shell > nav a[aria-current=page] { background:var(--sel); font-weight:600; }
+.shell > nav .badge { min-width:22px; text-align:center; border-radius:11px; background:#fdebd3; color:#a14a06; font-size:13px; }
+.shell > nav .foot { margin-top:auto; display:flex; flex-direction:column; gap:8px; padding:0 8px; font-size:13px; color:var(--soft); }
+.shell > nav .foot a { min-height:0; padding:0; color:var(--hiInk); text-decoration:underline; }
+#camLive { display:flex; align-items:center; gap:8px; }
+#camLive::before { content:""; width:8px; height:8px; border-radius:4px; background:var(--soft); }
+#camLive.on::before { background:#1f7f68; }
+.content { flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; padding:24px 32px; box-sizing:border-box; }
+.vhead { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px 16px; }
+.vhead > div { flex:1 1 320px; }
+.vhead .kicker { font-size:13px; color:var(--soft); }
+.vhead h1 { margin:2px 0 0; font-size:28px; font-weight:600; line-height:1.25; }
+.vhead button { min-height:44px; padding:0 16px; }
+#advBtn[aria-expanded=true] { background:var(--sel); }
+#syncBig { min-height:56px; padding:0 22px; font-size:17px; font-weight:600; border-radius:12px; }
+body.camui .bar { padding:12px 16px; border-radius:12px; background:var(--surface); border:1px solid var(--line); }
+/* basic mode: only what a person needs; everything else is behind ขั้นสูง */
+body.camui:not(.adv) .bar > :not(#play):not(#rewind):not(label:has(#vset)) { display:none; }
+body.camui #status { margin:0; border-radius:12px; }
+body.camui main { padding:0; gap:16px; }
+body.camui .card { border-radius:12px; border-width:1px; }
+body.camui .card.active { border:2px solid var(--hi); }
+body.camui canvas { border-radius:10px; }
+body.camui svg#map { border-radius:14px; }
+body.camui .panel { border-radius:12px; }
+
+/* ร้านสด: the map large, cameras beside it as pictures only */
+body.v-live main { grid-template-columns:minmax(0,2fr) minmax(260px,1fr); }
+body.v-live main > section:first-child { order:2; }
+body.v-live #mapBox > .row[role=toolbar] > :not(#mapFull):not(#zfit) { display:none; }
+body.v-live #mapBox > .layers, body.v-live #sel, body.v-live #mapBox > .panel:last-child { display:none; }
+body.v-live .card > .row, body.v-live .card .ptbar, body.v-live #addCam { display:none; }
+body.v-live:not(.adv) .card .camOut { display:none; }
+body.v-live .card { padding:6px; margin-bottom:10px; }
+
+/* ตั้งค่ากล้อง: per camera only the Reference picker and its corners; the map only draws a Reference */
+body.v-setup main { grid-template-columns:minmax(0,3fr) minmax(0,2fr); }
+body.v-setup:not(.adv) .card > .row:first-child > :not(.camName), body.v-setup:not(.adv) .card > .row:nth-child(3), body.v-setup:not(.adv) #addCam { display:none; }
+body.v-setup:not(.adv) #mapBox > .row[role=toolbar] > :not([data-tool=select]):not([data-tool=ref]):not(#zfit), body.v-setup:not(.adv) #mapBox > .layers, body.v-setup:not(.adv) #mapBox > .panel:last-child { display:none; }
+
+/* ปรับจากคนเดิน: one toggle and each camera's sync line */
+body.v-sync main { grid-template-columns:1fr; }
+body.v-sync main > section:last-child { display:none; }
+body.v-sync #cams { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+body.v-sync .card { margin:0; }
+body.v-sync .card > .row:not(:first-child), body.v-sync .card .row:first-child > :not(.camName), body.v-sync #addCam, body.v-sync .card .ptbar { display:none; }
+body.v-sync .card .camOut { font-size:14px; color:var(--ink); }
+
+/* แก้แผนที่ร้าน: Reference, shop area, zone; drawings and layers behind ขั้นสูง */
+body.v-map main { grid-template-columns:1fr; }
+body.v-map main > section:first-child { display:none; }
+body.v-map:not(.adv) #mapBox > .row[role=toolbar] > :not([data-tool=select]):not([data-tool=ref]):not([data-tool=shop]):not([data-tool=zone]):not(#zfit):not(#mapFull), body.v-map:not(.adv) #mapBox > .layers, body.v-map:not(.adv) #mapBox > .panel:last-child { display:none; }
+
+@media (max-width:900px) {
+  .shell { flex-direction:column; }
+  .shell > nav { position:static; height:auto; flex:none; flex-direction:row; flex-wrap:wrap; padding:10px 12px; border-right:0; border-bottom:1px solid var(--line); }
+  .brand { padding:0 8px 0 0; } .shell > nav a.sub { margin-left:0; } .shell > nav .foot { margin:0 0 0 auto; flex-direction:row; align-items:center; }
+  .content { padding:16px; }
+  body.v-live main, body.v-setup main { grid-template-columns:1fr; }
+}
+body.v-setup:not(.adv) .card .camOut { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+
+/* inside the FAST Admin app (?embed=1): its menu replaces ours */
+body.embed .shell > nav { display:none; }
+body.embed .content { padding:16px; }
