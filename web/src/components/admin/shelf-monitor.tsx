@@ -2,12 +2,36 @@
 
 import { useState } from "react";
 import { Signal } from "lucide-react";
-import type { Shelf } from "@/lib/api/types";
+import type { BleTagLocation, Shelf } from "@/lib/api/types";
 import { SHELF_PRODUCTS } from "@/lib/shelves";
 import { formatTime } from "./case-details";
 import styles from "./admin.module.css";
 
-export function ShelfMonitor({ shelves }: { shelves: Shelf[] }) {
+const bleStatusLabel: Record<BleTagLocation["status"], string> = {
+  UNCALIBRATED: "ยังไม่ปรับเทียบ",
+  TRACKING: "กำลังติดตาม",
+  OUTSIDE: "อยู่นอกพื้นที่",
+  PARTIAL: "ข้อมูลไม่ครบ",
+  STALE: "ไม่มีสัญญาณสด",
+  WAITING: "รอยืนยันเข้า",
+};
+const bleStatusClass: Record<BleTagLocation["status"], string> = {
+  UNCALIBRATED: styles.neutral,
+  TRACKING: styles.green,
+  OUTSIDE: styles.neutral,
+  PARTIAL: styles.amber,
+  STALE: styles.amber,
+  WAITING: styles.blue,
+};
+const presenceLabel: Record<BleTagLocation["presence"], string> = {
+  UNCONFIGURED: "ยังไม่ตั้งเกณฑ์",
+  UNKNOWN: "ยังไม่ทราบ",
+  INSIDE: "เข้าเขต",
+  OUTSIDE: "ออกเขต",
+  PARTIAL: "ข้อมูลไม่ครบ",
+};
+
+export function ShelfMonitor({ shelves, bleLocations }: { shelves: Shelf[]; bleLocations: BleTagLocation[] }) {
   const [selectedId, setSelectedId] = useState("SHELF-01");
   const shelf = shelves.find(shelf => shelf.shelfId === selectedId) ?? shelves[0];
   const device = shelf?.device;
@@ -32,6 +56,18 @@ export function ShelfMonitor({ shelves }: { shelves: Shelf[] }) {
       const lane = device?.lanes.find(lane => lane.laneId === id || lane.laneId === alias);
       return <div key={id}><span>{label}</span><strong data-testid={`device-lane-${id}`}>{lane ? lane.present ? "PRESENT" : "EMPTY" : "UNKNOWN"}</strong></div>;
     })}</div>
+    <section className={styles.bleLocationSection} aria-labelledby="ble-location-heading">
+      <div className={styles.sectionHeading}><h3 id="ble-location-heading">ตำแหน่งแท็ก BLE</h3><span className={styles.smallLabel}>ตัวรับ 3 จุด</span></div>
+      <div className={styles.bleLocationList}>
+        {bleLocations.map(location => <article className={styles.bleLocationRow} key={location.tagId} data-testid={`ble-location-${location.tagId}`}>
+          <div><strong>{location.tagId === "HV01" ? "HV-001" : `Basket ${location.tagId}`}</strong><span className={`${styles.badge} ${bleStatusClass[location.status]}`}>{bleStatusLabel[location.status]}</span></div>
+          <strong data-testid={`ble-position-${location.tagId}`}>{location.x !== null && location.y !== null ? `x ${location.x.toFixed(1)} · y ${location.y.toFixed(1)} m` : "—"}</strong>
+          <small>{location.zone ? `โซน ${location.zone} · ` : ""}{presenceLabel[location.presence]} · ใกล้ {location.nearestReaderId || "—"}</small>
+          <small>RSSI · {(["SHELF-01", "SHELF-02", "SHELF-03"] as const).map(id => `${id.replace("SHELF-", "")} ${location.rssi[id] ?? "—"}`).join(" / ")} dBm</small>
+        </article>)}
+        {!bleLocations.length && <p className={styles.muted}>รอข้อมูลจากตัวรับทั้งสามจุด</p>}
+      </div>
+    </section>
     <dl className={styles.hardwareMetrics}><div><dt>Uptime</dt><dd data-testid="device-uptime">{device?.uptimeMs !== null && device?.uptimeMs !== undefined ? `${Math.floor(device.uptimeMs / 1000)} s` : "—"}</dd></div><div><dt>Queue</dt><dd>{device?.queueDepth ?? "—"}</dd></div><div><dt>Dropped</dt><dd>{device?.droppedEvents ?? "—"}</dd></div></dl>
     <p className={styles.footnote}>สัญญาณล่าสุด: <time data-testid="device-last-seen" dateTime={device?.lastSeenAt || undefined}>{formatTime(device?.lastSeenAt)}</time><br />{status === "UNKNOWN" ? "ยังไม่ได้รับสัญญาณอุปกรณ์" : status === "OFFLINE" ? "ขาดการเชื่อมต่อ · ซ่อนค่าที่หมดอายุ" : "เชื่อมต่อแล้ว"}<br />เหตุการณ์ล่าสุด: {formatTime(shelf?.lastSeenAt)} · FSM: {shelf?.fsmState || "—"}</p>
   </section>;

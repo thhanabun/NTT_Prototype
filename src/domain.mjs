@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { deviceState } from "./device-state.mjs";
+import { bleLocations } from "./ble-location.mjs";
 import { shelfStates } from "./shelves.mjs";
 import { productCatalog, shelfSku } from "./product-catalog.mjs";
 import { assessProximity, RSSI_CLEAR_MARGIN_DB, SINGLE_BASKET_MIN_RSSI } from "./proximity-policy.mjs";
@@ -29,6 +30,7 @@ export function createStore() {
     orders: [],
     auditLog: [],
     telemetry: [],
+    bleLocationState: {},
     cameraEvidence: [],
     seenEventIds: [],
     caseSequence: 0,
@@ -439,6 +441,7 @@ export function snapshot(store, now = Date.now()) {
     products: Object.values(products),
     shelf: { ...store.shelf, device: deviceState(store, now) },
     shelves: shelfStates(store, now),
+    bleLocations: bleLocations(store, now),
     baskets,
     cases: store.cases.slice(0, 30),
     recentEvents: store.events.slice(0, 20),

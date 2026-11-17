@@ -75,6 +75,18 @@ export interface RssiReadings {
   HV01?: number | null;
 }
 
+export interface BleTagLocation {
+  tagId: "A" | "B" | "HV01";
+  status: "UNCALIBRATED" | "TRACKING" | "OUTSIDE" | "PARTIAL" | "STALE" | "WAITING";
+  presence: "UNCONFIGURED" | "UNKNOWN" | "INSIDE" | "OUTSIDE" | "PARTIAL";
+  x: number | null;
+  y: number | null;
+  zone: string | null;
+  nearestReaderId: "SHELF-01" | "SHELF-02" | "SHELF-03" | null;
+  rssi: Record<"SHELF-01" | "SHELF-02" | "SHELF-03", number | null>;
+  lastSeenAt: string | null;
+}
+
 export interface Shelf {
   shelfId: string;
   label?: string;
@@ -217,6 +229,7 @@ export interface ApiState {
   products: Product[];
   shelf: Shelf;
   shelves?: Shelf[];
+  bleLocations?: BleTagLocation[];
   baskets: Basket[];
   cases: BasketCase[];
   recentEvents: ShelfEvent[];

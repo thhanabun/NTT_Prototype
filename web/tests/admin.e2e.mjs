@@ -36,6 +36,9 @@ try {
   await page.goto(`${process.env.SHOPPER_TEST_ORIGIN ?? 'http://localhost:3001'}/admin`);
   await loginAdmin(page);
   await page.getByRole('heading', { name: 'ไม่มีเคสในหมวดนี้' }).waitFor();
+  await page.getByRole('heading', { name: 'ตำแหน่งแท็ก BLE' }).waitFor();
+  assert.equal(await page.getByTestId('ble-location-A').count(), 1);
+  await page.getByTestId('ble-location-A').getByText('ยังไม่ปรับเทียบ').waitFor();
   await post('/api/sessions', { basketId: 'A' });
   await post('/api/sessions', { basketId: 'B' });
   await event('admin-clear', { A: -48, B: -73 });
