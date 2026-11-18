@@ -12,6 +12,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { createStore } from '../../src/domain.mjs';
 import { createCloudHandlers } from '../../src/cloud/handlers.mjs';
+import { createCloudTelemetryHandler } from '../../src/cloud/telemetry-handler.mjs';
 import { pairingCode } from '../../src/cloud/auth.mjs';
 import { createAgentRuntime, createCloudToolsHandler } from '../../src/cloud/agent-runtime.mjs';
 
@@ -21,6 +22,7 @@ const directory = resolve(root, 'data', `cloud-browser-${Date.now()}`); await mk
 const logs = [], checks = [], errors = [], control = new Map(), sockets = new Set(), challenges = new Map();
 const secret = 'isolated-cloud-browser-secret-' + 'x'.repeat(32);
 let connectionCount = 0;
+let stateChanges = 0;
 let store = createStore(), server, frontend, browser;
 async function processRun(file, args, options = {}) {
   const child = spawn(file, args, { windowsHide: true, ...options, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -31,10 +33,12 @@ async function freePort() { const probe = tcpServer(); probe.listen(0, '127.0.0.
 function passed(label) { checks.push(label); console.log('PASS ' + label); }
 async function until(predicate, label, timeout = 30000) { const deadline = Date.now() + timeout; while (Date.now() < deadline) { if (await predicate()) return; await delay(50); } throw new Error('Timeout: ' + label); }
 async function body(request) { const chunks = []; for await (const chunk of request) chunks.push(chunk); return Buffer.concat(chunks).toString(); }
-function changed() { for (const socket of sockets) if (socket.readyState === 1) socket.send('{"type":"STATE_CHANGED"}'); }
+function changed() { stateChanges++; for (const socket of sockets) if (socket.readyState === 1) socket.send('{"type":"STATE_CHANGED"}'); }
 const repository = { async read() { return structuredClone(store); }, async mutate(fn) { const next = structuredClone(store), result = fn(next); store = next; changed(); return { result, store: structuredClone(store) }; } };
+const heartbeats = new Map();
 const services = {
   repository, key: async () => secret,
+  telemetry: { async write(sample) { heartbeats.set(sample.shelfId, sample); }, async latest(shelfId) { return heartbeats.get(shelfId); } },
   shopperEnv: { SHOPPER_AGENT_MODE: 'model', SHOPPER_AGENT_BASE_URL: 'http://fixture.invalid/v1', SHOPPER_AGENT_MODEL: 'SHOPPER_FIXTURE' },
   shopperCompletion: async ({ tools, messages }) => ({ model: 'SHOPPER_FIXTURE', usage: { inputTokens: 10, outputTokens: 5 }, message: tools
     ? { role: 'assistant', tool_calls: [{ id: 'shopper-fixture-call', type: 'function', function: { name: 'read_my_basket', arguments: '{}' } }] }
@@ -45,6 +49,7 @@ const services = {
   async startWorkflow() {}, async acknowledge() {}, async resume() {},
 };
 const handlers = createCloudHandlers(services), tools = createCloudToolsHandler(repository);
+const telemetryHandler = createCloudTelemetryHandler(services.telemetry);
 services.invokeAgent = async input => {
   const actions = ['get_shelf_event', 'get_basket_evidence', 'get_cart_history', 'DECIDE'];
   return createAgentRuntime({ repository, toolFunctionArn: 'fixture-tools', planner: async () => ({ action: actions.shift(), model: 'BEDROCK_FIXTURE' }), decision: async () => ({ candidate: 'A', confidence: 0.82, model: 'LAYA_FIXTURE' }), lambda: { async send(command) { return { Payload: Buffer.from(JSON.stringify(await tools(JSON.parse(command.input.Payload)))) }; } } })(input);
@@ -134,7 +139,9 @@ try {
   passed('Production web customer YES, staff rejection and checkout reach actual shared cloud handlers/domain without unconfirmed charges');
   await admin.getByRole('button', { name: 'คืน Basket B', exact: true }).click();
   await until(() => store.activeSessions.B === null, 'staff release empty basket');
-  await handlers.ingest({ shelfId: 'SHELF-01', mqttClientId: 'SHELF-01', mqttTopic: 'smartbasket/shelf/SHELF-01/telemetry', rssi: { A: -51, B: -72 }, uptimeMs: 123000, lanes: [{ laneId: 'LANE-1', present: true }, { laneId: 'LANE-2', present: false }] });
+  const changesBeforeHeartbeat = stateChanges;
+  await telemetryHandler({ shelfId: 'SHELF-01', mqttClientId: 'SHELF-01', mqttTopic: 'smartbasket/shelf/SHELF-01/telemetry', mqttReceivedAt: Date.now(), rssi: { A: -51, B: -72 }, uptimeMs: 123000, lanes: [{ laneId: 'LANE-1', present: true }, { laneId: 'LANE-2', present: false }] });
+  assert.equal(stateChanges, changesBeforeHeartbeat);
   await admin.getByTestId('device-status').filter({ hasText: 'ONLINE' }).waitFor();
   const beforeRenewal = connectionCount;
   await admin.getByTestId('device-status').filter({ hasText: 'OFFLINE' }).waitFor();

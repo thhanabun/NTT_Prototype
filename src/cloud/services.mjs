@@ -10,6 +10,7 @@ import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { CloudWatchLogsClient, DescribeLogGroupsCommand, PutRetentionPolicyCommand } from "@aws-sdk/client-cloudwatch-logs";
 import { DynamoDbRecordsRepository } from "./records-repository.mjs";
+import { createCloudTelemetry } from "./telemetry.mjs";
 import { requestBedrockShopperCompletion } from "../shopper-agent/bedrock.mjs";
 
 const hash = value => createHash("sha256").update(value).digest("hex");
@@ -46,7 +47,8 @@ export function createCloudServices(env = process.env) {
     return value;
   }
   return {
-    repository, get, put, scan, demoSignalsEnabled: env.ENABLE_DEMO_SIGNALS === "true",
+    repository, telemetry: env.TELEMETRY_TABLE && createCloudTelemetry(env.TELEMETRY_TABLE, documentClient),
+    get, put, scan, demoSignalsEnabled: env.ENABLE_DEMO_SIGNALS === "true",
     async key() {
       keyPromise ||= secrets.send(new GetSecretValueCommand({ SecretId: env.SESSION_SECRET_ARN })).then(result => {
         if (!result.SecretString || result.SecretString.length < 32) throw new Error("Invalid cloud session signing secret");

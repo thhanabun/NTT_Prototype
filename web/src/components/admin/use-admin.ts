@@ -5,8 +5,8 @@ import { decideStaffCase, resetDemo } from "@/lib/api/client";
 import { useLiveState } from "@/lib/api/live-state";
 import type { BasketId } from "@/lib/api/types";
 
-export function useAdmin() {
-  const live = useLiveState();
+export function useAdmin({ refreshDevices = false } = {}) {
+  const live = useLiveState({ refreshDevices });
   const { state, loading, stale, updatedAt } = live;
   const [actionError, setActionError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);

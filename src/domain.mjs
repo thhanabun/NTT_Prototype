@@ -125,7 +125,7 @@ function recordEvent(store, event) {
   store.shelf.rssi = event.rssi || { A: null, B: null };
 }
 
-export function processShelfEvent(store, input) {
+export function processShelfEvent(store, input, { iotReceivedAt } = {}) {
   if (!input || typeof input !== "object") throw new Error("Event payload must be an object");
   const eventId = String(input.eventId || "").trim();
   const eventType = String(input.eventType || "").toUpperCase();
@@ -164,6 +164,7 @@ export function processShelfEvent(store, input) {
     timestamp: input.timestamp || isoNow(),
     timeBasis: input.timestamp ? "SOURCE_TIMESTAMP" : "SERVER_RECEIPT",
     receivedAt: isoNow(),
+    ...(iotReceivedAt ? { iotReceivedAt } : {}),
     delayed: input.delayed === true,
     rssi,
   };

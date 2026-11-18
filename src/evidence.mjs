@@ -1,6 +1,8 @@
 import { BLE_LOCATION_CONFIG } from "./ble-location-config.mjs";
 import { updateBleLocation } from "./ble-location.mjs";
 
+export const evidenceWindowCenter = event => Date.parse(event.iotReceivedAt ?? event.receivedAt);
+
 function identifier(value, label) {
   if (typeof value !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) throw new Error(`Invalid ${label}`);
   return value;
@@ -19,7 +21,7 @@ function capturedTime(value, receivedAt) {
   return { capturedAt: new Date(milliseconds).toISOString(), timeBasis: "SOURCE_TIMESTAMP" };
 }
 
-export function ingestTelemetry(store, input, receivedAt = new Date().toISOString()) {
+export function normalizeTelemetry(input, receivedAt = new Date().toISOString()) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Telemetry must be an object");
   const rssiInput = input.rssi || input.baskets || {};
   const rssi = Object.fromEntries(["A", "B", "HV01"].map(id => {
@@ -32,7 +34,7 @@ export function ingestTelemetry(store, input, receivedAt = new Date().toISOStrin
     if (!["LANE-1", "LANE-2", "LANE-COKE", "LANE-WATER"].includes(lane.laneId) || typeof lane.present !== "boolean") throw new Error("Invalid lane state");
     return { laneId: lane.laneId, present: lane.present };
   });
-  const sample = {
+  return {
     shelfId: identifier(input.shelfId, "shelfId"), receivedAt,
     ...capturedTime(input.capturedAt || input.timestamp, receivedAt),
     source: input.source === "MOCK" ? "MOCK" : "DEVICE", rssi, lanes,
@@ -42,6 +44,10 @@ export function ingestTelemetry(store, input, receivedAt = new Date().toISOStrin
     queueDepth: optionalCount(input.queueDepth, "queueDepth"),
     droppedEvents: optionalCount(input.droppedEvents, "droppedEvents"),
   };
+}
+
+export function ingestTelemetry(store, input, receivedAt = new Date().toISOString()) {
+  const sample = normalizeTelemetry(input, receivedAt);
   store.telemetry ||= [];
   store.telemetry.unshift(sample);
   store.telemetry = store.telemetry.slice(0, 120);
