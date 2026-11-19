@@ -158,6 +158,39 @@
         }
       }
     },
+    "TelemetryTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "shelfId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "receiptKey",
+            "AttributeType": "N"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "shelfId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "receiptKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      }
+    },
     "SessionSecret": {
       "Type": "AWS::SecretsManager::Secret",
       "Properties": {
@@ -359,6 +392,19 @@
               },
               {
                 "Effect": "Allow",
+                "Action": [
+                  "dynamodb:GetItem",
+                  "dynamodb:Query"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "TelemetryTable",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
                 "Action": "bedrock:InvokeModel",
                 "Resource": {
                   "Ref": "BedrockInvokeResources"
@@ -393,6 +439,9 @@
                 "AgentRuntime",
                 "Arn"
               ]
+            },
+            "TELEMETRY_TABLE": {
+              "Ref": "TelemetryTable"
             },
             "SHOPPER_AGENT_MODE": "model",
             "SHOPPER_AGENT_PROVIDER": "bedrock",
@@ -511,6 +560,65 @@
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "IngestFunctionLog"
+          }
+        }
+      },
+      "Condition": "ProvisionIoT",
+      "Metadata": {
+        "BuildProperties": {
+          "UseNpmCi": true
+        }
+      }
+    },
+    "TelemetryFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Runtime": "nodejs22.x",
+        "CodeUri": "../../data/cloud-package/",
+        "Handler": "src/cloud/telemetry-handler.ingest",
+        "Policies": [
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "dynamodb:PutItem",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "TelemetryTable",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "TELEMETRY_TABLE": {
+              "Ref": "TelemetryTable"
+            }
+          }
+        },
+        "EventInvokeConfig": {
+          "MaximumRetryAttempts": 2,
+          "DestinationConfig": {
+            "OnFailure": {
+              "Type": "SQS",
+              "Destination": {
+                "Fn::GetAtt": [
+                  "FailureQueue",
+                  "Arn"
+                ]
+              }
+            }
+          }
+        },
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-TelemetryFunction"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "TelemetryFunctionLog"
           }
         }
       },
@@ -939,11 +1047,28 @@
                     "Arn"
                   ]
                 }
+              },
+              {
+                "Effect": "Allow",
+                "Action": "dynamodb:Query",
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "TelemetryTable",
+                    "Arn"
+                  ]
+                }
               }
             ]
           }
         ],
         "Timeout": 10,
+        "Environment": {
+          "Variables": {
+            "TELEMETRY_TABLE": {
+              "Ref": "TelemetryTable"
+            }
+          }
+        },
         "FunctionName": {
           "Fn::Sub": "${AWS::StackName}-ToolsFunction"
         },
@@ -1619,7 +1744,7 @@
       "Properties": {
         "TopicRulePayload": {
           "AwsIotSqlVersion": "2016-03-23",
-          "Sql": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId FROM 'smartbasket/shelf/+/+' WHERE (topic(4) = 'events' OR topic(4) = 'telemetry') AND (topic(3) = 'SHELF-01' OR topic(3) = 'SHELF-02' OR topic(3) = 'SHELF-03')",
+          "Sql": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId, timestamp() AS mqttReceivedAt FROM 'smartbasket/shelf/+/+' WHERE topic(4) = 'events' AND (topic(3) = 'SHELF-01' OR topic(3) = 'SHELF-02' OR topic(3) = 'SHELF-03')",
           "RuleDisabled": false,
           "Actions": [
             {
@@ -1651,6 +1776,49 @@
         "SourceArn": {
           "Fn::GetAtt": [
             "ShelfRule",
+            "Arn"
+          ]
+        }
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "TelemetryRule": {
+      "Type": "AWS::IoT::TopicRule",
+      "Properties": {
+        "TopicRulePayload": {
+          "AwsIotSqlVersion": "2016-03-23",
+          "Sql": "SELECT *, topic() AS mqttTopic, clientid() AS mqttClientId, timestamp() AS mqttReceivedAt FROM 'smartbasket/shelf/+/+' WHERE topic(4) = 'telemetry' AND (topic(3) = 'SHELF-01' OR topic(3) = 'SHELF-02' OR topic(3) = 'SHELF-03')",
+          "RuleDisabled": false,
+          "Actions": [
+            {
+              "Lambda": {
+                "FunctionArn": {
+                  "Fn::GetAtt": [
+                    "TelemetryFunction",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "TelemetryInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "TelemetryFunction"
+        },
+        "Principal": "iot.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "TelemetryRule",
             "Arn"
           ]
         }
@@ -1908,6 +2076,43 @@
             "Name": "FunctionName",
             "Value": {
               "Ref": "IngestFunction"
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopic"
+          }
+        ]
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "TelemetryFunctionLog": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-TelemetryFunction"
+        },
+        "RetentionInDays": 14
+      },
+      "Condition": "ProvisionIoT"
+    },
+    "TelemetryFunctionErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "TelemetryFunction"
             }
           }
         ],

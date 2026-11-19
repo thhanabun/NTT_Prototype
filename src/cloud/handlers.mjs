@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { addAuditEntry, customerDecision, processShelfEvent, staffDecision, startSession, checkout } from "../domain.mjs";
-import { ingestTelemetry } from "../evidence.mjs";
 import { completeCaseInvestigation } from "../agent/case-manager.mjs";
 import { queryStatistics } from "../stats-query.mjs";
 import { createShopperAgent } from "../shopper-agent/index.mjs";
 import { authenticate, basketId, httpError, requireOwner, requireStaff, scopedState, signShopper, verifyPairing } from "./auth.mjs";
 import { createCloudServices } from "./services.mjs";
+import { attachDeviceTelemetry } from "./telemetry.mjs";
 import { SHELF_IDS } from "../shelves.mjs";
 
 const hash = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -18,7 +18,7 @@ function bodyOf(event, maxBytes = 64000) {
 const tokenKey = (id, actor) => `HITL#${id}#${actor.toUpperCase()}`;
 
 export function createCloudHandlers(services) {
-  const { repository } = services;
+  const { repository, telemetry } = services;
   const queryShopper = createShopperAgent({ repository, env: services.shopperEnv || process.env, complete: services.shopperCompletion });
   async function launch(item) {
     if (!item || item.status === "CLOSED") return;
@@ -39,7 +39,11 @@ export function createCloudHandlers(services) {
         const method = event.requestContext?.http?.method, path = event.rawPath;
         const principal = await authenticate(event.headers || {}, { key: await services.key(), verifyJwt: token => services.verifyJwt(token) });
         if (method === "GET" && path === "/api/auth/me") { requireStaff(principal); return reply(200, { email: principal.email, expiresAt: principal.exp * 1000 }); }
-        if (method === "GET" && path === "/api/state") return reply(200, scopedState(await repository.read(), principal));
+        if (method === "GET" && path === "/api/state") {
+          const store = await repository.read();
+          if (principal.role === "STAFF" && telemetry) await attachDeviceTelemetry(store, telemetry);
+          return reply(200, scopedState(store, principal));
+        }
         if (method === "GET" && path === "/api/audit") { requireStaff(principal); const store = await repository.read(); return reply(200, { items: store.auditLog.slice(0, 100) }); }
         if (method === "POST" && path === "/api/vision/live") {
           requireStaff(principal);
@@ -143,13 +147,17 @@ export function createCloudHandlers(services) {
     async ingest(event) {
       const match = /^smartbasket\/shelf\/([A-Z0-9-]+)\/(events|telemetry)$/.exec(event.mqttTopic || "");
       if (!match || !SHELF_IDS.includes(match[1]) || event.mqttClientId !== match[1] || event.shelfId !== match[1]) throw new Error("IoT topic/client/shelf identity mismatch");
-      if (match[2] === "telemetry") { await repository.mutate(store => ingestTelemetry(store, { ...event, source: "DEVICE" })); return { ok: true }; }
+      // Drain telemetry invocations queued on this handler before rules were split.
+      if (match[2] === "telemetry") return { ok: true };
+      const receipt = event.mqttReceivedAt;
+      const iotReceivedAt = Number.isSafeInteger(receipt) && receipt > 0 && receipt <= Date.now() + 5000
+        ? new Date(receipt).toISOString() : undefined;
       if (event.mockVisionFrameId !== undefined || event.agentMode !== undefined) throw new Error("Device cannot inject mock Agent evidence");
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(event.eventId || "")) throw new Error("Invalid device event ID");
       const { result, store } = await repository.mutate(draft => {
         const received = draft.cloudReceipts?.find(item => item.eventId === event.eventId);
         if (received) { addAuditEntry(draft, "DUPLICATE_EVENT_IGNORED", "FSM", { eventId: event.eventId }); return { duplicate: true, eventId: event.eventId, caseId: received.caseId }; }
-        const result = processShelfEvent(draft, event);
+        const result = processShelfEvent(draft, event, { iotReceivedAt });
         const item = result.caseId ? draft.cases.find(item => item.caseId === result.caseId) : draft.cases.find(item => item.eventId === event.eventId);
         if (item) { draft.cloudWorkflows ||= {}; draft.cloudWorkflows[item.caseId] ||= { launched: false }; }
         draft.cloudReceipts ||= []; draft.cloudReceipts.push({ eventId: event.eventId, caseId: item?.caseId || null });

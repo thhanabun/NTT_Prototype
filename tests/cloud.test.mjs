@@ -8,17 +8,22 @@ import { authenticate, pairingCode, scopedState, signShopper, verifyShopper } fr
 import { createCloudHandlers } from "../src/cloud/handlers.mjs";
 import { requestBedrockToolDecision } from "../src/cloud/bedrock-planner.mjs";
 import { createAgentRuntime, createCloudToolsHandler } from "../src/cloud/agent-runtime.mjs";
+import { attachDeviceTelemetry, createCloudTelemetry } from "../src/cloud/telemetry.mjs";
+import { createCloudTelemetryHandler } from "../src/cloud/telemetry-handler.mjs";
+import { bleLocations } from "../src/ble-location.mjs";
+import { normalizeTelemetry } from "../src/evidence.mjs";
+import { SHELF_IDS } from "../src/shelves.mjs";
 import { cloudTemplate } from "../infra/cloud/template.mjs";
 
 const key = "test-secret-never-used-in-cloud-" + "x".repeat(32);
-function fixture() {
+function fixture(telemetry) {
   let store = createStore();
   const control = new Map(), calls = [];
   const repository = {
     async read() { return structuredClone(store); },
     async mutate(mutator) { const next = structuredClone(store); const result = mutator(next); store = next; return { result, store: structuredClone(store) }; },
   };
-  const services = { repository, calls, key: async () => key,
+  const services = { repository, telemetry, calls, key: async () => key,
     verifyJwt: async token => { if (token === "staff") return { sub: "staff-1", username: "staff@test.invalid", "cognito:groups": ["STAFF"], exp: Date.now() / 1000 + 3600 }; throw new Error("Bad JWT"); },
     async get(id) { return control.get(id); }, async put(item) { control.set(item.id, item); }, async scan(filter) { return [...control.values()].filter(filter); },
     async startWorkflow(item) { calls.push(["workflow", item.caseId]); }, async acknowledge(shelfId, eventId) { calls.push(["ack", eventId]); },
@@ -26,12 +31,13 @@ function fixture() {
     async invokeAgent() { throw new Error("No AWS model called in fixtures"); }, async broadcast() { calls.push(["broadcast"]); },
   };
   const handlers = createCloudHandlers(services);
+  const telemetryHandler = telemetry && createCloudTelemetryHandler(telemetry);
   async function api(path, body, authorization) {
     const response = await handlers.api({ rawPath: path, requestContext: { http: { method: body === undefined ? "GET" : "POST" } }, headers: authorization ? { authorization } : {}, body: body === undefined ? "" : JSON.stringify(body) });
     return { status: response.statusCode, body: JSON.parse(response.body) };
   }
   const ingest = (eventId, rssi = { A: -51, B: -72 }, eventType = "PICK") => handlers.ingest({ eventId, shelfId: "SHELF-01", mqttClientId: "SHELF-01", mqttTopic: "smartbasket/shelf/SHELF-01/events", laneId: "LANE-1", eventType, rssi });
-  return { repository, services, handlers, control, calls, api, ingest };
+  return { repository, services, handlers, telemetryHandler, control, calls, api, ingest };
 }
 
 test("Cloud record store round-trips state larger than 400 KB without a large item and preserves multiple camera frames", async () => {
@@ -125,6 +131,116 @@ test("Cloud IoT ingestion persists before workflow and ACK, retries failed launc
   await assert.rejects(f.handlers.ingest({ mqttTopic: "smartbasket/shelf/SHELF-01/events", mqttClientId: "attacker", shelfId: "SHELF-01" }), /identity/);
 });
 
+test("Cloud heartbeats use only shelf telemetry storage and retain receipt freshness across retry and reorder", async () => {
+  const calls = [], rows = new Map();
+  const telemetry = createCloudTelemetry("telemetry", { async send(command) {
+    const { TableName, Item, Key, ConditionExpression, ExpressionAttributeValues: values, Limit } = command.input;
+    assert.equal(TableName, "telemetry");
+    calls.push(command.constructor.name);
+    if (Item) {
+      const id = `${Item.shelfId}/${Item.receiptKey}`;
+      if (ConditionExpression && rows.get(id)?.receivedAtMs >= values[":receivedAtMs"]) {
+        throw Object.assign(new Error("Outdated"), { name: "ConditionalCheckFailedException" });
+      }
+      rows.set(id, structuredClone(Item));
+      return {};
+    }
+    if (Key) return { Item: rows.get(`${Key.shelfId}/${Key.receiptKey}`) };
+    const Items = [...rows.values()].filter(row => row.shelfId === values[":shelfId"] &&
+      row.receiptKey >= values[":from"] && row.receiptKey <= values[":to"]).sort((a, b) => b.receiptKey - a.receiptKey).slice(0, Limit);
+    return { Items };
+  } });
+  const f = fixture(telemetry), now = Date.now();
+  const heartbeat = (shelfId, mqttReceivedAt, rssi = -51) => ({ shelfId, mqttReceivedAt, mqttTopic: `smartbasket/shelf/${shelfId}/telemetry`, mqttClientId: shelfId, rssi: { A: rssi } });
+  const { read, mutate } = f.repository;
+  f.repository.read = f.repository.mutate = async () => assert.fail("Heartbeat touched transaction state");
+  await f.telemetryHandler(heartbeat("SHELF-01", now));
+  await f.telemetryHandler(heartbeat("SHELF-01", now)); // Lambda retries share the IoT receipt time.
+  await f.telemetryHandler(heartbeat("SHELF-01", now - 1000, -82));
+  await f.telemetryHandler(heartbeat("SHELF-02", now - 6000));
+  await f.telemetryHandler(heartbeat("SHELF-03", undefined));
+  await assert.rejects(f.telemetryHandler({ ...heartbeat("SHELF-03", now), mqttClientId: "SHELF-02" }), /identity/);
+  await assert.rejects(f.telemetryHandler(heartbeat("SHELF-03", now, -128)), /Invalid telemetry RSSI/);
+  assert.deepEqual(await f.handlers.ingest(heartbeat("SHELF-03", undefined)), { ok: true }, "Old queued telemetry drains without storage writes");
+  assert.deepEqual(calls, Array(8).fill("PutCommand"));
+  assert.equal(rows.size, 5);
+  assert.equal(rows.get(`SHELF-01/${now}`).ttl, Math.floor(now / 1000) + 3600);
+  assert.deepEqual(f.calls, []);
+  Object.assign(f.repository, { read, mutate });
+  const legacySample = normalizeTelemetry({ shelfId: "SHELF-03", rssi: { A: -60 } }, new Date(now - 6000).toISOString());
+  const { result: session } = await f.repository.mutate(store => { store.telemetry = [legacySample]; return startSession(store, "A"); });
+  const staff = await f.api("/api/state", undefined, "Bearer staff");
+  assert.equal(staff.status, 200);
+  assert.deepEqual(staff.body.shelves.map(({ device }) => [device.status, device.lastSeenAt, device.rssi.A]), [
+    ["ONLINE", new Date(now).toISOString(), -51], ["OFFLINE", new Date(now - 6000).toISOString(), null], ["OFFLINE", legacySample.receivedAt, null],
+  ]);
+  calls.length = 0;
+  await f.api("/api/state", undefined, "Basket " + signShopper(key, { basket: "A", sessionId: session.sessionId }));
+  await f.api("/api/state");
+  await f.ingest("evidence-window", { A: -55, B: -57 });
+  await f.ingest("evidence-window", { A: -55, B: -57 });
+  assert.deepEqual(calls, []);
+  assert.equal(f.calls.filter(([type]) => type === "ack").length, 2);
+  const stored = await f.repository.read();
+  assert.deepEqual(stored.telemetry, [legacySample]);
+  const tool = createCloudToolsHandler(f.repository, telemetry);
+  const task = { caseId: stored.cases[0].caseId, input: { eventId: "evidence-window" } };
+  await tool({ ...task, tool: "get_shelf_event" });
+  assert.deepEqual(calls, []);
+  const window = await tool({ ...task, tool: "get_signal_window" });
+  assert.deepEqual(calls, ["QueryCommand"]);
+  assert.deepEqual(window.samples.map(sample => sample.rssi.A), [-51, -82]);
+
+  calls.length = 0;
+  const simultaneousReceipt = Date.now() + 1;
+  f.repository.read = f.repository.mutate = async () => assert.fail("Concurrent heartbeats touched transaction state");
+  await Promise.all(SHELF_IDS.map(shelfId => f.telemetryHandler(heartbeat(shelfId, simultaneousReceipt))));
+  assert.deepEqual(calls, Array(6).fill("PutCommand"));
+  Object.assign(f.repository, { read, mutate });
+  const simultaneousState = await f.api("/api/state", undefined, "Bearer staff");
+  assert.deepEqual(simultaneousState.body.shelves.map(({ device }) => device.status), ["ONLINE", "ONLINE", "ONLINE"]);
+});
+
+test("Cloud staff telemetry merges legacy samples chronologically for calibrated three-shelf BLE", async () => {
+  const config = { tags: { A: { enterRssiDbm: -60, exitRssiDbm: -75, fingerprints: [{
+    x: 2, y: 3, rssi: Object.fromEntries(SHELF_IDS.map(shelfId => [shelfId, -50])),
+  }] } } };
+  const now = Date.now();
+  const recent = SHELF_IDS.map(shelfId => [1000, 2000].map(age => normalizeTelemetry({ shelfId, rssi: { A: -50 } }, new Date(now - age).toISOString())));
+  const legacy = normalizeTelemetry({ shelfId: SHELF_IDS[0], rssi: { A: -50 } }, new Date(now - 250).toISOString());
+  const seed = {};
+  const store = { telemetry: [legacy], bleLocationState: seed };
+  const index = shelfId => SHELF_IDS.indexOf(shelfId);
+  await attachDeviceTelemetry(store, { latest: async shelfId => recent[index(shelfId)][0], recent: async shelfId => recent[index(shelfId)] }, config);
+  assert.deepEqual(seed, {});
+  const [estimate] = bleLocations(store, now, config);
+  assert.deepEqual([estimate.presence, estimate.status, estimate.x, estimate.y], ["INSIDE", "TRACKING", 2, 3]);
+});
+
+test("Cloud evidence centers on IoT receipt even when a device event waits in the Lambda queue", async () => {
+  const receipt = Date.now() - 20_000, iotReceivedAt = new Date(receipt).toISOString();
+  const sample = normalizeTelemetry({ shelfId: "SHELF-01", rssi: { A: -55 },
+    lanes: [{ laneId: "LANE-1", present: true }], uptimeMs: 123000, queueDepth: 0, droppedEvents: 0 }, iotReceivedAt);
+  const windows = [];
+  const telemetry = { async recent(shelfId, from, to) { windows.push([shelfId, from, to]); return [sample]; } };
+  const f = fixture(telemetry);
+  const input = { eventId: "queued-evidence", shelfId: "SHELF-01", laneId: "LANE-1", eventType: "PICK", rssi: { A: -55, B: -57 } };
+  const result = await f.handlers.ingest({ ...input, mqttTopic: "smartbasket/shelf/SHELF-01/events", mqttClientId: "SHELF-01", mqttReceivedAt: receipt });
+  assert.equal(result.event.iotReceivedAt, iotReceivedAt);
+  assert.ok(Date.parse(result.event.receivedAt) - receipt > 5000);
+  assert.equal(result.event.delayed, false);
+  assert.deepEqual(f.calls.at(-1), ["ack", input.eventId]);
+  const invoke = createCloudToolsHandler(f.repository, telemetry);
+  const run = tool => invoke({ caseId: result.caseId, tool, input: { eventId: input.eventId } });
+  assert.deepEqual((await run("get_signal_window")).samples, [sample]);
+  assert.equal((await run("get_lane_state")).sample.present, true);
+  assert.equal((await run("get_device_health")).status, "STALE");
+  assert.deepEqual(windows, [3000, 3000, 5000].map(ms => ["SHELF-01", receipt - ms, receipt + ms]));
+  assert.equal(processShelfEvent(createStore(), { ...input, iotReceivedAt, mqttReceivedAt: receipt }).event.iotReceivedAt, undefined);
+  f.services.demoSignalsEnabled = true;
+  assert.equal((await f.api("/api/events", { ...input, eventId: "web-demo-" + randomUUID(), mqttReceivedAt: receipt }, "Bearer staff")).status, 400);
+});
+
 test("Cloud HITL survives callback failure without double charging; NO and timeout escalate, validation requires a human resolution", async () => {
   process.env.SHELF_ID = "SHELF-01";
   const f = fixture();
@@ -198,6 +314,8 @@ test("Prepared SAM infrastructure references real resources, avoids dependency c
   assert.equal(resources.CaseWorkflow.Properties.Definition.States.AfterCustomer.Default, "StaffApproval");
   assert.equal(resources.StateTable.Properties.PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled, true);
   assert.equal(resources.ControlTable.Properties.TimeToLiveSpecification.AttributeName, "ttl");
+  assert.equal(resources.TelemetryTable.Properties.TimeToLiveSpecification.AttributeName, "ttl");
+  assert.equal(resources.TelemetryTable.Properties.StreamSpecification, undefined);
   assert.equal(resources.ApiFunctionLog.Properties.RetentionInDays, 14);
   const api = resources.ApiFunction.Properties;
   assert.equal(api.Environment.Variables.SHOPPER_AGENT_PROVIDER, "bedrock");
@@ -206,7 +324,13 @@ test("Prepared SAM infrastructure references real resources, avoids dependency c
   const shopperInvoke = api.Policies[0].Statement.find(statement => statement.Action === "bedrock:InvokeModel");
   assert.deepEqual(shopperInvoke.Resource, { Ref: "BedrockInvokeResources" });
   assert.ok(resources.Trail && resources.Budget && resources.FailureQueue && resources.ArchiveBucket);
-  assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql, /WHERE \(topic\(4\) = 'events' OR topic\(4\) = 'telemetry'\)/);
+  assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql, /WHERE topic\(4\) = 'events'/);
+  assert.doesNotMatch(resources.ShelfRule.Properties.TopicRulePayload.Sql, /'telemetry'/);
+  assert.match(resources.TelemetryRule.Properties.TopicRulePayload.Sql, /topic\(4\) = 'telemetry'/);
+  assert.equal(resources.TelemetryFunction.Properties.Handler, "src/cloud/telemetry-handler.ingest");
+  assert.ok(!resources.IngestFunction.Properties.Policies[0].Statement.some(statement => JSON.stringify(statement.Resource).includes("TelemetryTable")));
+  assert.ok(!resources.TelemetryFunction.Properties.Policies[0].Statement.some(statement => JSON.stringify(statement.Resource).includes("StateTable")));
+  assert.match(resources.ShelfRule.Properties.TopicRulePayload.Sql, /timestamp\(\) AS mqttReceivedAt/);
   assert.equal(resources.ShelfRule.Properties.TopicRulePayload.ErrorAction, undefined);
   assert.equal(resources.IoTErrorRole, undefined);
   assert.ok(!resources.ToolsFunction.Properties.Policies[0].Statement.some(statement => statement.Action.includes("dynamodb:PutItem")));

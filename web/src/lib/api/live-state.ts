@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { getState } from "./client";
 import type { ApiState } from "./types";
 import { createRealtimeTicket } from "./client";
@@ -21,7 +21,6 @@ const listeners = new Set<() => void>();
 const delays = [1500, 3000, 6000, 12000, 30000];
 let source: EventSource | WebSocket | null = null;
 let generation = 0;
-let deviceExpiry: ReturnType<typeof setTimeout> | undefined;
 let invalidation: ReturnType<typeof setTimeout> | undefined;
 let renewal: ReturnType<typeof setTimeout> | undefined;
 let retry: ReturnType<typeof setTimeout> | undefined;
@@ -44,12 +43,6 @@ function update(changes: Partial<LiveSnapshot>) {
 }
 function accept(value: ApiState) {
   update({ state:validate(value), loading:false, stale:false, error:"", updatedAt:new Date().toISOString() });
-  clearTimeout(deviceExpiry);
-  const onlineDevices = (value.shelves ?? [value.shelf]).flatMap(shelf => shelf.device?.status === "ONLINE" && shelf.device.lastSeenAt ? [shelf.device] : []);
-  if (process.env.NEXT_PUBLIC_CLOUD_MODE === "true" && onlineDevices.length) {
-    const expiresAt = Math.min(...onlineDevices.map(device => Date.parse(device.lastSeenAt!) + device.timeoutMs));
-    deviceExpiry = setTimeout(() => { if (active) void readState(false); }, Math.max(100, expiresAt + 100 - Date.now()));
-  }
 }
 function disconnect() {
   generation++;
@@ -152,7 +145,10 @@ async function readState(showLoading: boolean): Promise<boolean> {
     if (revision === streamRevision) update({stale:true, error:cause instanceof Error ? cause.message : "Could not load state."});
     return false;
   } finally {
-    if (active && number === requestNumber) update({loading:false});
+    if (active && number === requestNumber) {
+      controller = null;
+      update({loading:false});
+    }
   }
 }
 
@@ -166,7 +162,6 @@ export async function refreshLiveState(): Promise<boolean> {
 }
 function stop() {
   active = false;
-  clearTimeout(deviceExpiry);
   clearTimeout(invalidation);
   requestNumber += 1;
   controller?.abort();
@@ -191,7 +186,14 @@ function subscribe(listener: () => void) {
 const getSnapshot = () => snapshot;
 const getServerSnapshot = () => initial;
 
-export function useLiveState() {
+export function useLiveState({ refreshDevices = false } = {}) {
   const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_CLOUD_MODE !== "true" || !refreshDevices) return;
+    const timer = setInterval(() => {
+      if (active && !controller && document.visibilityState === "visible") void readState(false);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [refreshDevices]);
   return { ...value, refresh:refreshLiveState };
 }

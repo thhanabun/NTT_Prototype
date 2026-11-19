@@ -20,7 +20,7 @@ type Filter = "OPEN" | "ALL" | "WAITING_CUSTOMER" | "OPEN_STAFF" | "CLOSED";
 const filters: {id:Filter; label:string}[] = [{id:"OPEN",label:"เคสที่ยังเปิด"},{id:"OPEN_STAFF",label:"รอพนักงาน"},{id:"WAITING_CUSTOMER",label:"รอลูกค้า"},{id:"CLOSED",label:"ปิดแล้ว"},{id:"ALL",label:"ทั้งหมด"}];
 
 export function AdminDashboard({ mapView, onMapViewChange, active }: { mapView: MapView; onMapViewChange: (view: MapView) => void; active: boolean }) {
-  const admin = useAdmin();
+  const admin = useAdmin({ refreshDevices: true });
   const [filter, setFilter] = useState<Filter>("OPEN");
   const state = admin.state;
   const shelves = getShelves(state);

@@ -2,6 +2,7 @@ import { ANALYSIS_SCRIPTS, SCRIPT_DESCRIPTIONS } from "./analysis-scripts.mjs";
 import { inspectVisionEvidence } from "./vision.mjs";
 import { productCatalog } from "../product-catalog.mjs";
 import { assessProximity } from "../proximity-policy.mjs";
+import { evidenceWindowCenter } from "../evidence.mjs";
 
 function getActiveSession(store, basketId) {
   const sessionId = store.activeSessions[basketId];
@@ -74,7 +75,7 @@ function sourceEvent(store, eventId) {
 function windowSamples(store, event, windowMs = 3000) {
   // Unsynchronized firmware has receipt time only; never label that as capture-time proof.
   const timeBasis = event.delayed ? "DELAYED_UNRELIABLE" : "SERVER_RECEIPT";
-  const center = Date.parse(event.receivedAt);
+  const center = evidenceWindowCenter(event);
   const samples = (store.telemetry || []).filter(sample => sample.shelfId === event.shelfId &&
     Math.abs(Date.parse(sample.receivedAt) - center) <= windowMs &&
     (sample.timeBasis !== "SOURCE_TIMESTAMP" || Math.abs(Date.parse(sample.capturedAt) - Date.parse(sample.receivedAt)) <= 3000)).slice(0, 12);

@@ -9,14 +9,22 @@ import { requestLayaBasketDecision } from "../agent/laya.mjs";
 import { runAgentTool, TOOL_DESCRIPTIONS } from "../agent/tools.mjs";
 import { planStatsQuery } from "../stats-query.mjs";
 import { requestBedrockToolDecision } from "./bedrock-planner.mjs";
+import { attachEvidenceTelemetry, createCloudTelemetry } from "./telemetry.mjs";
 
-export function createCloudToolsHandler(repository) {
+const telemetryWindows = { get_signal_window: 3000, get_lane_state: 3000, get_device_health: 5000 };
+
+export function createCloudToolsHandler(repository, telemetry) {
   return async function handler(event) {
     const store = await repository.read();
     const item = store.cases.find(item => item.caseId === event.caseId);
     if (!item || !item.type.startsWith("AMBIGUOUS_") || item.status === "CLOSED" || !Object.hasOwn(TOOL_DESCRIPTIONS, event.tool) || event.tool === "inspect_vision_evidence") throw new Error("Invalid cloud evidence tool request");
     if (event.tool !== "get_cart_history" && event.input?.eventId !== item.eventId) throw new Error("Tool event must belong to the investigation case");
-    return runAgentTool(structuredClone(store), event.tool, event.input || {});
+    const view = structuredClone(store);
+    if (telemetry && telemetryWindows[event.tool]) {
+      const sourceEvent = view.events.find(entry => entry.eventId === item.eventId);
+      if (sourceEvent) await attachEvidenceTelemetry(view, telemetry, sourceEvent, telemetryWindows[event.tool]);
+    }
+    return runAgentTool(view, event.tool, event.input || {});
   };
 }
 
@@ -77,7 +85,7 @@ export function serveAgentRuntime(run, { port = 8080, host = "0.0.0.0", ready = 
 
 let tools;
 export async function toolsHandler(event) {
-  tools ||= createCloudToolsHandler(createRepository({ backend: "dynamodb-records", tableName: process.env.STATE_TABLE }));
+  tools ||= createCloudToolsHandler(createRepository({ backend: "dynamodb-records", tableName: process.env.STATE_TABLE }), createCloudTelemetry(process.env.TELEMETRY_TABLE));
   return tools(event);
 }
 
